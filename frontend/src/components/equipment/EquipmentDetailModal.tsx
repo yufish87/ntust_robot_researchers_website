@@ -88,26 +88,30 @@ export function EquipmentDetailModal({ code, open, onOpenChange }: EquipmentDeta
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>{data?.info?.name || '器材詳情'}</DialogTitle>
-                    <DialogDescription>{data?.info?.code || ''}</DialogDescription>
+            <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto w-full">
+                <DialogHeader className="mb-2">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <DialogTitle className="text-2xl font-bold">{data?.info?.name || '器材詳情'}</DialogTitle>
+                            <DialogDescription className="text-base mt-1 font-mono">{data?.info?.code || ''}</DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
 
                 {loading ? (
-                    <div className="py-20 text-center">載入中...</div>
+                    <div className="py-20 text-center text-gray-500">載入中...</div>
                 ) : error ? (
                     <div className="py-20 text-center text-red-500">錯誤: {error}</div>
                 ) : data ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Left Column: Image & Basic Info */}
-                        <div className="space-y-4">
-                            <div className="aspect-video w-full bg-gray-100 rounded-lg overflow-hidden border relative">
+                    <div className="grid grid-cols-1 md:grid-cols-[400px_1fr] gap-8">
+                        {/* 左側：圖片與數據 */}
+                        <div className="space-y-6">
+                            <div className="aspect-[4/3] w-full bg-gray-100 rounded-xl overflow-hidden border relative shadow-sm">
                                 {data.info.image ? (
                                     <img 
                                         src={getGoogleDriveImageUrl(data.info.image)} 
                                         alt={data.info.name} 
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-contain bg-white"
                                         onError={(e) => {
                                             (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=No+Image';
                                         }}
@@ -115,49 +119,57 @@ export function EquipmentDetailModal({ code, open, onOpenChange }: EquipmentDeta
                                 ) : (
                                     <div className="flex items-center justify-center h-full text-gray-400">No Image</div>
                                 )}
-                                <Badge className={`absolute top-2 right-2 ${
-                                    data.info.available > 0 ? 'bg-green-500' : 'bg-red-500'
-                                }`}>
-                                    {data.info.available > 0 ? `剩餘: ${data.info.available}` : '已借完'}
-                                </Badge>
+                                <div className="absolute top-3 right-3">
+                                    <Badge className={`px-3 py-1 text-sm shadow-sm ${
+                                        data.info.available > 0 ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+                                    }`}>
+                                        {data.info.available > 0 ? `剩餘: ${data.info.available}` : '已借完'}
+                                    </Badge>
+                                </div>
                             </div>
 
-                            <div className="flex gap-4">
-                                <Card className="p-3 text-center flex-1">
-                                    <div className="text-xl font-bold">{data.info.total}</div>
-                                    <div className="text-xs text-gray-500">總數量</div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <Card className="p-4 text-center bg-slate-50 border-slate-200">
+                                    <div className="text-3xl font-bold text-slate-700">{data.info.total}</div>
+                                    <div className="text-sm text-slate-500 font-medium">總數量</div>
                                 </Card>
-                                <Card className="p-3 text-center flex-1 bg-green-50 border-green-200">
-                                    <div className="text-xl font-bold text-green-700">{data.info.available}</div>
-                                    <div className="text-xs text-green-600">可借用</div>
+                                <Card className="p-4 text-center bg-green-50 border-green-200">
+                                    <div className="text-3xl font-bold text-green-700">{data.info.available}</div>
+                                    <div className="text-sm text-green-600 font-medium">可借用</div>
                                 </Card>
                             </div>
+                        </div>
 
-                            {/* Cart Actions */}
-                            <div className="flex flex-col gap-3">
-                                <div className="flex items-center border rounded-md">
-                                    <Button
-                                        variant="ghost" 
-                                        size="icon"
-                                        className="h-10 w-12 rounded-none"
-                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                        disabled={data.info.available <= 0}
-                                    >
-                                        <Minus className="h-4 w-4" />
-                                    </Button>
-                                    <div className="flex-1 text-center font-bold">{quantity}</div>
-                                    <Button
-                                        variant="ghost" 
-                                        size="icon"
-                                        className="h-10 w-12 rounded-none"
-                                        onClick={() => setQuantity(Math.min(data.info.available, quantity + 1))}
-                                        disabled={data.info.available <= 0 || quantity >= data.info.available}
-                                    >
-                                        <Plus className="h-4 w-4" />
-                                    </Button>
+                        {/* 右側：詳細資訊與操作 */}
+                        <div className="flex flex-col h-full space-y-6">
+                            {/* 購物車操作 */}
+                            <div className="bg-white border rounded-xl p-4 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-medium text-slate-700">借用數量</span>
+                                    <div className="flex items-center border rounded-lg overflow-hidden">
+                                        <Button
+                                            variant="ghost" 
+                                            size="icon"
+                                            className="h-10 w-12 rounded-none hover:bg-slate-100"
+                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                            disabled={data.info.available <= 0}
+                                        >
+                                            <Minus className="h-4 w-4" />
+                                        </Button>
+                                        <div className="w-12 text-center font-bold text-lg">{quantity}</div>
+                                        <Button
+                                            variant="ghost" 
+                                            size="icon"
+                                            className="h-10 w-12 rounded-none hover:bg-slate-100"
+                                            onClick={() => setQuantity(Math.min(data.info.available, quantity + 1))}
+                                            disabled={data.info.available <= 0 || quantity >= data.info.available}
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </div>
                                 <Button 
-                                    className="w-full"
+                                    className="w-full text-lg h-12 shadow-md transition-all hover:scale-[1.01]"
                                     size="lg"
                                     disabled={data.info.available <= 0}
                                     onClick={() => {
@@ -169,52 +181,47 @@ export function EquipmentDetailModal({ code, open, onOpenChange }: EquipmentDeta
                                             maxQuantity: data.info.available
                                         });
                                         onOpenChange(false); 
-                                        // alert(`已加入 ${quantity} 個 ${data.info.name} 到購物車`);
                                     }}
                                 >
                                     <ShoppingCart className="mr-2 h-5 w-5" />
                                     加入購物車
                                 </Button>
                             </div>
-                        </div>
 
-                        {/* Right Column: Description & List */}
-                        <div className="space-y-4">
-                            <div className="bg-slate-50 p-4 rounded-md text-sm text-gray-700 max-h-40 overflow-y-auto">
-                                <h4 className="font-semibold mb-1">器材說明</h4>
-                                <p className="whitespace-pre-wrap">{data.info.description || "無說明"}</p>
-                            </div>
-
-                            <div>
-                                <h4 className="font-semibold mb-2 text-sm">庫存明細</h4>
-                                <div className="border rounded-md overflow-hidden max-h-60 overflow-y-auto">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="py-2">編號</TableHead>
-                                                <TableHead className="py-2">狀態</TableHead>
-                                                <TableHead className="py-2">備註</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {data.items.map((item) => (
-                                                <TableRow key={item.id}>
-                                                    <TableCell className="font-mono text-xs py-2">{item.id}</TableCell>
-                                                    <TableCell className="py-2">
-                                                        <Badge variant={
-                                                            item.status === '可借用' ? 'default' : 
-                                                            item.status === '已借出' ? 'secondary' : 'destructive'
-                                                        } className={`text-[10px] px-1 ${
-                                                            item.status === '可借用' ? 'bg-green-500 hover:bg-green-600' : ''
-                                                        }`}>
-                                                            {item.status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-xs py-2 text-gray-500">{item.note}</TableCell>
+                            {/* 庫存明細列表 */}
+                            <div className="flex-1 flex flex-col min-h-[300px] md:min-h-0">
+                                <h4 className="font-bold text-lg mb-2">庫存明細</h4>
+                                <div className="border rounded-lg overflow-hidden flex-1 relative">
+                                    <div className="absolute inset-0 overflow-y-auto">
+                                        <Table>
+                                            <TableHeader className="bg-slate-50 sticky top-0 z-10">
+                                                <TableRow>
+                                                    <TableHead className="w-[30%]">編號</TableHead>
+                                                    <TableHead className="w-[30%]">狀態</TableHead>
+                                                    <TableHead className="w-[40%]">備註</TableHead>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {data.items.map((item) => (
+                                                    <TableRow key={item.id} className="hover:bg-slate-50">
+                                                        <TableCell className="font-mono font-medium">{item.id}</TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={
+                                                                item.status === '可借用' ? 'secondary' : 
+                                                                item.status === '已借出' ? 'outline' : 'destructive'
+                                                            } className={`
+                                                                ${item.status === '可借用' ? 'bg-green-100 text-green-700 hover:bg-green-200 border-transparent' : ''}
+                                                                ${item.status === '已借出' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ''}
+                                                            `}>
+                                                                {item.status}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-slate-500">{item.note}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
                                 </div>
                             </div>
                         </div>

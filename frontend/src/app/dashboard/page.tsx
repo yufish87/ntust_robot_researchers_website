@@ -11,26 +11,26 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isAuthenticated()) {
-      router.push('/login');
+      router.push('/auth/login');
     }
   }, [isAuthenticated, router]);
 
   if (!user) return null;
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
+    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">概覽</h1>
+        <p className="text-muted-foreground">
+          查看最新的社團公告與系統資訊。
+        </p>
+      </div>
       <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <p className="text-lg">歡迎, <span className="font-semibold">{user.name}</span> ({user.studentId})</p>
-        <p className="text-gray-600">科系: {user.department} | 角色: {user.role}</p>
+        <h2 className="text-lg font-semibold mb-2">公告消息</h2>
+        <p className="text-gray-600">目前沒有新的公告。</p>
       </div>
 
-      <Button onClick={() => {
-        logout();
-        router.push('/login');
-      }} variant="outline">
-        登出
-      </Button>
+
     </div>
   );
 }

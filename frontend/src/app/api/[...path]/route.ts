@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GAS_API_URL = process.env.GAS_API_URL;
+const GAS_API_URL = process.env.NEXT_PUBLIC_GAS_API_URL;
 
 if (!GAS_API_URL) {
   throw new Error('GAS_API_URL is not defined');

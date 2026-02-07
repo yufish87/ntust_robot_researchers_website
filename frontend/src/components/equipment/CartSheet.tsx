@@ -39,10 +39,10 @@ export function CartSheet() {
             </SheetTrigger>
             <SheetContent className="flex flex-col w-full sm:max-w-lg">
                 <SheetHeader>
-                    <SheetTitle>借用清單</SheetTitle>
+                    <SheetTitle className="text-2xl font-bold">借用清單</SheetTitle>
                 </SheetHeader>
 
-                <div className="flex-1 overflow-y-auto py-6">
+                <div className="flex-1 overflow-y-auto py-6 px-1">
                     {items.length === 0 ? (
                         <div className="text-center text-gray-500 mt-10">
                             清單是空的
@@ -51,7 +51,7 @@ export function CartSheet() {
                     ) : (
                         <div className="space-y-4">
                             {items.map((item) => (
-                                <div key={item.code} className="flex gap-4 border-b pb-4">
+                                <div key={item.code} className="flex gap-4 border-b pb-4 pl-4">
                                     <div className="h-20 w-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
                                         {item.image ? (
                                             <img 
@@ -114,7 +114,7 @@ export function CartSheet() {
                         disabled={items.length === 0}
                         onClick={() => {
                             setIsOpen(false);
-                            router.push('/equipment/checkout');
+                            router.push('/dashboard/equipment/checkout');
                         }}
                     >
                         前往申請 (Checkout)

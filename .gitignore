@@ -1,11 +1,6 @@
 .agent/
 docs/
 
-node_modules
-.clasp.json
-.DS_Store
-.env
-.env.local
-
 # Exclude GAS backend code from GitHub (Managed by Clasp)
 gas-backend/
+.clasp.json

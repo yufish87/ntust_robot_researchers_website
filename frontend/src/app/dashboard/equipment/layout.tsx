@@ -6,7 +6,7 @@ export default function EquipmentLayout({
   children: React.ReactNode;
 }) {
   return (
-      <div className="relative min-h-screen">
+      <div>
         {children}
         <CartSheet />
       </div>

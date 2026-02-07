@@ -49,9 +49,13 @@ export default function EquipmentCatalogPage() {
                 const data: EquipmentIndex[] = res.data.data;
                 setCatalog(data);
                 
-                // Extract unique categories
-                const cats = Array.from(new Set(data.map(item => item.category))).filter(Boolean);
-                setCategories(['All', ...cats]);
+                // Extract unique categories and sort "其它" to the end
+                const uniqueCats = Array.from(new Set(data.map(item => item.category))).filter(Boolean);
+                const sortedCats = uniqueCats.filter(c => c !== '其它');
+                if (uniqueCats.includes('其它')) {
+                    sortedCats.push('其它');
+                }
+                setCategories(['All', ...sortedCats]);
             } else {
                 console.error("Failed to fetch catalog:", res.data.message);
             }
@@ -67,9 +71,14 @@ export default function EquipmentCatalogPage() {
         : catalog.filter(item => item.category === selectedCategory);
 
     return (
-        <div className="container mx-auto p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">器材租借</h1>
+        <div className="container p-6 space-y-6 max-w-6xl mx-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">器材借用</h1>
+                    <p className="text-muted-foreground">
+                        瀏覽社團可用器材並送出借用申請。
+                    </p>
+                </div>
                 <Link href="/dashboard/applications">
                     <Button variant="outline">我的申請紀錄</Button>
                 </Link>
@@ -109,6 +118,8 @@ export default function EquipmentCatalogPage() {
                                             src={getGoogleDriveImageUrl(item.image)} 
                                             alt={item.name} 
                                             className="w-full h-full object-cover"
+                                            referrerPolicy="no-referrer"
+                                            loading="lazy"
                                             onError={(e) => {
                                                 (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=No+Image'; // Fallback
                                             }}

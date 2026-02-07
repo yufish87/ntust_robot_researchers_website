@@ -9,12 +9,12 @@ export function proxy(request: NextRequest) {
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
     if (!token) {
       // Redirect to Login if no token
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL('/auth/login', request.url));
     }
   }
 
   // Auth Routes (Redirect to Dashboard if already logged in)
-  if (pathname === '/login') {
+  if (pathname === '/auth/login') {
     if (token) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
     }
@@ -27,6 +27,6 @@ export const config = {
   matcher: [
     '/dashboard/:path*',
     '/admin/:path*',
-    '/login'
+    '/auth/login'
   ],
 };

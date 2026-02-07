@@ -32,10 +32,8 @@ export function getGoogleDriveImageUrl(url: string | undefined): string | undefi
   }
 
   if (id) {
-    // Return direct thumbnail link (size 1000px) which usually bypasses some strict 3rd party cookie checks
-    // lh3.googleusercontent.com/d/{id} is also popular but sometimes requires auth.
-    // drive.google.com/thumbnail?id={id}&sz=w1000 is robust for public files.
-    return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+    // Use lh3.googleusercontent.com/d/{id} which acts more like a CDN and has higher rate limits than the thumbnail endpoint.
+    return `https://lh3.googleusercontent.com/d/${id}`;
   }
 
   return url;

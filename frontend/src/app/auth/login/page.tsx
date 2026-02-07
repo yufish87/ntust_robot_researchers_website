@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -55,9 +56,18 @@ export default function LoginPage() {
   return (
     <div className="flex h-screen items-center justify-center bg-gray-50">
       <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">NTUST RRC</CardTitle>
-          <CardDescription className="text-center">社團管理系統登入</CardDescription>
+        <CardHeader className="flex flex-col items-center">
+          <div className="relative w-full h-12 mb-2">
+            <Image 
+              src="/image/Bar_Logo.png" 
+              alt="RRC Logo" 
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <CardTitle className="text-xl text-center hidden">NTUST RRC</CardTitle>
+          <CardDescription className="text-center text-lg font-bold text-black tracking-widest">資源管理系統登入</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 
 interface ApplicationItem {
     id: string;
@@ -62,14 +62,20 @@ export default function ApplicationsPage() {
     if (error) return <div className="p-8 text-center text-red-500">錯誤: {error}</div>;
 
     return (
-        <div className="container mx-auto p-6 max-w-4xl">
-            <div className="flex items-center mb-6">
-                <Link href="/dashboard" className="mr-4">
-                    <Button variant="ghost" size="icon">
-                        <ArrowLeft className="h-5 w-5" />
+        <div className="container p-6 space-y-6 max-w-6xl mx-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">我的申請紀錄</h1>
+                    <p className="text-muted-foreground">
+                        追蹤您的器材借用申請進度與歷史。
+                    </p>
+                </div>
+                <Link href="/dashboard/equipment">
+                    <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        新增申請
                     </Button>
                 </Link>
-                <h1 className="text-3xl font-bold">我的申請紀錄</h1>
             </div>
 
             {applications.length === 0 ? (
