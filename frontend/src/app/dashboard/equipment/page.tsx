@@ -40,30 +40,40 @@ export default function EquipmentCatalogPage() {
     }, []);
 
     const fetchCatalog = async () => {
-        try {
-            setLoading(true);
-            // Use POST if generic proxy issues, or GET. 
-            // Controller supports GET (e.parameter).
-            const res = await api.get('/equipment/catalog');
-            if (res.data.success) {
-                const data: EquipmentIndex[] = res.data.data;
-                setCatalog(data);
-                
-                // Extract unique categories and sort "其它" to the end
-                const uniqueCats = Array.from(new Set(data.map(item => item.category))).filter(Boolean);
-                const sortedCats = uniqueCats.filter(c => c !== '其它');
-                if (uniqueCats.includes('其它')) {
-                    sortedCats.push('其它');
+        setLoading(true);
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                const res = await api.get('/equipment/catalog');
+                if (res.data.success) {
+                    const data: EquipmentIndex[] = res.data.data;
+                    setCatalog(data);
+                    
+                    // Extract unique categories and sort "其它" to the end
+                    const uniqueCats = Array.from(new Set(data.map(item => item.category))).filter(Boolean);
+                    const sortedCats = uniqueCats.filter(c => c !== '其它');
+                    if (uniqueCats.includes('其它')) {
+                        sortedCats.push('其它');
+                    }
+                    setCategories(['All', ...sortedCats]);
+                    setLoading(false);
+                    return;
+                } else {
+                    console.error("Failed to fetch catalog:", res.data.message);
+                    if (res.data.message && typeof res.data.message === 'string' && res.data.message.includes('Server is busy')) {
+                         await new Promise(r => setTimeout(r, 1500));
+                         retries--;
+                         continue;
+                    }
+                    break; // Other error, don't retry
                 }
-                setCategories(['All', ...sortedCats]);
-            } else {
-                console.error("Failed to fetch catalog:", res.data.message);
+            } catch (error) {
+                console.error("Error fetching catalog:", error);
+                await new Promise(r => setTimeout(r, 1500));
+                retries--;
             }
-        } catch (error) {
-            console.error("Error fetching catalog:", error);
-        } finally {
-            setLoading(false);
         }
+        setLoading(false);
     };
 
     const filteredCatalog = selectedCategory === 'All' 
@@ -76,10 +86,10 @@ export default function EquipmentCatalogPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">器材借用</h1>
                     <p className="text-muted-foreground">
-                        瀏覽社團可用器材並送出借用申請。
+                        瀏覽可用器材並送出借用申請。
                     </p>
                 </div>
-                <Link href="/dashboard/applications">
+                <Link href="/dashboard/equipment/applications">
                     <Button variant="outline">我的申請紀錄</Button>
                 </Link>
             </div>

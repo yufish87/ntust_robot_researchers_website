@@ -38,6 +38,7 @@ interface EquipmentDetail {
     items: {
         id: string;
         status: string;
+        usage: string;
         note: string;
         returnDate?: string;
     }[];
@@ -57,32 +58,50 @@ export function EquipmentDetailModal({ code, open, onOpenChange }: EquipmentDeta
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        let active = true;
+
+        const fetchDetails = async (code: string) => {
+            try {
+                if (active) {
+                    setLoading(true);
+                    setError(null);
+                }
+                
+                const res = await api.post('/equipment/item', { code });
+                
+                if (active) {
+                    if (res.data.success) {
+                        setData(res.data.data);
+                    } else {
+                        setError(res.data.message);
+                    }
+                }
+            } catch (err: any) {
+                if (active) {
+                    setError(err.message || "載入失敗");
+                }
+            } finally {
+                if (active) {
+                    setLoading(false);
+                }
+            }
+        };
+
         if (open && code) {
-            fetchDetails(code);
+            setData(null); // Clear previous data immediately
+            setError(null);
             setQuantity(1);
+            fetchDetails(code);
         } else {
              // Reset state when closed
              setData(null);
              setError(null);
         }
-    }, [open, code]);
 
-    const fetchDetails = async (code: string) => {
-        try {
-            setLoading(true);
-            setError(null);
-            const res = await api.post('/equipment/item', { code });
-            if (res.data.success) {
-                setData(res.data.data);
-            } else {
-                setError(res.data.message);
-            }
-        } catch (err: any) {
-            setError(err.message || "載入失敗");
-        } finally {
-            setLoading(false);
-        }
-    };
+        return () => {
+            active = false;
+        };
+    }, [open, code]);
 
     if (!open) return null;
 
@@ -98,11 +117,11 @@ export function EquipmentDetailModal({ code, open, onOpenChange }: EquipmentDeta
                     </div>
                 </DialogHeader>
 
-                {loading ? (
+                {loading || !data ? ( // Show loading if loading OR data is null
                     <div className="py-20 text-center text-gray-500">載入中...</div>
                 ) : error ? (
                     <div className="py-20 text-center text-red-500">錯誤: {error}</div>
-                ) : data ? (
+                ) : (
                     <div className="grid grid-cols-1 md:grid-cols-[400px_1fr] gap-8">
                         {/* 左側：圖片與數據 */}
                         <div className="space-y-6">
@@ -196,9 +215,9 @@ export function EquipmentDetailModal({ code, open, onOpenChange }: EquipmentDeta
                                         <Table>
                                             <TableHeader className="bg-slate-50 sticky top-0 z-10">
                                                 <TableRow>
-                                                    <TableHead className="w-[30%]">編號</TableHead>
-                                                    <TableHead className="w-[30%]">狀態</TableHead>
-                                                    <TableHead className="w-[40%]">備註</TableHead>
+                                                    <TableHead className="w-[20%]">編號</TableHead>
+                                                    <TableHead className="w-[20%]">使用情形</TableHead>
+                                                    <TableHead className="w-[60%]">器材狀態</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -206,17 +225,31 @@ export function EquipmentDetailModal({ code, open, onOpenChange }: EquipmentDeta
                                                     <TableRow key={item.id} className="hover:bg-slate-50">
                                                         <TableCell className="font-mono font-medium">{item.id}</TableCell>
                                                         <TableCell>
-                                                            <Badge variant={
-                                                                item.status === '可借用' ? 'secondary' : 
-                                                                item.status === '已借出' ? 'outline' : 'destructive'
-                                                            } className={`
-                                                                ${item.status === '可借用' ? 'bg-green-100 text-green-700 hover:bg-green-200 border-transparent' : ''}
-                                                                ${item.status === '已借出' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ''}
-                                                            `}>
-                                                                {item.status}
-                                                            </Badge>
+                                                            {(() => {
+                                                                const s = item.usage;
+                                                                if (!s) return null;
+                                                                
+                                                                // "可借出/審核中/已借出/已報廢/維修中" -> Green/Yellow/Red/Black/Red
+                                                                if (s === '可借用') {
+                                                                    return <Badge className="bg-green-500 hover:bg-green-600">{s}</Badge>;
+                                                                }
+                                                                if (s === '審核中') {
+                                                                    return <Badge className="bg-yellow-500 hover:bg-yellow-600">{s}</Badge>;
+                                                                }
+                                                                if (s === '已借出' || s === '維修中') {
+                                                                    return <Badge variant="destructive">{s}</Badge>;
+                                                                }
+                                                                if (s === '已報廢') {
+                                                                    return <Badge className="bg-gray-800 hover:bg-gray-900">{s}</Badge>;
+                                                                }
+                                                                
+                                                                // Default fallback
+                                                                return <Badge variant="outline">{s}</Badge>;
+                                                            })()}
                                                         </TableCell>
-                                                        <TableCell className="text-slate-500">{item.note}</TableCell>
+                                                        <TableCell className="text-slate-600">
+                                                            {item.status || ''}
+                                                        </TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
@@ -226,7 +259,7 @@ export function EquipmentDetailModal({ code, open, onOpenChange }: EquipmentDeta
                             </div>
                         </div>
                     </div>
-                ) : null}
+                )}
             </DialogContent>
         </Dialog>
     );

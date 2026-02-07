@@ -31,7 +31,7 @@ const navItems = [
     icon: Megaphone,
   },
   {
-    title: "課程資訊",
+    title: "課程",
     href: "/dashboard/courses",
     icon: BookOpen,
   },
@@ -46,7 +46,7 @@ const navItems = [
     icon: CreditCard,
   },
   {
-    title: "競賽報名",
+    title: "競賽意願",
     href: "/dashboard/competitions",
     icon: Trophy,
   },

@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 import axios from "axios";
 
 interface FileUploadProps {
-  onUploadComplete: (fileId: string) => void;
+  onUploadComplete?: (fileId: string) => void;
+  onFileChange?: (file: File | null) => void;
   accept?: string;
   maxSizeMB?: number; // default 10MB
   className?: string;
@@ -22,6 +23,7 @@ export interface FileUploadRef {
 
 export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ 
   onUploadComplete, 
+  onFileChange,
   accept = "image/*,application/pdf", 
   maxSizeMB = 10,
   className 
@@ -47,6 +49,7 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
       setStatus("idle");
       setErrorMessage("");
       setProgress(0);
+      onFileChange?.(selectedFile);
     }
   };
 
@@ -96,7 +99,7 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
                } catch(e) {}
 
                if (finalId) {
-                 onUploadComplete(finalId);
+                 onUploadComplete?.(finalId);
                  resolve(finalId);
                } else {
                  reject(new Error("上傳成功但未回傳 File ID"));
@@ -113,7 +116,7 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
              if (initFileId) {
                 console.warn("CORS 封鎖了回應，但因已取得 ID，視為成功。");
                 setStatus("success");
-                onUploadComplete(initFileId);
+                onUploadComplete?.(initFileId);
                 resolve(initFileId);
              } else {
                 reject(new Error("網路錯誤 - 請檢查網路連線"));
@@ -145,6 +148,7 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
     if (inputRef.current) {
       inputRef.current.value = "";
     }
+    onFileChange?.(null);
   };
 
   // Drag and Drop handlers
@@ -164,6 +168,7 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
        setFile(f);
        setStatus("idle");
        setErrorMessage("");
+       onFileChange?.(f);
     }
   };
 
@@ -193,7 +198,7 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
             點擊或拖曳檔案至此
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            支援格式: {accept.replace(/application\//g, ".").replace(/image\//g, ".")} (Max {maxSizeMB}MB)
+            支援格式: .png, .jpg, .pdf (Max {maxSizeMB}MB)
           </p>
           {errorMessage && (
             <p className="text-xs text-red-500 mt-2 font-medium flex items-center">

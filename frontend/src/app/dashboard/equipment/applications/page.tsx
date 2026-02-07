@@ -58,17 +58,21 @@ export default function ApplicationsPage() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center">載入中...</div>;
-    if (error) return <div className="p-8 text-center text-red-500">錯誤: {error}</div>;
-
     return (
         <div className="container p-6 space-y-6 max-w-6xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">我的申請紀錄</h1>
-                    <p className="text-muted-foreground">
-                        追蹤您的器材借用申請進度與歷史。
-                    </p>
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard/equipment">
+                        <Button variant="ghost" size="icon" className="shrink-0">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                    </Link>
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">我的申請紀錄</h1>
+                        <p className="text-muted-foreground">
+                            追蹤器材借用申請進度與歷史。
+                        </p>
+                    </div>
                 </div>
                 <Link href="/dashboard/equipment">
                     <Button>
@@ -78,10 +82,18 @@ export default function ApplicationsPage() {
                 </Link>
             </div>
 
-            {applications.length === 0 ? (
+            {loading ? (
+                <div className="p-8 text-center text-muted-foreground">
+                    <div className="flex justify-center items-center gap-2">
+                        <span>載入中...</span>
+                    </div>
+                </div>
+            ) : error ? (
+                <div className="p-8 text-center text-red-500">錯誤: {error}</div>
+            ) : applications.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg">
                     <p className="text-gray-500 mb-4">目前沒有任何申請紀錄</p>
-                    <Link href="/equipment">
+                    <Link href="/dashboard/equipment">
                         <Button>前往借用器材</Button>
                     </Link>
                 </div>

@@ -47,6 +47,7 @@ const itemSchema = z.object({
 });
 
 // App Schema
+// App Schema
 const formSchema = z.object({
   category: z.enum(["一般報銷", "社團内部競賽報銷", "上銀競賽報銷", "暑期營隊報銷"]),
   description: z.string().min(5, "請輸入詳細說明 (至少 5 字)"),
@@ -63,7 +64,7 @@ const formSchema = z.object({
     return val <= format(new Date(), "yyyy-MM-dd");
   }, "發票日期不可為未來日期"),
   items: z.array(itemSchema).min(1, "至少需要一項費用明細"),
-  fileId: z.string().optional(), // Make optional since we handle it manually
+  fileId: z.string().min(1, "請上傳發票畫面/單據"),
 }).superRefine((data, ctx) => {
   // Conditional Validation for Invoice Number
   const exemptions = ["免用統一發票收據", "其他證明文件"];
@@ -115,19 +116,6 @@ export default function NewFinanceApplicationPage() {
   }, 0);
 
   const onSubmit: SubmitHandler<FormInputValues> = async (data) => {
-    // 1. Validate File Selection
-    // Ensure ref exists and hasFile matches
-    // 1. Validate File Selection
-    const hasFile = fileUploadRef.current?.hasFile();
-    if (!hasFile) {
-      form.setError("fileId", {
-        type: "manual",
-        message: "請上傳發票或收據照片",
-      });
-      return;
-    }
-    form.clearErrors("fileId");
-
     setIsSubmitting(true);
     try {
       // 2. Submit Application (Phase 1)
@@ -146,7 +134,7 @@ export default function NewFinanceApplicationPage() {
         invoiceNumber: data.invoiceNumber || "",
         invoiceDate: data.invoiceDate,
         items: transformedItems, // Send the transformed array
-        fileId: data.fileId || "",
+        fileId: (data.fileId === "pending" ? "" : data.fileId) || "",
         totalAmount: totalAmount,
       };
 
@@ -203,7 +191,6 @@ export default function NewFinanceApplicationPage() {
         <form 
           noValidate
           onSubmit={form.handleSubmit(onSubmit, (errors) => {
-            console.error("Validation Errors:", errors);
             toast({
               variant: "destructive",
               title: "表單驗證失敗",
@@ -225,7 +212,9 @@ export default function NewFinanceApplicationPage() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center h-5">
-                        <FormLabel>報帳類別</FormLabel>
+                        <FormLabel>
+                          報帳類別 <span className="text-red-500 ml-1">*</span>
+                        </FormLabel>
                         {form.formState.errors.category && (
                           <span className="text-destructive text-xs leading-none">{form.formState.errors.category.message}</span>
                         )}
@@ -253,7 +242,9 @@ export default function NewFinanceApplicationPage() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center h-5">
-                        <FormLabel>發票種類</FormLabel>
+                        <FormLabel>
+                          發票種類 <span className="text-red-500 ml-1">*</span>
+                        </FormLabel>
                          {form.formState.errors.invoiceType && (
                           <span className="text-destructive text-xs leading-none">{form.formState.errors.invoiceType.message}</span>
                         )}
@@ -308,7 +299,9 @@ export default function NewFinanceApplicationPage() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center h-5">
-                        <FormLabel>發票/單據日期</FormLabel>
+                        <FormLabel>
+                          發票/單據日期 <span className="text-red-500 ml-1">*</span>
+                        </FormLabel>
                          {form.formState.errors.invoiceDate && (
                           <span className="text-destructive text-xs leading-none">{form.formState.errors.invoiceDate.message}</span>
                         )}
@@ -327,7 +320,9 @@ export default function NewFinanceApplicationPage() {
                 render={({ field }) => (
                   <FormItem>
                       <div className="flex justify-between items-center h-5">
-                        <FormLabel>支出說明</FormLabel>
+                        <FormLabel>
+                          支出說明 <span className="text-red-500 ml-1">*</span>
+                        </FormLabel>
                         {form.formState.errors.description && (
                           <span className="text-destructive text-xs leading-none">{form.formState.errors.description.message}</span>
                         )}
@@ -370,7 +365,9 @@ export default function NewFinanceApplicationPage() {
                       render={({ field }) => (
                         <FormItem>
                           <div className="flex justify-between items-center h-5">
-                            <FormLabel>品名</FormLabel>
+                            <FormLabel>
+                              品名 <span className="text-red-500 ml-1">*</span>
+                            </FormLabel>
                              {form.formState.errors.items?.[index]?.itemName && (
                               <span className="text-destructive text-xs leading-none">{form.formState.errors.items[index]?.itemName?.message}</span>
                             )}
@@ -389,7 +386,9 @@ export default function NewFinanceApplicationPage() {
                       render={({ field }) => (
                         <FormItem>
                            <div className="flex justify-between items-center h-5">
-                             <FormLabel>規格/詳細說明</FormLabel>
+                             <FormLabel>
+                               規格/詳細說明 <span className="text-red-500 ml-1">*</span>
+                             </FormLabel>
                               {form.formState.errors.items?.[index]?.itemSpec && (
                               <span className="text-destructive text-xs leading-none">{form.formState.errors.items[index]?.itemSpec?.message}</span>
                             )}
@@ -423,7 +422,9 @@ export default function NewFinanceApplicationPage() {
                       render={({ field }) => (
                         <FormItem>
                           <div className="flex justify-between items-center h-5">
-                            <FormLabel>費用類型</FormLabel>
+                            <FormLabel>
+                              費用類型 <span className="text-red-500 ml-1">*</span>
+                            </FormLabel>
                              {form.formState.errors.items?.[index]?.expenseType && (
                               <span className="text-destructive text-xs leading-none">{form.formState.errors.items[index]?.expenseType?.message}</span>
                             )}
@@ -453,7 +454,9 @@ export default function NewFinanceApplicationPage() {
                       render={({ field }) => (
                         <FormItem>
                           <div className="flex justify-between items-center h-5">
-                            <FormLabel>數量</FormLabel>
+                            <FormLabel>
+                              數量 <span className="text-red-500 ml-1">*</span>
+                            </FormLabel>
                              {form.formState.errors.items?.[index]?.quantity && (
                               <span className="text-destructive text-xs leading-none">{form.formState.errors.items[index]?.quantity?.message}</span>
                             )}
@@ -472,7 +475,9 @@ export default function NewFinanceApplicationPage() {
                       render={({ field }) => (
                         <FormItem>
                           <div className="flex justify-between items-center h-5">
-                            <FormLabel>單價</FormLabel>
+                            <FormLabel>
+                              單價 <span className="text-red-500 ml-1">*</span>
+                            </FormLabel>
                              {form.formState.errors.items?.[index]?.unitPrice && (
                               <span className="text-destructive text-xs leading-none">{form.formState.errors.items[index]?.unitPrice?.message}</span>
                             )}
@@ -508,7 +513,9 @@ export default function NewFinanceApplicationPage() {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>發票畫面/單據上傳</CardTitle>
+                <CardTitle>
+                  發票畫面/單據上傳 <span className="text-red-500 ml-1">*</span>
+                </CardTitle>
                 {form.formState.errors.fileId && (
                   <div className="text-destructive text-sm font-medium flex items-center animate-in fade-in slide-in-from-left-1">
                     <AlertCircle className="w-4 h-4 mr-1.5" />
@@ -529,10 +536,19 @@ export default function NewFinanceApplicationPage() {
                     <FormControl>
                       <FileUpload
                         ref={fileUploadRef}
+                        onFileChange={(file) => {
+                           if (file) {
+                             field.onChange("pending"); // Set temp value to pass required validation
+                             form.clearErrors("fileId");
+                           } else {
+                             field.onChange("");
+                           }
+                        }}
                         onUploadComplete={(fileId: string) => {
                           field.onChange(fileId);
                         }}
                         accept="image/*,application/pdf"
+                        className={form.formState.errors.fileId ? "border-red-500 bg-red-50" : ""}
                       />
                     </FormControl>
                     {/* <FormMessage /> Moved to Header */}

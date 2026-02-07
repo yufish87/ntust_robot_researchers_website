@@ -26,19 +26,30 @@ import { useToast } from '@/hooks/use-toast';
 // Schema Definition
 const checkoutSchema = z.object({
   reason: z.string().min(1, "請輸入借用原因"),
-  pickupDate: z.string().optional().refine((val) => {
+  pickupDate: z.string().optional().transform(val => val?.trim() === "" ? undefined : val).refine((val) => {
     if (!val) return true;
     const date = new Date(val);
-    const now = new Date();
-    return date >= now;
+    const year = date.getFullYear();
+    if (year > 9999) return false;
+    
+    // Check if date >= today (ignore time)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selected = new Date(val);
+    selected.setHours(0, 0, 0, 0); // Compare date part only
+    return selected >= today;
   }, "不可選擇過去時間"),
   returnDate: z.string().min(1, "請選擇歸還日期").refine((val) => {
-    // Check if date is >= today
+    const date = new Date(val);
+    const year = date.getFullYear();
+    if (year > 9999) return false;
+
+    // Check if date >= today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const selected = new Date(val);
     return selected >= today;
-  }, "歸還日期不可早於今日"), // Typo in prompt "latest is today" treated as "cannot be past"? User said "cannot fill past date, latest is today" -> usually means "earliest is today". The "latest is today" might be a typo for "earliest". Past dates disabled usually means date >= today. The min attribute I added previously was `min={today}`, so I will stick to "cannot be in the past".
+  }, "歸還日期不可早於今日"),
 });
 
 type CheckoutFormValues = z.input<typeof checkoutSchema>;
@@ -98,7 +109,7 @@ export default function CheckoutPage() {
                     title: "申請提交成功",
                     description: `單號: ${res.data.data.applicationId}`,
                 });
-                router.push('/dashboard/applications');
+                router.push('/dashboard/equipment/applications');
             } else {
                 throw new Error(res.data.message || "提交失敗");
             }
@@ -150,7 +161,7 @@ export default function CheckoutPage() {
                         </CardHeader>
                         <CardContent>
                             <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
                                     {/* Applicant Info (Read-only) */}
                                     <div>
                                         <div className="flex justify-between items-center h-5 mb-2">
@@ -204,7 +215,6 @@ export default function CheckoutPage() {
                                                         <Input 
                                                             type="datetime-local" 
                                                             {...field} 
-                                                            min={new Date().toISOString().slice(0, 16)}
                                                             max="9999-12-31T23:59"
                                                         />
                                                     </FormControl>
@@ -235,7 +245,6 @@ export default function CheckoutPage() {
                                                         <Input 
                                                             type="date" 
                                                             {...field} 
-                                                            min={new Date().toLocaleDateString('en-CA')} 
                                                             max="9999-12-31"
                                                         />
                                                     </FormControl>
