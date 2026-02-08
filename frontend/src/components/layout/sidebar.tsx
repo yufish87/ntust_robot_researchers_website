@@ -69,7 +69,7 @@ export function AppSidebar() {
 
   const handleLogout = () => {
     logout();
-    router.push("/auth/login");
+    router.push("/");
   };
 
   return (
