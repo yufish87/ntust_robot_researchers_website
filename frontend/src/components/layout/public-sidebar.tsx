@@ -1,10 +1,16 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Home, Info, Megaphone, BookOpen, Phone, LogIn, UserPlus, LogOut } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Home, Info, Megaphone, BookOpen, Phone, LogIn, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/useAuthStore";
+import { LoginModal } from "@/components/auth/login-modal";
+import { RegisterModal } from "@/components/auth/register-modal";
 
 const navItems = [
   { title: "首頁", href: "#hero", icon: Home },
@@ -15,6 +21,19 @@ const navItems = [
 ];
 
 export function PublicSidebar() {
+  const { token, logout } = useAuthStore();
+  const isAuthenticated = !!token;
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null; 
+  }
+
   return (
     <div className="flex bg-slate-50 border-r border-slate-200 h-screen w-64 flex-col fixed left-0 top-0 hidden md:flex z-50">
       {/* Header */}
@@ -24,6 +43,7 @@ export function PublicSidebar() {
              src="/image/Bar_Logo.png" 
              alt="RRC Logo" 
              fill
+             sizes="(max-width: 768px) 100vw, 20vw"
              className="object-contain"
              priority
            />
@@ -53,15 +73,25 @@ export function PublicSidebar() {
 
       {/* Footer / Auth */}
       <div className="p-4 border-t border-slate-200 bg-white space-y-2">
-        <Link href="/auth/login" className="w-full block">
+        {isAuthenticated ? (
           <Button 
-            className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start"
+            onClick={logout}
+            className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start cursor-pointer"
           >
-            <LogIn className="mr-3 h-4 w-4" />
-            登入系統
+            <LogOut className="mr-3 h-4 w-4" />
+            登出系統
           </Button>
-        </Link>
-        <Link href="/auth/register" className="w-full block">
+        ) : (
+          <LoginModal>
+            <Button 
+              className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start cursor-pointer"
+            >
+              <LogIn className="mr-3 h-4 w-4" />
+              登入系統
+            </Button>
+          </LoginModal>
+        )}
+        <RegisterModal>
           <Button 
             variant="outline" 
             className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start"
@@ -69,7 +99,7 @@ export function PublicSidebar() {
             <UserPlus className="mr-3 h-4 w-4" />
             註冊帳號
           </Button>
-        </Link>
+        </RegisterModal>
       </div>
     </div>
   );

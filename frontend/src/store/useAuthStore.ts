@@ -14,6 +14,7 @@ interface AuthState {
   token: string | null;
   user: User | null;
   login: (payload: any) => Promise<void>;
+  register: (payload: any) => Promise<void>;
   logout: () => void;
   isAuthenticated: () => boolean;
 }
@@ -41,6 +42,17 @@ export const useAuthStore = create<AuthState>()(
           });
         } else {
           throw new Error(res.data.message || 'Login failed');
+        }
+      },
+
+      register: async (payload) => {
+        // payload: { studentId, password, name, dept, grade, verifyCode }
+        const res = await api.post('/auth/register', payload);
+        
+        if (res.data.success) {
+          return;
+        } else {
+          throw new Error(res.data.message || 'Registration failed');
         }
       },
 

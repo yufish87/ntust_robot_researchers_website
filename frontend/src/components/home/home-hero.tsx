@@ -53,6 +53,7 @@ export function HomeHero() {
             }}
           >
             了解課程
+            <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
         
@@ -70,7 +71,7 @@ export function HomeHero() {
            <div className="w-px h-8 bg-slate-600"></div>
           <div className="flex flex-col items-center lg:items-start">
              <span className="text-2xl font-bold text-[#ffc000]">臺科大</span>
-             <span>頂尖技術社團</span>
+             <span>專業技術社團</span>
           </div>
         </div>
       </div>

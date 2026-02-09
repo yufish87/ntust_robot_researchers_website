@@ -7,6 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 
+import { ArrowLeft } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -17,8 +19,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/useAuthStore';
+import { toast } from '@/hooks/use-toast';
 
 // Define schema validation
 const formSchema = z.object({
@@ -45,18 +48,36 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(values);
-      router.push('/dashboard'); // Redirect to dashboard after login
+      toast({
+        title: "登入成功",
+        description: "歡迎回到機器人研究社",
+      });
+      router.push('/dashboard'); 
     } catch (err: any) {
-      setError(err.message || '登入失敗');
+      const errorMessage = err.message || '學號或密碼錯誤';
+      setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "登入失敗",
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-gray-50">
-      <Card className="w-[350px]">
-        <CardHeader className="flex flex-col items-center">
+    <div className="flex h-screen items-center justify-center bg-gray-50 p-4 relative">
+      <Button 
+        variant="ghost" 
+        className="absolute top-4 left-4 text-slate-500 hover:text-slate-900"
+        onClick={() => router.push('/')}
+      >
+        <ArrowLeft className="mr-2 w-5 h-5" />
+        回首頁
+      </Button>
+      <Card className="w-full max-w-[425px] shadow-lg">
+        <CardHeader className="flex flex-col items-center gap-2 pb-2">
           <div className="relative w-full h-12 mb-2">
             <Image 
               src="/image/Bar_Logo.png" 
@@ -66,22 +87,27 @@ export default function LoginPage() {
               priority
             />
           </div>
-          <CardTitle className="text-xl text-center hidden">NTUST RRC</CardTitle>
-          <CardDescription className="text-center text-lg font-bold text-black tracking-widest">資源管理系統登入</CardDescription>
+          <CardTitle className="text-xl font-bold tracking-widest text-[#34313c]">
+            資源管理系統登入
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
               <FormField
                 control={form.control}
                 name="studentId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>學號</FormLabel>
+                    <div className="flex justify-between items-center h-5">
+                      <FormLabel>學號</FormLabel>
+                      {form.formState.errors.studentId && (
+                        <span className="text-destructive text-xs leading-none">{form.formState.errors.studentId.message}</span>
+                      )}
+                    </div>
                     <FormControl>
-                      <Input placeholder="請輸入學號" {...field} />
+                      <Input placeholder="請輸入學號" {...field} autoComplete="username" />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -90,24 +116,39 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>密碼</FormLabel>
+                    <div className="flex justify-between items-center h-5">
+                      <FormLabel>密碼</FormLabel>
+                      {form.formState.errors.password && (
+                        <span className="text-destructive text-xs leading-none">{form.formState.errors.password.message}</span>
+                      )}
+                    </div>
                     <FormControl>
-                      <Input type="password" placeholder="請輸入密碼" {...field} />
+                      <Input type="password" placeholder="請輸入密碼" {...field} autoComplete="current-password" />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
               
               {error && (
-                <div className="text-sm text-red-500 text-center font-medium">
+                <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md text-center font-medium">
                   {error}
                 </div>
               )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full bg-[#ffc000] text-[#34313c] hover:bg-yellow-500 font-bold" disabled={loading}>
                 {loading ? '登入中...' : '登入'}
               </Button>
+
+              <div className="text-center mt-2">
+                <Button 
+                  variant="link" 
+                  className="text-slate-500"
+                  onClick={() => router.push('/auth/register')}
+                  type="button"
+                >
+                  還沒有帳號？立即註冊
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>

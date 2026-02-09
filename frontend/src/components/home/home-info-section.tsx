@@ -123,7 +123,7 @@ export function ContactSection({ className }: { className?: string }) {
           </a>
 
           {/* Facebook */}
-           <a href="https://www.facebook.com/NTUSTRRC" target="_blank" rel="noopener noreferrer" className="bg-white/5 p-4 rounded-xl flex items-center gap-4 hover:bg-white/10 transition-colors group">
+           <a href="https://www.facebook.com/ntust.robot" target="_blank" rel="noopener noreferrer" className="bg-white/5 p-4 rounded-xl flex items-center gap-4 hover:bg-white/10 transition-colors group">
             <div className="w-10 h-10 rounded-full bg-[#ffc000]/20 flex items-center justify-center shrink-0 text-[#ffc000] group-hover:bg-[#ffc000] group-hover:text-black transition-colors">
                <span className="text-lg">f</span>
             </div>
