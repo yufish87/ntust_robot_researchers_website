@@ -5,7 +5,26 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollIndicator } from "@/components/home/scroll-indicator";
 
 
-export default function Home() {
+import fs from "fs/promises";
+import path from "path";
+
+export default async function Home() {
+  // Read images from public/image/Carousel
+  const carouselDir = path.join(process.cwd(), "public", "image", "Carousel");
+  let carouselImages: { src: string; text: string }[] = [];
+  
+  try {
+    const files = await fs.readdir(carouselDir);
+    carouselImages = files
+      .filter(file => /\.(jpg|jpeg|png|webp)$/i.test(file))
+      .map(file => ({
+        src: `/image/Carousel/${encodeURIComponent(file)}`,
+        text: path.parse(file).name
+      }));
+  } catch (err) {
+    console.error("Failed to read carousel images", err);
+  }
+
   return (
     <div className="flex bg-[#34313c] min-h-screen selection:bg-[#ffc000] selection:text-[#34313c]">
       {/* Sidebar - Visible on Desktop */}
@@ -23,7 +42,7 @@ export default function Home() {
           
           {/* 1. Hero Section */}
           <section id="hero" className="h-[88vh] flex items-center px-4 md:px-8 lg:px-12 py-12 md:py-0 relative">
-            <HomeHero />
+            <HomeHero carouselImages={carouselImages} />
             
             {/* Scroll Down Indicator */}
             {/* Handled by global ScrollIndicator component */}

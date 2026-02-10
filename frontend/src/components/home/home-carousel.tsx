@@ -11,31 +11,31 @@ import {
 import { useRef } from "react";
 import Image from "next/image";
 
-const images = [
-  {
-    src: "/placeholder1", // Using divs for now as we don't have real images
-    alt: "Robot Researchers 1",
-    color: "bg-gradient-to-r from-blue-500 to-cyan-500",
-    text: "機器人競賽 - 精彩瞬間"
-  },
-  {
-    src: "/placeholder2",
-    alt: "Robot Researchers 2",
-    color: "bg-gradient-to-r from-purple-500 to-pink-500",
-    text: "社課教學 - 手把手教學"
-  },
-  {
-    src: "/placeholder3", 
-    alt: "Robot Researchers 3",
-    color: "bg-gradient-to-r from-orange-400 to-red-500",
-    text: "社團活動 - 迎新大會"
-  },
+const gradients = [
+  "bg-gradient-to-r from-blue-500 to-cyan-500",
+  "bg-gradient-to-r from-purple-500 to-pink-500",
+  "bg-gradient-to-r from-orange-400 to-red-500",
+  "bg-gradient-to-r from-emerald-500 to-teal-500",
 ];
 
-export function HomeCarousel() {
+interface CarouselImage {
+  src: string;
+  text: string;
+}
+
+interface HomeCarouselProps {
+  images?: CarouselImage[];
+}
+
+export function HomeCarousel({ images = [] }: HomeCarouselProps) {
   const plugin = useRef(
     Autoplay({ delay: 10000, stopOnInteraction: false, stopOnMouseEnter: true })
   );
+
+  // Fallback if no images provided
+  const displayImages = images.length > 0 ? images : [
+    { src: "/placeholder", text: "尚無活動照片" }
+  ];
 
   return (
     <div className="w-full h-full min-h-[300px] flex items-center justify-center relative group">
@@ -45,31 +45,26 @@ export function HomeCarousel() {
         className="w-full h-full"
       >
         <CarouselContent className="h-full">
-          {images.map((item, index) => (
+          {displayImages.map((item, index) => (
             <CarouselItem key={index} className="h-full">
               <div className="flex flex-col h-full w-full">
                 {/* Top: Text Section (Smaller) */}
-                <div className={`w-full h-[30%] ${item.color} flex flex-col items-center justify-center text-white p-4 text-center`}>
-                   <h3 className="text-xl md:text-2xl font-bold tracking-wider drop-shadow-md">
+                <div className={`w-full h-[20%] ${gradients[index % gradients.length]} flex flex-col items-center justify-center text-white p-4 text-center`}>
+                   <h3 className="text-lg md:text-xl font-bold tracking-wider drop-shadow-md line-clamp-2">
                      {item.text}
                    </h3>
                 </div>
                 
                 {/* Bottom: Image Section (16:9 container or Flex fill) */}
-                <div className="w-full flex-1 relative bg-slate-800 flex items-center justify-center overflow-hidden">
-                  {/* Placeholder for Image */}
-                  <div className="text-slate-500 flex flex-col items-center">
-                    <span className="text-sm">Image Area (16:9)</span>
-                    <span className="text-xs opacity-50">{item.src}</span>
-                  </div>
-                   {/* 
+                <div className="w-full h-[80%] relative bg-slate-800 flex items-center justify-center overflow-hidden">
                    <Image 
                      src={item.src} 
-                     alt={item.alt} 
+                     alt={item.text} 
                      fill 
-                     className="object-cover" 
+                     sizes="(max-width: 768px) 100vw, 50vw"
+                     className="object-cover object-center" 
+                     priority={index === 0}
                    /> 
-                   */}
                 </div>
               </div>
             </CarouselItem>

@@ -6,7 +6,11 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { HomeCarousel } from "./home-carousel";
 
-export function HomeHero() {
+interface HomeHeroProps {
+  carouselImages?: { src: string; text: string }[];
+}
+
+export function HomeHero({ carouselImages = [] }: HomeHeroProps) {
   return (
     <section className="w-full flex flex-col lg:flex-row items-center gap-8 lg:gap-12 py-8 md:py-12">
       {/* Left Content */}
@@ -77,9 +81,9 @@ export function HomeHero() {
       </div>
 
       {/* Right Content - Carousel */}
-      <div className="flex-1 w-full max-w-[600px] lg:max-w-none">
-        <div className="relative aspect-video lg:aspect-auto lg:h-[450px] shadow-2xl rounded-2xl overflow-hidden border-4 border-slate-700/50">
-          <HomeCarousel />
+      <div className="flex-1 w-full max-w-[600px] lg:max-w-[700px]">
+        <div className="relative aspect-[4/3] shadow-2xl rounded-2xl overflow-hidden border-4 border-slate-700/50">
+          <HomeCarousel images={carouselImages} />
           {/* Decorative Elements */}
           <div className="absolute -z-10 top-[-20px] right-[-20px] w-full h-full bg-[#ffc000]/10 rounded-2xl"></div>
           <div className="absolute -z-10 bottom-[-20px] left-[-20px] w-full h-full bg-slate-700/30 rounded-2xl"></div>
