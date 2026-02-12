@@ -1,7 +1,6 @@
 import { PublicSidebar } from "@/components/layout/public-sidebar";
 import { HomeHero } from "@/components/home/home-hero";
 import { AboutSection, ContactSection, CourseSection, NewsSection } from "@/components/home/home-info-section";
-import { Separator } from "@/components/ui/separator";
 import { ScrollIndicator } from "@/components/home/scroll-indicator";
 
 
@@ -71,7 +70,7 @@ export default async function Home() {
           
           {/* Footer Copyright */}
           <footer className="text-center text-slate-500 text-xs py-8 border-t border-white/5 bg-black/20">
-            © {new Date().getFullYear()} NTUST Robot Researchers Club. All rights reserved.
+            {new Date().getFullYear()} 國立臺灣科技大學機器人研究社
           </footer>
           
           <ScrollIndicator />

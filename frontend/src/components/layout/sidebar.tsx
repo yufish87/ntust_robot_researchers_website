@@ -82,6 +82,7 @@ export function AppSidebar() {
              alt="RRC Logo" 
              fill
              className="object-contain"
+             sizes="20vw"
              priority
            />
         </div>

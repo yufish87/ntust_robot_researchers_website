@@ -24,15 +24,10 @@ export function PublicSidebar() {
   const { token, logout } = useAuthStore();
   const isAuthenticated = !!token;
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null; 
-  }
+  // Removed mounted check to allow SSR/immediate render
+  // const [mounted, setMounted] = useState(false);
+  // useEffect(() => setMounted(true), []);
+  // if (!mounted) return null;
 
   return (
     <div className="flex bg-slate-50 border-r border-slate-200 h-screen w-64 flex-col fixed left-0 top-0 hidden md:flex z-50">
