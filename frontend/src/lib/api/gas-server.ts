@@ -41,7 +41,7 @@ export async function proxyToGas(req: NextRequest, gasRoute: string) {
       // Standard GAS Web App only does doGet and doPost.
       // So ensuring we send POST for non-GET requests is crucial if the original request was PUT/DELETE.
       
-      let json = {};
+      let json: any = {};
       try {
         if (req.body) {
           json = await req.json();

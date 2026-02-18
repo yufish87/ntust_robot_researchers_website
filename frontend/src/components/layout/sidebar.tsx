@@ -11,6 +11,7 @@ import {
   LogOut, 
   User,
   Wrench,
+  Printer,
   Megaphone, // for Announcements
   Trophy,    // for Competitions
   BookOpen,  // for Courses
@@ -39,6 +40,11 @@ const navItems = [
     title: "器材借用",
     href: "/dashboard/equipment",
     icon: Wrench,
+  },
+  {
+    title: "機器借用",
+    href: "/dashboard/machine",
+    icon: Printer,
   },
   {
     title: "財務報帳",

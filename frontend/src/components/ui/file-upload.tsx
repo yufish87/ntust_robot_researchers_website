@@ -13,6 +13,8 @@ interface FileUploadProps {
   accept?: string;
   maxSizeMB?: number; // default 10MB
   className?: string;
+  folderType?: "finance" | "machine_3dp" | "machine_lsc"; // Default: finance
+  formatHint?: string;
 }
 
 export interface FileUploadRef {
@@ -26,7 +28,9 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
   onFileChange,
   accept = "image/*,application/pdf", 
   maxSizeMB = 10,
-  className 
+  className,
+  folderType = "finance",
+  formatHint
 }, ref) => {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
@@ -71,7 +75,7 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
           fileName: uploadName,
           mimeType: contentType,
           fileSize: file.size,
-          type: "finance" 
+          type: folderType 
         });
         const { sessionUri, fileId: initFileId } = initResponse.data;
         if (!sessionUri) throw new Error("無法取得上傳連結");
@@ -111,14 +115,14 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
           };
           
           xhr.onerror = () => {
-             console.error("上傳期間發生網路錯誤 (可能是 CORS 問題)。");
              // 解決方案：如果我們已經有 initFileId，假設上傳成功，因為 Google 經常封鎖最後的回應
              if (initFileId) {
-                console.warn("CORS 封鎖了回應，但因已取得 ID，視為成功。");
+                // console.warn("CORS 封鎖了回應，但因已取得 ID，視為成功。");
                 setStatus("success");
                 onUploadComplete?.(initFileId);
                 resolve(initFileId);
              } else {
+                console.error("上傳期間發生網路錯誤 (可能是 CORS 問題)。");
                 reject(new Error("網路錯誤 - 請檢查網路連線"));
              }
           };
@@ -198,7 +202,7 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
             點擊或拖曳檔案至此
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            支援格式: .png, .jpg, .pdf (Max {maxSizeMB}MB)
+            {formatHint || `支援格式: .png, .jpg, .pdf (Max ${maxSizeMB}MB)`}
           </p>
           {errorMessage && (
             <p className="text-xs text-red-500 mt-2 font-medium flex items-center">
