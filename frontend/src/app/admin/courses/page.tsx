@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Course } from '@/lib/types/course'; // Use interface
+import { Course } from '@/lib/types/course';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { CourseForm } from '@/components/admin/courses/CourseForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -32,7 +31,7 @@ export default function AdminCoursesPage() {
     const fetchCourses = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/courses'); // Admin can view all courses via normal list or specialized admin list if needed. Assuming /api/courses returns all.
+            const res = await fetch('/api/courses');
             const json = await res.json();
             if (json.success) {
                 setCourses(json.data);
@@ -119,69 +118,113 @@ export default function AdminCoursesPage() {
     };
 
     return (
-        <div className="container p-6 space-y-6">
+        <div className="container p-6 space-y-6 max-w-6xl mx-auto">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">課程管理</h1>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">課程管理</h1>
+                    <p className="text-muted-foreground">管理課程資訊、講義與錄影資源。</p>
+                </div>
                 <Button onClick={() => { setEditingCourse(null); setIsFormOpen(true); }}>
                     <Plus className="w-4 h-4 mr-2" /> 新增課程
                 </Button>
             </div>
 
-            <div className="border rounded-md">
+            <div className="border rounded-lg overflow-hidden">
                 <Table>
                     <TableHeader>
-                        <TableRow>
-                            <TableHead>學期</TableHead>
+                        <TableRow className="bg-muted/50">
+                            <TableHead className="w-[160px]">課程 ID</TableHead>
+                            <TableHead className="w-[80px]">學期</TableHead>
                             <TableHead>課程名稱</TableHead>
-                            <TableHead>權限</TableHead>
-                            <TableHead>資源數 (講義/影片/其他)</TableHead>
-                            <TableHead>上傳時間</TableHead>
-                            <TableHead className="text-right">操作</TableHead>
+                            <TableHead className="w-[90px]">權限</TableHead>
+                            <TableHead className="w-[190px]">教材</TableHead>
+                            <TableHead className="w-[110px]">上傳者</TableHead>
+                            <TableHead className="w-[160px]">上課時間</TableHead>
+                            <TableHead className="w-[110px] text-center">操作</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                              <TableRow>
-                                <TableCell colSpan={6} className="text-center h-24">載入中...</TableCell>
+                                <TableCell colSpan={8} className="text-center h-32">
+                                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        載入中...
+                                    </div>
+                                </TableCell>
                             </TableRow>
                         ) : courses.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center h-24">無課程資料</TableCell>
+                                <TableCell colSpan={8} className="text-center h-32 text-muted-foreground">
+                                    尚無課程資料，點擊右上角「新增課程」開始建立。
+                                </TableCell>
                             </TableRow>
                         ) : (
-                            courses.map((course) => (
-                                <TableRow key={course.id}>
-                                    <TableCell>{course.semester}</TableCell>
-                                    <TableCell className="font-medium">{course.title}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={course.permission === 'visitor' ? 'secondary' : 'outline'}>
-                                            {course.permission === 'visitor' ? 'Visitor' : 'Member'}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        {course.handouts?.length || 0} / {course.videos?.length || 0} / {course.others?.length || 0}
-                                    </TableCell>
-                                    <TableCell>{course.uploadTime}</TableCell>
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                                    <span className="sr-only">Open menu</span>
-                                                    <MoreHorizontal className="h-4 w-4" />
+                            courses.map((course) => {
+                                const handoutCount = course.handouts?.length || 0;
+                                const videoCount = course.videos?.length || 0;
+                                const otherCount = course.others?.length || 0;
+
+                                // 確保流水號為 3 碼，例如 CRS-20260210-1 → CRS-20260210-001
+                                const displayId = course.id.replace(
+                                    /(CRS-\d{8}-)(\d+)$/,
+                                    (_, prefix, num) => prefix + num.padStart(3, '0')
+                                );
+
+                                return (
+                                    <TableRow key={course.id}>
+                                        <TableCell className="font-mono text-xs text-muted-foreground">
+                                            {displayId}
+                                        </TableCell>
+                                        <TableCell>{course.semester}</TableCell>
+                                        <TableCell className="font-medium">{course.title}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={course.permission === 'visitor' ? 'secondary' : 'outline'}>
+                                                {course.permission === 'visitor' ? '公開' : '社員'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-wrap items-center gap-1">
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                                                    講義 {handoutCount}
+                                                </span>
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700">
+                                                    影片 {videoCount}
+                                                </span>
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-orange-50 text-orange-700">
+                                                    其他 {otherCount}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="font-mono text-xs">
+                                            {course.uploaderId}
+                                        </TableCell>
+                                        <TableCell className="text-sm">
+                                            {course.courseDate || '—'}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <div className="flex items-center justify-center gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                    onClick={() => { setEditingCourse(course); setIsFormOpen(true); }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
                                                 </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => { setEditingCourse(course); setIsFormOpen(true); }}>
-                                                    <Pencil className="mr-2 h-4 w-4" /> 編輯
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setDeletingId(course.id)} className="text-red-600">
-                                                    <Trash2 className="mr-2 h-4 w-4" /> 刪除
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                                                    onClick={() => setDeletingId(course.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>
@@ -189,7 +232,7 @@ export default function AdminCoursesPage() {
 
             {/* Form Dialog */}
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{editingCourse ? "編輯課程" : "新增課程"}</DialogTitle>
                     </DialogHeader>
@@ -212,10 +255,11 @@ export default function AdminCoursesPage() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>取消</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">確任刪除</AlertDialogAction>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">確認刪除</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
         </div>
     );
 }
+

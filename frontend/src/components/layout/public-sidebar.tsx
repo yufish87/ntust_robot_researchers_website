@@ -24,10 +24,8 @@ export function PublicSidebar() {
   const { token, logout } = useAuthStore();
   const isAuthenticated = !!token;
   const router = useRouter();
-  // Removed mounted check to allow SSR/immediate render
-  // const [mounted, setMounted] = useState(false);
-  // useEffect(() => setMounted(true), []);
-  // if (!mounted) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <div className="flex bg-slate-50 border-r border-slate-200 h-screen w-64 flex-col fixed left-0 top-0 hidden md:flex z-50">
@@ -68,7 +66,7 @@ export function PublicSidebar() {
 
       {/* Footer / Auth */}
       <div className="p-4 border-t border-slate-200 bg-white space-y-2">
-        {isAuthenticated ? (
+        {mounted && isAuthenticated ? (
           <Button 
             onClick={logout}
             className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start cursor-pointer"

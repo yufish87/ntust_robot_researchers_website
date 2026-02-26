@@ -1,52 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
-// Force dynamic needed because we are using fetch/POST
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { fileName, mimeType, fileSize, type, semester, courseTitle } = body;
+    const { fileId } = body;
 
-    // Call GAS to get Session URI
+    if (!fileId) {
+      return NextResponse.json({ error: "Missing fileId" }, { status: 400 });
+    }
+
     const gasUrl = process.env.NEXT_PUBLIC_GAS_API_URL;
     if (!gasUrl) {
       throw new Error("GAS API URL not configured");
     }
 
-    // Wrap params for GAS Router
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value || "";
+
     const payload = {
-      route: "upload/init",
-      params: {
-        fileName,
-        mimeType,
-        fileSize,
-        type,
-        semester,
-        courseTitle
-      }
+      route: "upload/delete",
+      token,
+      fileId,
     };
 
     const res = await fetch(gasUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      // Important: No cache
-      cache: "no-store", 
+      cache: "no-store",
     });
 
     const data = await res.json();
 
     if (!data.success) {
-      throw new Error(data.message || "Failed to init upload");
+      throw new Error(data.message || "Failed to delete file");
     }
 
     return NextResponse.json(data.data);
-
   } catch (error: any) {
-    console.error("Upload Init Error:", error);
+    console.error("Upload Delete Error:", error);
     return NextResponse.json(
       { error: error.message || "Internal Server Error" },
       { status: 500 }
