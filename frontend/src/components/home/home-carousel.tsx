@@ -29,13 +29,18 @@ interface HomeCarouselProps {
 
 export function HomeCarousel({ images = [] }: HomeCarouselProps) {
   const plugin = useRef(
-    Autoplay({ delay: 10000, stopOnInteraction: false, stopOnMouseEnter: true })
+    Autoplay({
+      delay: 10000,
+      stopOnInteraction: false,
+      stopOnMouseEnter: true,
+    }),
   );
 
   // Fallback if no images provided
-  const displayImages = images.length > 0 ? images : [
-    { src: "/placeholder", text: "尚無活動照片" }
-  ];
+  const displayImages =
+    images.length > 0
+      ? images
+      : [{ src: "/placeholder", text: "尚無活動照片" }];
 
   return (
     <div className="w-full h-full min-h-[300px] flex items-center justify-center relative group">
@@ -49,22 +54,24 @@ export function HomeCarousel({ images = [] }: HomeCarouselProps) {
             <CarouselItem key={index} className="h-full">
               <div className="flex flex-col h-full w-full">
                 {/* Top: Text Section (Smaller) */}
-                <div className={`w-full h-[20%] ${gradients[index % gradients.length]} flex flex-col items-center justify-center text-white p-4 text-center`}>
-                   <h3 className="text-lg md:text-xl font-bold tracking-wider drop-shadow-md line-clamp-2">
-                     {item.text}
-                   </h3>
+                <div
+                  className={`w-full h-[20%] ${gradients[index % gradients.length]} flex flex-col items-center justify-center text-white p-4 text-center`}
+                >
+                  <h3 className="text-lg md:text-xl font-bold tracking-wider drop-shadow-md line-clamp-2">
+                    {item.text}
+                  </h3>
                 </div>
-                
+
                 {/* Bottom: Image Section (16:9 container or Flex fill) */}
                 <div className="w-full h-[80%] relative bg-slate-800 flex items-center justify-center overflow-hidden">
-                   <Image 
-                     src={item.src} 
-                     alt={item.text} 
-                     fill 
-                     sizes="(max-width: 768px) 100vw, 50vw"
-                     className="object-cover object-center" 
-                     priority={index === 0}
-                   /> 
+                  <Image
+                    src={item.src}
+                    alt={item.text}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover object-center"
+                    loading={index === 0 ? "eager" : "lazy"}
+                  />
                 </div>
               </div>
             </CarouselItem>

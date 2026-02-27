@@ -4,7 +4,17 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Home, Info, Megaphone, BookOpen, Phone, LogIn, UserPlus, LogOut } from "lucide-react";
+import {
+  Home,
+  Info,
+  Megaphone,
+  BookOpen,
+  Phone,
+  LogIn,
+  UserPlus,
+  LogOut,
+  LayoutDashboard,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -32,24 +42,26 @@ export function PublicSidebar() {
       {/* Header */}
       <div className="p-6 flex flex-col items-center gap-2 border-b border-slate-100">
         <div className="relative w-full h-12">
-           <Image 
-             src="/image/Bar_Logo.png" 
-             alt="RRC Logo" 
-             fill
-             sizes="(max-width: 768px) 100vw, 20vw"
-             className="object-contain"
-             priority
-           />
+          <Image
+            src="/image/Bar_Logo.png"
+            alt="RRC Logo"
+            fill
+            sizes="(max-width: 768px) 100vw, 20vw"
+            className="object-contain"
+            priority
+          />
         </div>
-        <p className="text-base font-bold text-black tracking-[0.2em] mt-1 text-center">社團官網</p>
+        <p className="text-base font-bold text-black tracking-[0.2em] mt-1 text-center">
+          社團官網
+        </p>
       </div>
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
         {navItems.map((item) => (
           <div key={item.href} className="block">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full justify-start mb-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
               onClick={(e) => {
                 e.preventDefault();
@@ -67,32 +79,42 @@ export function PublicSidebar() {
       {/* Footer / Auth */}
       <div className="p-4 border-t border-slate-200 bg-white space-y-2">
         {mounted && isAuthenticated ? (
-          <Button 
-            onClick={logout}
-            className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start cursor-pointer"
-          >
-            <LogOut className="mr-3 h-4 w-4" />
-            登出系統
-          </Button>
-        ) : (
-          <LoginModal>
-            <Button 
-              className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start cursor-pointer"
+          <>
+            <Button
+              onClick={() => router.push("/dashboard")}
+              className="w-full bg-[#ffc000] hover:bg-yellow-400 text-[#34313c] font-bold justify-start cursor-pointer"
             >
-              <LogIn className="mr-3 h-4 w-4" />
-              登入系統
+              <LayoutDashboard className="mr-3 h-4 w-4" />
+              進入系統
             </Button>
-          </LoginModal>
+            <Button
+              variant="outline"
+              onClick={logout}
+              className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start cursor-pointer"
+            >
+              <LogOut className="mr-3 h-4 w-4" />
+              登出系統
+            </Button>
+          </>
+        ) : (
+          <>
+            <LoginModal>
+              <Button className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start cursor-pointer">
+                <LogIn className="mr-3 h-4 w-4" />
+                登入系統
+              </Button>
+            </LoginModal>
+            <RegisterModal>
+              <Button
+                variant="outline"
+                className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start"
+              >
+                <UserPlus className="mr-3 h-4 w-4" />
+                註冊帳號
+              </Button>
+            </RegisterModal>
+          </>
         )}
-        <RegisterModal>
-          <Button 
-            variant="outline" 
-            className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start"
-          >
-            <UserPlus className="mr-3 h-4 w-4" />
-            註冊帳號
-          </Button>
-        </RegisterModal>
       </div>
     </div>
   );
