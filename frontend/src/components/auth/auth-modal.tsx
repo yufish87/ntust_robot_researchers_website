@@ -67,15 +67,13 @@ export function AuthModal({ children, defaultView = "login" }: AuthModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-col items-center gap-2">
-           <div className="relative w-full h-12 mb-2">
-            <Image 
-             src="/image/Bar_Logo.png" 
-              alt="RRC Logo" 
+          <div className="relative w-full h-12 mb-2">
+            <Image
+              src="/image/Bar_Logo.png"
+              alt="RRC Logo"
               fill
               sizes="(max-width: 768px) 100vw, 300px"
               className="object-contain dark:invert"
@@ -86,19 +84,21 @@ export function AuthModal({ children, defaultView = "login" }: AuthModalProps) {
             {view === "login" ? "資源管理系統登入" : "新成員註冊"}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            {view === "login" ? "請輸入學號與密碼進行登入" : "請填寫基本資料進行註冊"}
+            {view === "login"
+              ? "請輸入學號與密碼進行登入"
+              : "請填寫基本資料進行註冊"}
           </DialogDescription>
         </DialogHeader>
 
         {view === "login" ? (
-          <LoginForm 
-            onSuccess={() => setOpen(false)} 
-            onSwitch={() => switchView("register")} 
+          <LoginForm
+            onSuccess={() => setOpen(false)}
+            onSwitch={() => switchView("register")}
           />
         ) : (
-          <RegisterForm 
-            onSuccess={() => setView("login")} 
-            onSwitch={() => switchView("login")} 
+          <RegisterForm
+            onSuccess={() => setView("login")}
+            onSwitch={() => switchView("login")}
           />
         )}
       </DialogContent>
@@ -116,7 +116,6 @@ function LoginForm({ onSuccess, onSwitch }: FormProps) {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -125,14 +124,27 @@ function LoginForm({ onSuccess, onSwitch }: FormProps) {
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setLoading(true);
-    setError(null);
+    form.clearErrors();
     try {
       await login(values);
       onSuccess();
       toast({ title: "登入成功", description: "歡迎回到機器人研究社" });
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message || "學號或密碼錯誤");
+      const msg = err.message || "";
+      if (msg.includes("找不到") || msg.includes("USER_NOT_FOUND")) {
+        form.setError("studentId", { message: "找不到此學號" });
+      } else if (
+        msg.includes("密碼錯誤") ||
+        msg.includes("WRONG_PASSWORD") ||
+        msg.includes("Wrong password")
+      ) {
+        form.setError("password", { message: "密碼錯誤" });
+      } else if (msg.includes("inactive") || msg.includes("deleted")) {
+        form.setError("studentId", { message: "此帳號已停用" });
+      } else {
+        form.setError("password", { message: "登入失敗，請稍後再試" });
+      }
     } finally {
       setLoading(false);
     }
@@ -149,11 +161,17 @@ function LoginForm({ onSuccess, onSwitch }: FormProps) {
               <div className="flex justify-between items-center h-5">
                 <FormLabel>學號</FormLabel>
                 {form.formState.errors.studentId && (
-                  <span className="text-destructive text-xs leading-none">{form.formState.errors.studentId.message}</span>
+                  <span className="text-destructive text-xs leading-none">
+                    {form.formState.errors.studentId.message}
+                  </span>
                 )}
               </div>
               <FormControl>
-                <Input placeholder="請輸入學號" {...field} autoComplete="username" />
+                <Input
+                  placeholder="請輸入學號"
+                  {...field}
+                  autoComplete="username"
+                />
               </FormControl>
             </FormItem>
           )}
@@ -166,29 +184,34 @@ function LoginForm({ onSuccess, onSwitch }: FormProps) {
               <div className="flex justify-between items-center h-5">
                 <FormLabel>密碼</FormLabel>
                 {form.formState.errors.password && (
-                  <span className="text-destructive text-xs leading-none">{form.formState.errors.password.message}</span>
+                  <span className="text-destructive text-xs leading-none">
+                    {form.formState.errors.password.message}
+                  </span>
                 )}
               </div>
               <FormControl>
-                <Input type="password" placeholder="請輸入密碼" {...field} autoComplete="current-password" />
+                <Input
+                  type="password"
+                  placeholder="請輸入密碼"
+                  {...field}
+                  autoComplete="current-password"
+                />
               </FormControl>
             </FormItem>
           )}
         />
-        
-        {error && (
-          <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md text-center font-medium">
-            {error}
-          </div>
-        )}
-        
-        <Button type="submit" className="w-full bg-[#ffc000] text-[#34313c] hover:bg-yellow-500 font-bold" disabled={loading}>
+
+        <Button
+          type="submit"
+          className="w-full bg-[#ffc000] text-[#34313c] hover:bg-yellow-500 font-bold"
+          disabled={loading}
+        >
           {loading ? "登入中..." : "登入"}
         </Button>
 
         <div className="text-center mt-2">
-          <Button 
-            variant="link" 
+          <Button
+            variant="link"
             className="text-slate-500"
             onClick={(e) => {
               e.preventDefault();
@@ -246,11 +269,17 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
               <div className="flex justify-between items-center h-5">
                 <FormLabel>學號</FormLabel>
                 {form.formState.errors.studentId && (
-                  <span className="text-destructive text-xs leading-none">{form.formState.errors.studentId.message}</span>
+                  <span className="text-destructive text-xs leading-none">
+                    {form.formState.errors.studentId.message}
+                  </span>
                 )}
               </div>
               <FormControl>
-                <Input placeholder="請輸入學號" {...field} autoComplete="username" />
+                <Input
+                  placeholder="請輸入學號"
+                  {...field}
+                  autoComplete="username"
+                />
               </FormControl>
             </FormItem>
           )}
@@ -263,11 +292,17 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
               <div className="flex justify-between items-center h-5">
                 <FormLabel>姓名</FormLabel>
                 {form.formState.errors.name && (
-                  <span className="text-destructive text-xs leading-none">{form.formState.errors.name.message}</span>
+                  <span className="text-destructive text-xs leading-none">
+                    {form.formState.errors.name.message}
+                  </span>
                 )}
               </div>
               <FormControl>
-                <Input placeholder="請輸入姓名" {...field} autoComplete="name" />
+                <Input
+                  placeholder="請輸入姓名"
+                  {...field}
+                  autoComplete="name"
+                />
               </FormControl>
             </FormItem>
           )}
@@ -281,11 +316,17 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
                 <div className="flex justify-between items-center h-5">
                   <FormLabel>系所</FormLabel>
                   {form.formState.errors.dept && (
-                    <span className="text-destructive text-xs leading-none">{form.formState.errors.dept.message}</span>
+                    <span className="text-destructive text-xs leading-none">
+                      {form.formState.errors.dept.message}
+                    </span>
                   )}
                 </div>
                 <FormControl>
-                  <Input placeholder="例如: 資工系" {...field} autoComplete="organization" />
+                  <Input
+                    placeholder="例如: 資工系"
+                    {...field}
+                    autoComplete="organization"
+                  />
                 </FormControl>
               </FormItem>
             )}
@@ -298,17 +339,23 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
                 <div className="flex justify-between items-center h-5">
                   <FormLabel>年級</FormLabel>
                   {form.formState.errors.grade && (
-                    <span className="text-destructive text-xs leading-none">{form.formState.errors.grade.message}</span>
+                    <span className="text-destructive text-xs leading-none">
+                      {form.formState.errors.grade.message}
+                    </span>
                   )}
                 </div>
                 <FormControl>
-                  <Input placeholder="例如: 大一" {...field} autoComplete="off" />
+                  <Input
+                    placeholder="例如: 大一"
+                    {...field}
+                    autoComplete="off"
+                  />
                 </FormControl>
               </FormItem>
             )}
           />
         </div>
-        
+
         <FormField
           control={form.control}
           name="password"
@@ -317,11 +364,18 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
               <div className="flex justify-between items-center h-5">
                 <FormLabel>密碼</FormLabel>
                 {form.formState.errors.password && (
-                  <span className="text-destructive text-xs leading-none">{form.formState.errors.password.message}</span>
+                  <span className="text-destructive text-xs leading-none">
+                    {form.formState.errors.password.message}
+                  </span>
                 )}
               </div>
               <FormControl>
-                <Input type="password" placeholder="請設定密碼" {...field} autoComplete="new-password" />
+                <Input
+                  type="password"
+                  placeholder="請設定密碼"
+                  {...field}
+                  autoComplete="new-password"
+                />
               </FormControl>
             </FormItem>
           )}
@@ -335,7 +389,9 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
               <div className="flex justify-between items-center h-5">
                 <FormLabel>驗證碼</FormLabel>
                 {form.formState.errors.verifyCode && (
-                  <span className="text-destructive text-xs leading-none">{form.formState.errors.verifyCode.message}</span>
+                  <span className="text-destructive text-xs leading-none">
+                    {form.formState.errors.verifyCode.message}
+                  </span>
                 )}
               </div>
               <FormControl>
@@ -344,20 +400,24 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
             </FormItem>
           )}
         />
-        
+
         {error && (
           <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md text-center font-medium">
             {error}
           </div>
         )}
-        
-        <Button type="submit" className="w-full bg-[#ffc000] text-[#34313c] hover:bg-yellow-500 font-bold mt-2" disabled={loading}>
+
+        <Button
+          type="submit"
+          className="w-full bg-[#ffc000] text-[#34313c] hover:bg-yellow-500 font-bold mt-2"
+          disabled={loading}
+        >
           {loading ? "註冊中..." : "註冊"}
         </Button>
 
         <div className="text-center mt-2">
-          <Button 
-            variant="link" 
+          <Button
+            variant="link"
             className="text-slate-500"
             onClick={(e) => {
               e.preventDefault();

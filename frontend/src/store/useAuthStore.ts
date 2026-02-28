@@ -8,6 +8,7 @@ interface User {
   name: string;
   role: string;
   department: string;
+  grade?: string;
 }
 
 interface AuthState {
@@ -17,6 +18,7 @@ interface AuthState {
   register: (payload: any) => Promise<void>;
   logout: () => void;
   isAuthenticated: () => boolean;
+  updateUser: (partial: Partial<User>) => void;
 }
 
 // Persist storage wrapper to fix hydration issues in Next.js
@@ -67,6 +69,13 @@ export const useAuthStore = create<AuthState>()(
 
       isAuthenticated: () => {
         return !!get().token;
+      },
+
+      updateUser: (partial) => {
+        const current = get().user;
+        if (current) {
+          set({ user: { ...current, ...partial } });
+        }
       },
     }),
     {
