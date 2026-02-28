@@ -29,24 +29,7 @@ import { FinanceDetailModal } from "@/components/finance/FinanceDetailModal";
 import { CancelConfirmModal } from "@/components/finance/CancelConfirmModal";
 
 import { FinanceAPI } from "@/lib/api/finance";
-
-// Types
-interface FinanceApplication {
-  id: string;
-  category: string;
-  description: string;
-  totalAmount: number;
-  status: string;
-  createdAt: string;
-  // Extended fields for details
-  items: any[]; 
-  invoiceType: string;
-  invoiceNumber?: string;
-  invoiceDate: string;
-  fileId?: string;
-  fileLink?: string;
-  rejectReason?: string;
-}
+import type { FinanceApplication } from "@/lib/types/finance";
 
 export default function FinanceDashboardPage() {
   const { toast } = useToast();
@@ -123,23 +106,38 @@ export default function FinanceDashboardPage() {
     }
   };
 
-  const activeApplications = data.filter(app => app.status === "pending");
-  const historyApplications = data.filter(app => app.status !== "pending");
+  // 進行中：審核中 or 已通過 (尚未完成撥款)
+  const activeApplications = data.filter(app =>
+    app.status === "審核中" ||
+    (app.status === "已通過" && app.disbursementStatus !== "已撥款")
+  );
+  const historyApplications = data.filter(app =>
+    app.status === "不予通過" ||
+    app.status === "已取消" ||
+    (app.status === "已通過" && app.disbursementStatus === "已撥款")
+  );
 
   const currentList = activeTab === "active" ? activeApplications : historyApplications;
 
-  function getStatusBadge(status: string) {
-    switch (status) {
-      case "pending":
+  function getStatusBadge(app: FinanceApplication) {
+    switch (app.status) {
+      case "審核中":
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">審核中</Badge>;
-      case "approved":
+      case "已通過": {
+        if (app.disbursementStatus === "已撥款")
+          return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">已完成</Badge>;
+        if (app.invoiceSubmitStatus === "已確認")
+          return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">待撥款</Badge>;
+        if (app.invoiceSubmitStatus === "已提交")
+          return <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">發票已提交</Badge>;
         return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">已通過</Badge>;
-      case "rejected":
-        return <Badge variant="destructive">已拒絕</Badge>;
-      case "cancelled":
+      }
+      case "不予通過":
+        return <Badge variant="destructive">不予通過</Badge>;
+      case "已取消":
         return <Badge variant="secondary">已取消</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary">{app.status}</Badge>;
     }
   }
 
@@ -244,7 +242,7 @@ export default function FinanceDashboardPage() {
                       <TableCell className="font-medium">
                         NT$ {Number(app.totalAmount).toLocaleString()}
                       </TableCell>
-                      <TableCell>{getStatusBadge(app.status)}</TableCell>
+                      <TableCell>{getStatusBadge(app)}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -257,7 +255,25 @@ export default function FinanceDashboardPage() {
                             <DropdownMenuItem onClick={() => handleViewDetails(app)}>
                               查看詳情
                             </DropdownMenuItem>
-                            {app.status === 'pending' && (
+                            {app.status === '已通過' && app.invoiceSubmitStatus === '未提交' && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={async () => {
+                                    try {
+                                      await FinanceAPI.submitInvoice(app.id);
+                                      toast({ title: '回報成功', description: '已回報發票投遞，請等待管理員確認。' });
+                                      setTimeout(() => fetchData(), 500);
+                                    } catch (err: any) {
+                                      toast({ variant: 'destructive', title: '操作失敗', description: err.message || '未知錯誤' });
+                                    }
+                                  }}
+                                >
+                                  回報已投遞發票
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {app.status === '審核中' && (
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 

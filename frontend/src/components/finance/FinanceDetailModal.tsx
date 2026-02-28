@@ -8,30 +8,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, ShieldCheck, Receipt, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-interface FinanceApplication {
-  id: string;
-  category: string;
-  description: string;
-  totalAmount: number;
-  status: string;
-  createdAt: string;
-  items: Array<{
-    itemName: string;
-    itemSpec: string;
-    quantity: number;
-    totalPrice: number;
-    expenseType: string;
-  }>;
-  invoiceType: string;
-  invoiceNumber?: string;
-  invoiceDate: string;
-  fileId?: string;
-  fileLink?: string;
-  rejectReason?: string;
-}
+import type { FinanceApplication } from "@/lib/types/finance";
 
 interface FinanceDetailModalProps {
   application: FinanceApplication | null;
@@ -42,20 +21,34 @@ interface FinanceDetailModalProps {
 export function FinanceDetailModal({ application, isOpen, onClose }: FinanceDetailModalProps) {
   if (!application) return null;
 
-  function getStatusBadge(status: string) {
-    switch (status) {
-      case "pending":
+  function getStatusBadge(app: FinanceApplication) {
+    switch (app.status) {
+      case "審核中":
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">審核中</Badge>;
-      case "approved":
+      case "已通過": {
+        if (app.disbursementStatus === "已撥款")
+          return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">已完成</Badge>;
+        if (app.invoiceSubmitStatus === "已確認")
+          return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">待撥款</Badge>;
+        if (app.invoiceSubmitStatus === "已提交")
+          return <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">發票已提交</Badge>;
         return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">已通過</Badge>;
-      case "rejected":
-        return <Badge variant="destructive">已拒絕</Badge>;
-      case "cancelled":
+      }
+      case "不予通過":
+        return <Badge variant="destructive">不予通過</Badge>;
+      case "已取消":
         return <Badge variant="secondary">已取消</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary">{app.status}</Badge>;
     }
   }
+
+  const fmtDate = (d: string | undefined | null) =>
+    d ? format(new Date(d), "yyyy/MM/dd HH:mm") : "—";
+
+  const showAuditSection = application.status !== "審核中";
+  const showInvoiceSection = application.status === "已通過" && application.invoiceSubmitStatus;
+  const showDisbursementSection = application.status === "已通過" && application.disbursementStatus;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -68,16 +61,14 @@ export function FinanceDetailModal({ application, isOpen, onClose }: FinanceDeta
                 {application.id}
               </span>
             </DialogTitle>
-            {getStatusBadge(application.status)}
+            {getStatusBadge(application)}
           </div>
           <DialogDescription>
-            申請時間: {application.createdAt ? format(new Date(application.createdAt), "yyyy/MM/dd HH:mm") : "-"}
+            申請人: {application.applicantName || application.applicantId} ・ 申請時間: {fmtDate(application.createdAt)}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-6 py-4">
-          {/* Basic Info */}
-          <div className="grid gap-6 py-4">
           {/* Basic Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -108,11 +99,11 @@ export function FinanceDetailModal({ application, isOpen, onClose }: FinanceDeta
               </div>
               <div>
                 <span className="text-muted-foreground block">發票號碼</span>
-                <span className="font-mono">{application.invoiceNumber || "-"}</span>
+                <span className="font-mono">{application.invoiceNumber || "—"}</span>
               </div>
               <div>
                 <span className="text-muted-foreground block">發票日期</span>
-                <span>{application.invoiceDate ? format(new Date(application.invoiceDate), "yyyy/MM/dd") : "-"}</span>
+                <span>{application.invoiceDate ? format(new Date(application.invoiceDate), "yyyy/MM/dd") : "—"}</span>
               </div>
             </div>
             
@@ -158,14 +149,85 @@ export function FinanceDetailModal({ application, isOpen, onClose }: FinanceDeta
             </div>
           </div>
 
-           {/* Reject Reason */}
-           {application.status === 'rejected' && application.rejectReason && (
+          {/* Audit Section */}
+          {showAuditSection && (
+            <div className="border rounded-md p-4 bg-slate-50">
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                審核資訊
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground block">審核結果</span>
+                  <span>{application.status}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block">審核人</span>
+                  <span>{application.reviewerId || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block">審核時間</span>
+                  <span>{fmtDate(application.reviewedAt)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Invoice Submit Section */}
+          {showInvoiceSection && (
+            <div className="border rounded-md p-4 bg-slate-50">
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Receipt className="h-4 w-4" />
+                發票投遞狀態
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground block">提交狀態</span>
+                  <span>{application.invoiceSubmitStatus}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block">提交時間</span>
+                  <span>{fmtDate(application.invoiceSubmitTime)}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block">確認者</span>
+                  <span>{application.invoiceReceiverId || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block">確認時間</span>
+                  <span>{fmtDate(application.invoiceReceivedAt)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Disbursement Section */}
+          {showDisbursementSection && (
+            <div className="border rounded-md p-4 bg-slate-50">
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Banknote className="h-4 w-4" />
+                撥款資訊
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground block">撥款狀態</span>
+                  <span>{application.disbursementStatus}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block">撥款時間</span>
+                  <span>{fmtDate(application.disbursedAt)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reject Reason */}
+          {application.status === "不予通過" && application.rejectReason && (
             <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-800">
-              <h4 className="font-semibold mb-1">拒絕原因</h4>
+              <h4 className="font-semibold mb-1">駁回原因</h4>
               <p className="text-sm">{application.rejectReason}</p>
             </div>
           )}
-        </div>
         </div>
       </DialogContent>
     </Dialog>
