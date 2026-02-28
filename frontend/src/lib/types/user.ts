@@ -54,3 +54,35 @@ export interface AdminUpdateRoleRequest {
 export interface AdminDeleteUserRequest {
   targetStudentId: string;
 }
+
+/** 驗證碼物件 */
+export interface VerifyCode {
+  code: string;
+  description: string;
+  validFrom: string;
+  validUntil: string;
+  isActive: boolean;
+  usedCount: number;
+  usageLimit: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+/** 管理員用 — 產生驗證碼 Request */
+export interface AdminGenerateCodeRequest {
+  description: string;
+  validUntil: string;
+  usageLimit: number;
+}
+
+/** 管理員用 — 產生驗證碼 Response */
+export interface AdminGenerateCodeResponse {
+  code: string;
+  message: string;
+}
+
+/** 管理員用 — 手動新增人員 Request */
+export interface AdminAddUserRequest {
+  studentId: string;
+  name: string;
+}

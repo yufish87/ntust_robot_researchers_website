@@ -7,6 +7,9 @@ import type {
   AdminListUsersResponse,
   AdminUpdateRoleRequest,
   AdminDeleteUserRequest,
+  AdminGenerateCodeRequest,
+  AdminGenerateCodeResponse,
+  AdminAddUserRequest,
 } from "@/lib/types/user";
 
 /**
@@ -44,7 +47,7 @@ export const UserAPI = {
 
   /** 管理員 — 取得使用者列表 */
   listUsers: async (): Promise<AdminListUsersResponse> => {
-    const res = await api.post("/admin/members/list", {});
+    const res = await api.post("/admin/users/list", {});
     if (!res.data.success)
       throw new Error(res.data.message || "取得使用者列表失敗");
     return res.data.data as AdminListUsersResponse;
@@ -52,17 +55,34 @@ export const UserAPI = {
 
   /** 管理員 — 變更使用者身份 */
   updateRole: async (data: AdminUpdateRoleRequest) => {
-    const res = await api.post("/admin/members/update-role", data);
-    if (!res.data.success)
-      throw new Error(res.data.message || "變更身份失敗");
+    const res = await api.post("/admin/users/update-role", data);
+    if (!res.data.success) throw new Error(res.data.message || "變更身份失敗");
     return res.data;
   },
 
   /** 管理員 — 軟刪除使用者 */
   adminDelete: async (data: AdminDeleteUserRequest) => {
-    const res = await api.post("/admin/members/delete", data);
+    const res = await api.post("/admin/users/delete", data);
     if (!res.data.success)
       throw new Error(res.data.message || "刪除使用者失敗");
+    return res.data;
+  },
+
+  /** 管理員 — 產生註冊驗證碼 */
+  generateCode: async (
+    data: AdminGenerateCodeRequest
+  ): Promise<AdminGenerateCodeResponse> => {
+    const res = await api.post("/admin/users/generate-code", data);
+    if (!res.data.success)
+      throw new Error(res.data.message || "產生驗證碼失敗");
+    return res.data.data as AdminGenerateCodeResponse;
+  },
+
+  /** 管理員 — 手動新增人員 */
+  adminAddUser: async (data: AdminAddUserRequest) => {
+    const res = await api.post("/admin/users/add-user", data);
+    if (!res.data.success)
+      throw new Error(res.data.message || "新增人員失敗");
     return res.data;
   },
 };

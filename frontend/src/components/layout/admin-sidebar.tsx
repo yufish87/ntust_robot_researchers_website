@@ -28,7 +28,7 @@ const adminNavItems = [
   },
   {
     title: "人員管理",
-    href: "/admin/members",
+    href: "/admin/users",
     icon: Users,
   },
   {
