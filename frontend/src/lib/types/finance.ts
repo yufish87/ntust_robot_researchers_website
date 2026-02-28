@@ -1,9 +1,14 @@
 /** Finance Module Type Definitions */
 
-export type FinanceStatus = '審核中' | '已通過' | '不予通過' | '已取消';
-export type InvoiceSubmitStatus = '未提交' | '已提交' | '已確認';
-export type DisbursementStatus = '待撥款' | '已撥款';
-export type FinanceStatusFilter = 'pending' | 'invoice' | 'disburse' | 'history' | 'all';
+export type FinanceStatus = "審核中" | "已通過" | "不予通過" | "已取消";
+export type InvoiceSubmitStatus = "未提交" | "已提交" | "已確認";
+export type DisbursementStatus = "待撥款" | "已撥款";
+export type FinanceStatusFilter =
+  | "pending"
+  | "invoice"
+  | "disburse"
+  | "history"
+  | "all";
 
 export interface FinanceItem {
   itemName: string;

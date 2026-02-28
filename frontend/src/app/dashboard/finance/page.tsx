@@ -2,11 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, MoreHorizontal, FileText, Calendar, DollarSign } from "lucide-react";
+import {
+  Plus,
+  MoreHorizontal,
+  FileText,
+  Calendar,
+  DollarSign,
+} from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -36,9 +48,11 @@ export default function FinanceDashboardPage() {
   const [data, setData] = useState<FinanceApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
-  const [selectedApp, setSelectedApp] = useState<FinanceApplication | null>(null);
+  const [selectedApp, setSelectedApp] = useState<FinanceApplication | null>(
+    null,
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   // Cancel Modal State
   const [cancelAppId, setCancelAppId] = useState<string | null>(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -52,12 +66,12 @@ export default function FinanceDashboardPage() {
     try {
       setLoading(true);
       // Wait a bit to ensure GAS propagation/lock release if called after action
-      // await new Promise(r => setTimeout(r, 1000)); 
-      
+      // await new Promise(r => setTimeout(r, 1000));
+
       const res = await FinanceAPI.getMyApplications();
-      
+
       // Force refresh data in case of stale state
-      setData([...res]); 
+      setData([...res]);
     } catch (error) {
       console.error("Failed to fetch applications", error);
     } finally {
@@ -83,18 +97,17 @@ export default function FinanceDashboardPage() {
     try {
       setIsCancelling(true);
       await FinanceAPI.cancel(cancelAppId);
-      
+
       toast({
         title: "申請已取消",
         description: `單號 ${cancelAppId} 已成功取消。`,
       });
-      
+
       setIsCancelModalOpen(false);
       setCancelAppId(null);
-      
+
       // Delay fetch to allow backend propagation
       setTimeout(() => fetchData(), 500);
-      
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -107,30 +120,56 @@ export default function FinanceDashboardPage() {
   };
 
   // 進行中：審核中 or 已通過 (尚未完成撥款)
-  const activeApplications = data.filter(app =>
-    app.status === "審核中" ||
-    (app.status === "已通過" && app.disbursementStatus !== "已撥款")
+  const activeApplications = data.filter(
+    (app) =>
+      app.status === "審核中" ||
+      (app.status === "已通過" && app.disbursementStatus !== "已撥款"),
   );
-  const historyApplications = data.filter(app =>
-    app.status === "不予通過" ||
-    app.status === "已取消" ||
-    (app.status === "已通過" && app.disbursementStatus === "已撥款")
+  const historyApplications = data.filter(
+    (app) =>
+      app.status === "不予通過" ||
+      app.status === "已取消" ||
+      (app.status === "已通過" && app.disbursementStatus === "已撥款"),
   );
 
-  const currentList = activeTab === "active" ? activeApplications : historyApplications;
+  const currentList =
+    activeTab === "active" ? activeApplications : historyApplications;
 
   function getStatusBadge(app: FinanceApplication) {
     switch (app.status) {
       case "審核中":
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">審核中</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-yellow-50 text-yellow-700 border-yellow-200"
+          >
+            審核中
+          </Badge>
+        );
       case "已通過": {
         if (app.disbursementStatus === "已撥款")
-          return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">已完成</Badge>;
+          return (
+            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
+              已完成
+            </Badge>
+          );
         if (app.invoiceSubmitStatus === "已確認")
-          return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">待撥款</Badge>;
+          return (
+            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
+              待撥款
+            </Badge>
+          );
         if (app.invoiceSubmitStatus === "已提交")
-          return <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">發票已提交</Badge>;
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">已通過</Badge>;
+          return (
+            <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">
+              發票已提交
+            </Badge>
+          );
+        return (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
+            已通過
+          </Badge>
+        );
       }
       case "不予通過":
         return <Badge variant="destructive">不予通過</Badge>;
@@ -154,118 +193,143 @@ export default function FinanceDashboardPage() {
   }
 
   return (
-      <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">財務報帳</h1>
-            <p className="text-muted-foreground">
-              管理您的所有報帳申請與歷史紀錄。
-            </p>
-          </div>
-          <Link href="/dashboard/finance/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              新增申請
-            </Button>
-          </Link>
+    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">財務報帳</h1>
+          <p className="text-muted-foreground">
+            管理您的所有報帳申請與歷史紀錄。
+          </p>
         </div>
+        <Link href="/dashboard/finance/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            新增申請
+          </Button>
+        </Link>
+      </div>
 
-        {/* Custom Tabs */}
-        <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
-          <button
-            onClick={() => setActiveTab("active")}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              activeTab === "active" 
-                ? "bg-white text-slate-900 shadow-sm" 
-                : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            進行中 ({activeApplications.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("history")}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              activeTab === "history" 
-                ? "bg-white text-slate-900 shadow-sm" 
-                : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            歷史紀錄 ({historyApplications.length})
-          </button>
-        </div>
+      {/* Custom Tabs */}
+      <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
+        <button
+          onClick={() => setActiveTab("active")}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            activeTab === "active"
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          進行中 ({activeApplications.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            activeTab === "history"
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-500 hover:text-slate-900"
+          }`}
+        >
+          歷史紀錄 ({historyApplications.length})
+        </button>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{activeTab === "active" ? "進行中" : "歷史紀錄"}</CardTitle>
-            <CardDescription>
-              {activeTab === "active" 
-                ? "目前正在進行報帳流程的項目。" 
-                : "已經結束報帳流程的項目。"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="py-8 text-center text-muted-foreground">載入中...</div>
-            ) : currentList.length === 0 ? (
-              <div className="py-12 text-center border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">目前沒有資料</p>
-                {activeTab === "active" && (
-                  <Link href="/dashboard/finance/new" className="mt-4 inline-block">
-                    <Button variant="link">立即申請</Button>
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>單號</TableHead>
-                    <TableHead>類別</TableHead>
-                    <TableHead className="w-[300px]">說明</TableHead>
-                    <TableHead>申請日期</TableHead>
-                    <TableHead className="w-[120px]">金額</TableHead>
-                    <TableHead>狀態</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentList.map((app) => (
-                    <TableRow key={app.id}>
-                      <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                      <TableCell>{getCategoryName(app.category)}</TableCell>
-                      <TableCell className="truncate max-w-[300px]" title={app.description}>
-                        {app.description}
-                      </TableCell>
-                      <TableCell>
-                        {app.createdAt ? format(new Date(app.createdAt), "yyyy/MM/dd") : "-"}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        NT$ {Number(app.totalAmount).toLocaleString()}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(app)}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewDetails(app)}>
-                              查看詳情
-                            </DropdownMenuItem>
-                            {app.status === '已通過' && app.invoiceSubmitStatus === '未提交' && (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {activeTab === "active" ? "進行中" : "歷史紀錄"}
+          </CardTitle>
+          <CardDescription>
+            {activeTab === "active"
+              ? "目前正在進行報帳流程的項目。"
+              : "已經結束報帳流程的項目。"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="py-8 text-center text-muted-foreground">
+              載入中...
+            </div>
+          ) : currentList.length === 0 ? (
+            <div className="py-12 text-center border-2 border-dashed rounded-lg">
+              <p className="text-muted-foreground">目前沒有資料</p>
+              {activeTab === "active" && (
+                <Link
+                  href="/dashboard/finance/new"
+                  className="mt-4 inline-block"
+                >
+                  <Button variant="link">立即申請</Button>
+                </Link>
+              )}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>單號</TableHead>
+                  <TableHead>類別</TableHead>
+                  <TableHead className="w-[300px]">說明</TableHead>
+                  <TableHead>申請日期</TableHead>
+                  <TableHead className="w-[120px]">金額</TableHead>
+                  <TableHead>狀態</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentList.map((app) => (
+                  <TableRow key={app.id}>
+                    <TableCell className="font-mono text-xs">
+                      {app.id}
+                    </TableCell>
+                    <TableCell>{getCategoryName(app.category)}</TableCell>
+                    <TableCell
+                      className="truncate max-w-[300px]"
+                      title={app.description}
+                    >
+                      {app.description}
+                    </TableCell>
+                    <TableCell>
+                      {app.createdAt
+                        ? format(new Date(app.createdAt), "yyyy/MM/dd")
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      NT$ {Number(app.totalAmount).toLocaleString()}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(app)}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleViewDetails(app)}
+                          >
+                            查看詳情
+                          </DropdownMenuItem>
+                          {app.status === "已通過" &&
+                            app.invoiceSubmitStatus === "未提交" && (
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={async () => {
                                     try {
                                       await FinanceAPI.submitInvoice(app.id);
-                                      toast({ title: '回報成功', description: '已回報發票投遞，請等待管理員確認。' });
+                                      toast({
+                                        title: "回報成功",
+                                        description:
+                                          "已回報發票投遞，請等待管理員確認。",
+                                      });
                                       setTimeout(() => fetchData(), 500);
                                     } catch (err: any) {
-                                      toast({ variant: 'destructive', title: '操作失敗', description: err.message || '未知錯誤' });
+                                      toast({
+                                        variant: "destructive",
+                                        title: "操作失敗",
+                                        description: err.message || "未知錯誤",
+                                      });
                                     }
                                   }}
                                 >
@@ -273,41 +337,41 @@ export default function FinanceDashboardPage() {
                                 </DropdownMenuItem>
                               </>
                             )}
-                            {app.status === '審核中' && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  className="text-red-600 focus:text-red-600"
-                                  onClick={() => confirmCancel(app.id)}
-                                >
-                                  取消申請
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                          {app.status === "審核中" && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600 focus:text-red-600"
+                                onClick={() => confirmCancel(app.id)}
+                              >
+                                取消申請
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
-        <FinanceDetailModal 
-          application={selectedApp} 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
-        />
+      <FinanceDetailModal
+        application={selectedApp}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
 
-        <CancelConfirmModal
-          appId={cancelAppId}
-          isOpen={isCancelModalOpen}
-          onClose={() => setIsCancelModalOpen(false)}
-          onConfirm={handleCancelExecute}
-          isLoading={isCancelling}
-        />
-      </div>
+      <CancelConfirmModal
+        appId={cancelAppId}
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={handleCancelExecute}
+        isLoading={isCancelling}
+      />
+    </div>
   );
 }

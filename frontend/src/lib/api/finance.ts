@@ -8,7 +8,13 @@ export interface FinanceApplicationRequest {
   invoiceNumber?: string;
   invoiceDate: string;
   totalAmount: number;
-  items: { itemName: string; itemSpec: string; expenseType: string; quantity: number; totalPrice: number }[];
+  items: {
+    itemName: string;
+    itemSpec: string;
+    expenseType: string;
+    quantity: number;
+    totalPrice: number;
+  }[];
   fileId: string;
 }
 

@@ -6,9 +6,22 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { format } from "date-fns";
-import { FileText, Download, ShieldCheck, Receipt, Banknote } from "lucide-react";
+import {
+  FileText,
+  Download,
+  ShieldCheck,
+  Receipt,
+  Banknote,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FinanceApplication } from "@/lib/types/finance";
 
@@ -18,21 +31,48 @@ interface FinanceDetailModalProps {
   onClose: () => void;
 }
 
-export function FinanceDetailModal({ application, isOpen, onClose }: FinanceDetailModalProps) {
+export function FinanceDetailModal({
+  application,
+  isOpen,
+  onClose,
+}: FinanceDetailModalProps) {
   if (!application) return null;
 
   function getStatusBadge(app: FinanceApplication) {
     switch (app.status) {
       case "審核中":
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">審核中</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-yellow-50 text-yellow-700 border-yellow-200"
+          >
+            審核中
+          </Badge>
+        );
       case "已通過": {
         if (app.disbursementStatus === "已撥款")
-          return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">已完成</Badge>;
+          return (
+            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
+              已完成
+            </Badge>
+          );
         if (app.invoiceSubmitStatus === "已確認")
-          return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">待撥款</Badge>;
+          return (
+            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
+              待撥款
+            </Badge>
+          );
         if (app.invoiceSubmitStatus === "已提交")
-          return <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">發票已提交</Badge>;
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">已通過</Badge>;
+          return (
+            <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">
+              發票已提交
+            </Badge>
+          );
+        return (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
+            已通過
+          </Badge>
+        );
       }
       case "不予通過":
         return <Badge variant="destructive">不予通過</Badge>;
@@ -47,8 +87,10 @@ export function FinanceDetailModal({ application, isOpen, onClose }: FinanceDeta
     d ? format(new Date(d), "yyyy/MM/dd HH:mm") : "—";
 
   const showAuditSection = application.status !== "審核中";
-  const showInvoiceSection = application.status === "已通過" && application.invoiceSubmitStatus;
-  const showDisbursementSection = application.status === "已通過" && application.disbursementStatus;
+  const showInvoiceSection =
+    application.status === "已通過" && application.invoiceSubmitStatus;
+  const showDisbursementSection =
+    application.status === "已通過" && application.disbursementStatus;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -64,7 +106,8 @@ export function FinanceDetailModal({ application, isOpen, onClose }: FinanceDeta
             {getStatusBadge(application)}
           </div>
           <DialogDescription>
-            申請人: {application.applicantName || application.applicantId} ・ 申請時間: {fmtDate(application.createdAt)}
+            申請人: {application.applicantName || application.applicantId} ・
+            申請時間: {fmtDate(application.createdAt)}
           </DialogDescription>
         </DialogHeader>
 
@@ -72,18 +115,28 @@ export function FinanceDetailModal({ application, isOpen, onClose }: FinanceDeta
           {/* Basic Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">報帳類別</h4>
+              <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                報帳類別
+              </h4>
               <p>{application.category}</p>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">總金額</h4>
-              <p className="font-bold text-lg">NT$ {Number(application.totalAmount).toLocaleString()}</p>
+              <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                總金額
+              </h4>
+              <p className="font-bold text-lg">
+                NT$ {Number(application.totalAmount).toLocaleString()}
+              </p>
             </div>
           </div>
 
           <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-1">支出說明</h4>
-            <p className="bg-slate-50 p-3 rounded-md text-sm">{application.description}</p>
+            <h4 className="text-sm font-medium text-muted-foreground mb-1">
+              支出說明
+            </h4>
+            <p className="bg-slate-50 p-3 rounded-md text-sm">
+              {application.description}
+            </p>
           </div>
 
           {/* Invoice Info */}
@@ -99,18 +152,33 @@ export function FinanceDetailModal({ application, isOpen, onClose }: FinanceDeta
               </div>
               <div>
                 <span className="text-muted-foreground block">發票號碼</span>
-                <span className="font-mono">{application.invoiceNumber || "—"}</span>
+                <span className="font-mono">
+                  {application.invoiceNumber || "—"}
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground block">發票日期</span>
-                <span>{application.invoiceDate ? format(new Date(application.invoiceDate), "yyyy/MM/dd") : "—"}</span>
+                <span>
+                  {application.invoiceDate
+                    ? format(new Date(application.invoiceDate), "yyyy/MM/dd")
+                    : "—"}
+                </span>
               </div>
             </div>
-            
+
             {application.fileLink && (
               <div className="mt-4 pt-3 border-t">
-                <Button variant="outline" size="sm" asChild className="w-full sm:w-auto">
-                  <a href={application.fileLink} target="_blank" rel="noopener noreferrer">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="w-full sm:w-auto"
+                >
+                  <a
+                    href={application.fileLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <Download className="mr-2 h-4 w-4" />
                     查看上傳憑證
                   </a>
@@ -137,11 +205,17 @@ export function FinanceDetailModal({ application, isOpen, onClose }: FinanceDeta
                     <TableRow key={idx}>
                       <TableCell className="font-medium">
                         <div>{item.itemName}</div>
-                        <div className="text-xs text-muted-foreground">{item.expenseType}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {item.expenseType}
+                        </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{item.itemSpec}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {item.itemSpec}
+                      </TableCell>
                       <TableCell>{item.quantity}</TableCell>
-                      <TableCell>NT$ {Number(item.totalPrice).toLocaleString()}</TableCell>
+                      <TableCell>
+                        NT$ {Number(item.totalPrice).toLocaleString()}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
