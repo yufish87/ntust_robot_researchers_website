@@ -4,6 +4,9 @@ import type {
   UpdateProfileRequest,
   ChangePasswordRequest,
   DeleteAccountRequest,
+  AdminListUsersResponse,
+  AdminUpdateRoleRequest,
+  AdminDeleteUserRequest,
 } from "@/lib/types/user";
 
 /**
@@ -36,6 +39,30 @@ export const UserAPI = {
   deleteAccount: async (data: DeleteAccountRequest) => {
     const res = await api.post("/user/delete-account", data);
     if (!res.data.success) throw new Error(res.data.message || "帳號刪除失敗");
+    return res.data;
+  },
+
+  /** 管理員 — 取得使用者列表 */
+  listUsers: async (): Promise<AdminListUsersResponse> => {
+    const res = await api.post("/admin/members/list", {});
+    if (!res.data.success)
+      throw new Error(res.data.message || "取得使用者列表失敗");
+    return res.data.data as AdminListUsersResponse;
+  },
+
+  /** 管理員 — 變更使用者身份 */
+  updateRole: async (data: AdminUpdateRoleRequest) => {
+    const res = await api.post("/admin/members/update-role", data);
+    if (!res.data.success)
+      throw new Error(res.data.message || "變更身份失敗");
+    return res.data;
+  },
+
+  /** 管理員 — 軟刪除使用者 */
+  adminDelete: async (data: AdminDeleteUserRequest) => {
+    const res = await api.post("/admin/members/delete", data);
+    if (!res.data.success)
+      throw new Error(res.data.message || "刪除使用者失敗");
     return res.data;
   },
 };

@@ -37,3 +37,20 @@ export interface ChangePasswordRequest {
 export interface DeleteAccountRequest {
   password: string;
 }
+
+/** 管理員用 — 使用者列表回應 */
+export interface AdminListUsersResponse {
+  users: UserProfile[];
+  total: number;
+}
+
+/** 管理員用 — 變更身份 Request */
+export interface AdminUpdateRoleRequest {
+  targetStudentId: string;
+  newRole: "member" | "admin";
+}
+
+/** 管理員用 — 刪除使用者 Request */
+export interface AdminDeleteUserRequest {
+  targetStudentId: string;
+}
