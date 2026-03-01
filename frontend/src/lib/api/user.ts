@@ -10,6 +10,8 @@ import type {
   AdminGenerateCodeRequest,
   AdminGenerateCodeResponse,
   AdminAddUserRequest,
+  AdminListCodesResponse,
+  AdminUpdateCodeRequest,
 } from "@/lib/types/user";
 
 /**
@@ -70,7 +72,7 @@ export const UserAPI = {
 
   /** 管理員 — 產生註冊驗證碼 */
   generateCode: async (
-    data: AdminGenerateCodeRequest
+    data: AdminGenerateCodeRequest,
   ): Promise<AdminGenerateCodeResponse> => {
     const res = await api.post("/admin/users/generate-code", data);
     if (!res.data.success)
@@ -81,8 +83,23 @@ export const UserAPI = {
   /** 管理員 — 手動新增人員 */
   adminAddUser: async (data: AdminAddUserRequest) => {
     const res = await api.post("/admin/users/add-user", data);
+    if (!res.data.success) throw new Error(res.data.message || "新增人員失敗");
+    return res.data;
+  },
+
+  /** 管理員 — 取得所有驗證碼 */
+  listCodes: async (): Promise<AdminListCodesResponse> => {
+    const res = await api.post("/admin/users/list-codes", {});
     if (!res.data.success)
-      throw new Error(res.data.message || "新增人員失敗");
+      throw new Error(res.data.message || "取得驗證碼列表失敗");
+    return res.data.data as AdminListCodesResponse;
+  },
+
+  /** 管理員 — 更新驗證碼 */
+  updateCode: async (data: AdminUpdateCodeRequest) => {
+    const res = await api.post("/admin/users/update-code", data);
+    if (!res.data.success)
+      throw new Error(res.data.message || "更新驗證碼失敗");
     return res.data;
   },
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EquipmentAdminAPI } from "@/lib/api/equipment";
 import type {
   EquipmentApplication,
@@ -147,7 +147,7 @@ function ExpandedRow({ app }: { app: EquipmentApplication }) {
 export default function AdminEquipmentPage() {
   const { toast } = useToast();
   const [tab, setTab] = useState<EquipmentStatusFilter>("pending");
-  const [data, setData] = useState<EquipmentApplication[]>([]);
+  const [allData, setAllData] = useState<EquipmentApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -159,33 +159,47 @@ export default function AdminEquipmentPage() {
   // 歸還確認 Dialog
   const [returnTarget, setReturnTarget] = useState<string | null>(null);
 
-  /* ---------- 資料載入 ---------- */
-  const fetchData = useCallback(
-    async (status: EquipmentStatusFilter) => {
-      setLoading(true);
-      try {
-        const res = await EquipmentAdminAPI.list(status);
-        if (res.success) {
-          setData(res.data ?? []);
-        } else {
-          toast({ variant: "destructive", title: "取得資料失敗" });
-        }
-      } catch {
-        toast({
-          variant: "destructive",
-          title: "取得資料失敗",
-          description: "請稍後再試",
-        });
-      } finally {
-        setLoading(false);
+  /* ---------- 資料載入（一次取全部，前端分類）---------- */
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await EquipmentAdminAPI.list("all");
+      if (res.success) {
+        setAllData(res.data ?? []);
+      } else {
+        toast({ variant: "destructive", title: "取得資料失敗" });
       }
-    },
-    [toast],
-  );
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "取得資料失敗",
+        description: "請稍後再試",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  /* ---------- 前端依 tab 篩選 ---------- */
+  const data = useMemo(() => {
+    if (tab === "all") return allData;
+    return allData.filter((app) => {
+      switch (tab) {
+        case "pending":
+          return app.status === "待審核";
+        case "active":
+          return app.status === "已核准";
+        case "history":
+          return app.status === "已歸還" || app.status === "不予通過";
+        default:
+          return true;
+      }
+    });
+  }, [allData, tab]);
 
   useEffect(() => {
-    fetchData(tab);
-  }, [tab, fetchData]);
+    fetchData();
+  }, [fetchData]);
 
   /* ---------- 動作 ---------- */
   const handleApprove = async (id: string) => {
@@ -194,7 +208,7 @@ export default function AdminEquipmentPage() {
       const res = await EquipmentAdminAPI.approve(id);
       if (res.success) {
         toast({ title: "已核准", description: `申請 ${id} 已通過` });
-        fetchData(tab);
+        fetchData();
       } else {
         toast({
           variant: "destructive",
@@ -221,7 +235,7 @@ export default function AdminEquipmentPage() {
         });
         setRejectTarget(null);
         setRejectReason("");
-        fetchData(tab);
+        fetchData();
       } else {
         toast({
           variant: "destructive",
@@ -247,7 +261,7 @@ export default function AdminEquipmentPage() {
           description: `申請 ${returnTarget} 器材已歸還`,
         });
         setReturnTarget(null);
-        fetchData(tab);
+        fetchData();
       } else {
         toast({
           variant: "destructive",
@@ -275,7 +289,7 @@ export default function AdminEquipmentPage() {
         </div>
         <Button
           variant="outline"
-          onClick={() => fetchData(tab)}
+          onClick={() => fetchData()}
           disabled={loading}
         >
           <RefreshCw
@@ -306,16 +320,16 @@ export default function AdminEquipmentPage() {
         ).map((t) => (
           <TabsContent key={t} value={t} className="mt-4">
             <div className="border rounded-lg overflow-hidden">
-              <Table>
+              <Table style={{ tableLayout: "fixed" }}>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="w-10" />
-                    <TableHead>申請單號</TableHead>
-                    <TableHead>申請者</TableHead>
+                    <TableHead className="w-[160px]">申請單號</TableHead>
+                    <TableHead className="w-[120px]">申請者</TableHead>
                     <TableHead>器材摘要</TableHead>
-                    <TableHead>預計歸還</TableHead>
-                    <TableHead>狀態</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
+                    <TableHead className="w-[120px]">預計歸還</TableHead>
+                    <TableHead className="w-[90px]">狀態</TableHead>
+                    <TableHead className="w-[80px] text-right">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

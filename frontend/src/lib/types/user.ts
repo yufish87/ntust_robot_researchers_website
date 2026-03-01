@@ -70,7 +70,9 @@ export interface VerifyCode {
 
 /** 管理員用 — 產生驗證碼 Request */
 export interface AdminGenerateCodeRequest {
+  code: string;
   description: string;
+  validFrom: string;
   validUntil: string;
   usageLimit: number;
 }
@@ -79,6 +81,19 @@ export interface AdminGenerateCodeRequest {
 export interface AdminGenerateCodeResponse {
   code: string;
   message: string;
+}
+
+/** 管理員用 — 驗證碼列表回應 */
+export interface AdminListCodesResponse {
+  codes: VerifyCode[];
+  total: number;
+}
+
+/** 管理員用 — 更新驗證碼 Request */
+export interface AdminUpdateCodeRequest {
+  code: string;
+  isActive?: boolean;
+  usageLimit?: number;
 }
 
 /** 管理員用 — 手動新增人員 Request */

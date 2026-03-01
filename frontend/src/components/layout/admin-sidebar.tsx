@@ -82,7 +82,9 @@ export function AdminSidebar() {
             priority
           />
         </div>
-        <p className="text-base font-bold text-white tracking-[0.2em] mt-1 text-center">管理員後台</p>
+        <p className="text-base font-bold text-white tracking-[0.2em] mt-1 text-center">
+          管理員後台
+        </p>
       </div>
 
       {/* Nav */}
@@ -99,13 +101,24 @@ export function AdminSidebar() {
                   "w-full justify-start mb-1",
                   isActive
                     ? "font-semibold hover:bg-white/10"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
+                    : "text-white/60 hover:text-white hover:bg-white/10",
                 )}
-                style={isActive ? { backgroundColor: "rgba(255,192,0,0.15)", color: "#ffc000" } : undefined}
+                style={
+                  isActive
+                    ? {
+                        backgroundColor: "rgba(255,192,0,0.15)",
+                        color: "#ffc000",
+                      }
+                    : undefined
+                }
               >
                 <item.icon
                   className={cn("mr-3 h-5 w-5")}
-                  style={isActive ? { color: "#ffc000" } : { color: "rgba(255,255,255,0.4)" }}
+                  style={
+                    isActive
+                      ? { color: "#ffc000" }
+                      : { color: "rgba(255,255,255,0.4)" }
+                  }
                 />
                 {item.title}
               </Button>

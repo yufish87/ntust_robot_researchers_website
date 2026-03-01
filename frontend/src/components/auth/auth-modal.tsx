@@ -230,7 +230,6 @@ function LoginForm({ onSuccess, onSwitch }: FormProps) {
 function RegisterForm({ onSuccess, onSwitch }: FormProps) {
   const register = useAuthStore((state) => state.register);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -246,13 +245,29 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setLoading(true);
-    setError(null);
+    form.clearErrors();
     try {
       await register(values);
       toast({ title: "註冊成功", description: "請使用剛註冊的帳號登入" });
       onSuccess();
     } catch (err: any) {
-      setError(err.message || "註冊失敗");
+      const msg = err.message || "";
+      if (msg.includes("Invalid verification code")) {
+        form.setError("verifyCode", { message: "驗證碼不存在" });
+      } else if (msg.includes("inactive")) {
+        form.setError("verifyCode", { message: "此驗證碼已停用" });
+      } else if (msg.includes("expired or not yet valid")) {
+        form.setError("verifyCode", { message: "驗證碼已過期或尚未生效" });
+      } else if (msg.includes("usage limit")) {
+        form.setError("verifyCode", { message: "驗證碼已達使用次數上限" });
+      } else if (
+        msg.includes("already exists") ||
+        msg.includes("ALREADY_EXISTS")
+      ) {
+        form.setError("studentId", { message: "此學號已註冊" });
+      } else {
+        form.setError("verifyCode", { message: msg || "註冊失敗" });
+      }
     } finally {
       setLoading(false);
     }
@@ -400,12 +415,6 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
             </FormItem>
           )}
         />
-
-        {error && (
-          <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md text-center font-medium">
-            {error}
-          </div>
-        )}
 
         <Button
           type="submit"

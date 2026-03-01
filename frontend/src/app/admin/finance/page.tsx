@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { FinanceAdminAPI } from "@/lib/api/finance";
 import type {
   FinanceApplication,
@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, CheckCircle2, XCircle, Banknote, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,7 +53,7 @@ const TABS: { key: TabKey; label: string; filter: FinanceStatusFilter }[] = [
 export default function AdminFinancePage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabKey>("pending");
-  const [data, setData] = useState<FinanceApplication[]>([]);
+  const [allData, setAllData] = useState<FinanceApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -69,39 +70,63 @@ export default function AdminFinancePage() {
     null,
   );
 
-  const currentFilter = TABS.find((t) => t.key === activeTab)!.filter;
-
-  const fetchData = useCallback(
-    async (filter: FinanceStatusFilter) => {
-      setLoading(true);
-      try {
-        const res = await FinanceAdminAPI.list(filter);
-        if (res.success) {
-          setData(res.data ?? []);
-        } else {
-          toast({
-            variant: "destructive",
-            title: "載入失敗",
-            description: res.message,
-          });
-        }
-      } catch (err) {
-        console.error(err);
+  /* ---------- 資料載入（一次取全部，前端分類）---------- */
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await FinanceAdminAPI.list("all");
+      if (res.success) {
+        setAllData(res.data ?? []);
+      } else {
         toast({
           variant: "destructive",
-          title: "系統錯誤",
-          description: "無法連線至伺服器",
+          title: "載入失敗",
+          description: res.message,
         });
-      } finally {
-        setLoading(false);
       }
-    },
-    [toast],
-  );
+    } catch (err) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "系統錯誤",
+        description: "無法連線至伺服器",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  /* ---------- 前端依 activeTab 篩選 ---------- */
+  const data = useMemo(() => {
+    return allData.filter((app) => {
+      switch (activeTab) {
+        case "pending":
+          return app.status === "審核中";
+        case "invoice":
+          return (
+            app.status === "已通過" && app.invoiceSubmitStatus !== "已確認"
+          );
+        case "disburse":
+          return (
+            app.status === "已通過" &&
+            app.invoiceSubmitStatus === "已提交" &&
+            app.disbursementStatus === "待撥款"
+          );
+        case "history":
+          return (
+            app.disbursementStatus === "已撥款" ||
+            app.status === "不予通過" ||
+            app.status === "已取消"
+          );
+        default:
+          return true;
+      }
+    });
+  }, [allData, activeTab]);
 
   useEffect(() => {
-    fetchData(currentFilter);
-  }, [currentFilter, fetchData]);
+    fetchData();
+  }, [fetchData]);
 
   // ── Actions ────────────────────────
   const handleApprove = async (app: FinanceApplication) => {
@@ -110,7 +135,7 @@ export default function AdminFinancePage() {
       const res = await FinanceAdminAPI.approve(app.id);
       if (res.success) {
         toast({ title: "已通過", description: `申請 ${app.id} 已核准。` });
-        fetchData(currentFilter);
+        fetchData();
       } else {
         toast({
           variant: "destructive",
@@ -144,7 +169,7 @@ export default function AdminFinancePage() {
         });
         setRejectApp(null);
         setRejectReason("");
-        fetchData(currentFilter);
+        fetchData();
       } else {
         toast({
           variant: "destructive",
@@ -174,7 +199,7 @@ export default function AdminFinancePage() {
           description: `申請 ${disburseApp.id} 已完成撥款。`,
         });
         setDisburseApp(null);
-        fetchData(currentFilter);
+        fetchData();
       } else {
         toast({
           variant: "destructive",
@@ -250,25 +275,19 @@ export default function AdminFinancePage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              activeTab === tab.key
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)}>
+        <TabsList>
+          {TABS.map((tab) => (
+            <TabsTrigger key={tab.key} value={tab.key}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Table */}
       <div className="border rounded-lg overflow-hidden">
-        <Table>
+        <Table style={{ tableLayout: "fixed" }}>
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="w-[160px]">單號</TableHead>

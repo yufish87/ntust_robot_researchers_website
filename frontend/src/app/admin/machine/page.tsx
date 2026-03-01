@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, Fragment } from "react";
+import { useCallback, useEffect, useMemo, useState, Fragment } from "react";
 import { MachineAdminAPI } from "@/lib/api/machine";
 import type {
   MachineApplication,
@@ -38,8 +38,8 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
-  FileText,
   ImageIcon,
+  Download,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -79,172 +79,306 @@ function formatDateTime(raw?: string) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Google Drive URL → fileId 擷取                                     */
+/* ------------------------------------------------------------------ */
+function extractFileId(driveUrl: string): string | null {
+  const match = driveUrl.match(/\/file\/d\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
+/* ------------------------------------------------------------------ */
 /*  展開列 — 顯示申請詳細資訊                                          */
 /* ------------------------------------------------------------------ */
 function ExpandedRow({ app }: { app: MachineApplication }) {
   const is3DP = app.type === "3d-printer";
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const handleDownload = async (driveUrl: string, label: string) => {
+    const fileId = extractFileId(driveUrl);
+    if (!fileId) return;
+    setDownloading(label);
+    try {
+      const res = await fetch(`/api/machine/download?fileId=${fileId}`);
+      if (!res.ok) throw new Error("下載失敗");
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition");
+      let filename = label;
+      if (disposition) {
+        const match = disposition.match(/filename\*=UTF-8''(.+)/);
+        if (match) filename = decodeURIComponent(match[1]);
+        else {
+          const fallback = disposition.match(/filename="?([^";\n]+)"?/);
+          if (fallback) filename = fallback[1];
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Silently fail or could add toast
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleViewImage = async (driveUrl: string) => {
+    const fileId = extractFileId(driveUrl);
+    if (!fileId) return;
+    setPreviewOpen(true);
+    setPreviewLoading(true);
+    setPreviewUrl(null);
+    try {
+      const res = await fetch(
+        `/api/machine/download?fileId=${fileId}&mode=view`,
+      );
+      if (!res.ok) throw new Error("載入失敗");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } catch {
+      setPreviewUrl(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   return (
-    <TableRow className="bg-slate-50/60">
-      <TableCell colSpan={8} className="p-4">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* 用途 */}
-          <div>
-            <p className="text-sm font-semibold text-slate-600 mb-1">用途</p>
-            <p className="text-sm text-slate-700">{app.purpose || "—"}</p>
-          </div>
-
-          {/* 是否需要協助 */}
-          <div>
-            <p className="text-sm font-semibold text-slate-600 mb-1">
-              需要人員協助
-            </p>
-            <p className="text-sm text-slate-700">{app.needAssist || "—"}</p>
-          </div>
-
-          {/* 數量 */}
-          <div>
-            <p className="text-sm font-semibold text-slate-600 mb-1">
-              {is3DP ? "列印份數" : "切割數量"}
-            </p>
-            <p className="text-sm text-slate-700">{app.quantity}</p>
-          </div>
-
-          {/* 3DP 獨有欄位 */}
-          {is3DP && app.type === "3d-printer" && (
-            <>
-              <div>
-                <p className="text-sm font-semibold text-slate-600 mb-1">
-                  填充度
-                </p>
-                <p className="text-sm text-slate-700">{app.infill || "—"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-600 mb-1">
-                  預估耗材
-                </p>
-                <p className="text-sm text-slate-700">
-                  {app.estimateMaterial || "—"}
-                </p>
-              </div>
-            </>
-          )}
-
-          {/* LSC 獨有欄位 */}
-          {!is3DP && app.type === "laser-cutter" && (
-            <>
-              <div>
-                <p className="text-sm font-semibold text-slate-600 mb-1">
-                  材料來源
-                </p>
-                <p className="text-sm text-slate-700">
-                  {app.materialSource || "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-600 mb-1">
-                  材質 / 厚度
-                </p>
-                <p className="text-sm text-slate-700">
-                  {app.materialType || "—"} / {app.thickness || "—"}
-                </p>
-              </div>
-            </>
-          )}
-
-          {/* 預估時間 */}
-          <div>
-            <p className="text-sm font-semibold text-slate-600 mb-1">
-              預估{is3DP ? "列印" : "切割"}時間
-            </p>
-            <p className="text-sm text-slate-700">{app.estimateTime || "—"}</p>
-          </div>
-
-          {/* 希望使用時間 (by applicant) */}
-          <div>
-            <p className="text-sm font-semibold text-slate-600 mb-1">
-              希望使用時間
-            </p>
-            <p className="text-sm text-slate-700">{app.useTime || "—"}</p>
-          </div>
-
-          {/* 建議開始時間 (by admin) */}
-          {app.proposedTime && (
+    <>
+      <TableRow className="bg-slate-50/60">
+        <TableCell colSpan={8} className="p-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* 用途 */}
             <div>
-              <p className="text-sm font-semibold text-blue-600 mb-1">
-                管理員建議時間
-              </p>
-              <p className="text-sm text-blue-700">{app.proposedTime}</p>
+              <p className="text-sm font-semibold text-slate-600 mb-1">用途</p>
+              <p className="text-sm text-slate-700">{app.purpose || "—"}</p>
             </div>
-          )}
 
-          {/* 備註 */}
-          <div>
-            <p className="text-sm font-semibold text-slate-600 mb-1">備註</p>
-            <p className="text-sm text-slate-700">{app.note || "—"}</p>
-          </div>
-
-          {/* 檔案連結 */}
-          <div>
-            <p className="text-sm font-semibold text-slate-600 mb-1">
-              檔案連結
-            </p>
-            <div className="flex gap-2">
-              {app.fileLink && (
-                <a
-                  href={app.fileLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  {is3DP ? "Gcode" : "圖檔"}
-                </a>
-              )}
-              {is3DP && app.type === "3d-printer" && app.screenshotLink && (
-                <a
-                  href={app.screenshotLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
-                >
-                  <ImageIcon className="h-3.5 w-3.5" />
-                  截圖
-                </a>
-              )}
-              {!app.fileLink && "—"}
-            </div>
-          </div>
-
-          {/* 拒絕理由 */}
-          {app.rejectReason && (
-            <div>
-              <p className="text-sm font-semibold text-red-600 mb-1">
-                拒絕理由
-              </p>
-              <p className="text-sm text-red-700 bg-red-50 p-2 rounded">
-                {app.rejectReason}
-              </p>
-            </div>
-          )}
-
-          {/* 審核資訊 */}
-          {app.reviewerId && (
+            {/* 是否需要協助 */}
             <div>
               <p className="text-sm font-semibold text-slate-600 mb-1">
-                審核者
+                需要人員協助
               </p>
-              <p className="text-sm text-slate-700">{app.reviewerId}</p>
-              {app.reviewedAt && (
-                <p className="text-xs text-slate-400 mt-0.5">
-                  審核時間: {formatDateTime(app.reviewedAt)}
-                </p>
-              )}
+              <p className="text-sm text-slate-700">{app.needAssist || "—"}</p>
             </div>
+
+            {/* 數量 */}
+            <div>
+              <p className="text-sm font-semibold text-slate-600 mb-1">
+                {is3DP ? "列印份數" : "切割數量"}
+              </p>
+              <p className="text-sm text-slate-700">{app.quantity}</p>
+            </div>
+
+            {/* 3DP 獨有欄位 */}
+            {is3DP && app.type === "3d-printer" && (
+              <>
+                <div>
+                  <p className="text-sm font-semibold text-slate-600 mb-1">
+                    填充度
+                  </p>
+                  <p className="text-sm text-slate-700">{app.infill || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-600 mb-1">
+                    預估耗材
+                  </p>
+                  <p className="text-sm text-slate-700">
+                    {app.estimateMaterial || "—"}
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* LSC 獨有欄位 */}
+            {!is3DP && app.type === "laser-cutter" && (
+              <>
+                <div>
+                  <p className="text-sm font-semibold text-slate-600 mb-1">
+                    材料來源
+                  </p>
+                  <p className="text-sm text-slate-700">
+                    {app.materialSource || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-600 mb-1">
+                    材質 / 厚度
+                  </p>
+                  <p className="text-sm text-slate-700">
+                    {app.materialType || "—"} / {app.thickness || "—"}
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* 預估時間 */}
+            <div>
+              <p className="text-sm font-semibold text-slate-600 mb-1">
+                預估{is3DP ? "列印" : "切割"}時間
+              </p>
+              <p className="text-sm text-slate-700">
+                {app.estimateTime || "—"}
+              </p>
+            </div>
+
+            {/* 希望使用時間 (by applicant) */}
+            <div>
+              <p className="text-sm font-semibold text-slate-600 mb-1">
+                希望使用時間
+              </p>
+              <p className="text-sm text-slate-700">
+                {formatDateTime(app.useTime) || "—"}
+              </p>
+            </div>
+
+            {/* 建議開始時間 (by admin) */}
+            {app.proposedTime && (
+              <div>
+                <p className="text-sm font-semibold text-blue-600 mb-1">
+                  管理員建議時間
+                </p>
+                <p className="text-sm text-blue-700">
+                  {formatDateTime(app.proposedTime)}
+                </p>
+              </div>
+            )}
+
+            {/* 備註 */}
+            <div>
+              <p className="text-sm font-semibold text-slate-600 mb-1">備註</p>
+              <p className="text-sm text-slate-700">{app.note || "—"}</p>
+            </div>
+
+            {/* 檔案連結 */}
+            <div>
+              <p className="text-sm font-semibold text-slate-600 mb-1">
+                檔案連結
+              </p>
+              <div className="flex gap-2">
+                {app.fileLink && (
+                  <button
+                    onClick={() =>
+                      handleDownload(app.fileLink!, is3DP ? "Gcode" : "圖檔")
+                    }
+                    disabled={downloading === (is3DP ? "Gcode" : "圖檔")}
+                    className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline disabled:opacity-50"
+                  >
+                    {downloading === (is3DP ? "Gcode" : "圖檔") ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Download className="h-3.5 w-3.5" />
+                    )}
+                    {is3DP ? "Gcode" : "圖檔"}
+                  </button>
+                )}
+                {is3DP && app.type === "3d-printer" && app.screenshotLink && (
+                  <button
+                    onClick={() => handleViewImage(app.screenshotLink!)}
+                    className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+                  >
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    截圖
+                  </button>
+                )}
+                {!app.fileLink && "—"}
+              </div>
+            </div>
+
+            {/* 拒絕理由 */}
+            {app.rejectReason && (
+              <div>
+                <p className="text-sm font-semibold text-red-600 mb-1">
+                  拒絕理由
+                </p>
+                <p className="text-sm text-red-700 bg-red-50 p-2 rounded">
+                  {app.rejectReason}
+                </p>
+              </div>
+            )}
+
+            {/* 審核資訊 */}
+            {app.reviewerId && (
+              <div>
+                <p className="text-sm font-semibold text-slate-600 mb-1">
+                  審核者
+                </p>
+                <p className="text-sm text-slate-700">{app.reviewerId}</p>
+                {app.reviewedAt && (
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    審核時間: {formatDateTime(app.reviewedAt)}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </TableCell>
+      </TableRow>
+
+      {/* Image Preview Dialog */}
+      <Dialog
+        open={previewOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreviewOpen(false);
+            if (previewUrl) {
+              URL.revokeObjectURL(previewUrl);
+              setPreviewUrl(null);
+            }
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>截圖預覽</DialogTitle>
+            <DialogDescription className="sr-only">
+              切片軟體截圖預覽
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center min-h-[200px]">
+            {previewLoading ? (
+              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+            ) : previewUrl ? (
+              <img
+                src={previewUrl}
+                alt="截圖預覽"
+                className="max-w-full max-h-[60vh] rounded-lg object-contain"
+              />
+            ) : (
+              <p className="text-sm text-slate-400">載入失敗</p>
+            )}
+          </div>
+          {previewUrl && (
+            <DialogFooter>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (app.type !== "3d-printer" || !("screenshotLink" in app))
+                    return;
+                  handleDownload(app.screenshotLink as string, "截圖");
+                }}
+                disabled={downloading === "截圖"}
+              >
+                {downloading === "截圖" ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
+                下載
+              </Button>
+            </DialogFooter>
           )}
-        </div>
-      </TableCell>
-    </TableRow>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -270,7 +404,7 @@ export default function AdminMachinePage() {
   // 狀態子 tab
   const [statusTab, setStatusTab] = useState<MachineStatusFilter>("pending");
 
-  const [data, setData] = useState<MachineApplication[]>([]);
+  const [allData, setAllData] = useState<MachineApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -283,14 +417,14 @@ export default function AdminMachinePage() {
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  /* ---------- 資料載入 ---------- */
+  /* ---------- 資料載入（一次取全部，前端分類）---------- */
   const fetchData = useCallback(
-    async (type: MachineType, status: MachineStatusFilter) => {
+    async (type: MachineType) => {
       setLoading(true);
       try {
-        const res = await MachineAdminAPI.list(type, status);
+        const res = await MachineAdminAPI.list(type, "all");
         if (res.success) {
-          setData(res.data ?? []);
+          setAllData(res.data ?? []);
         } else {
           toast({ variant: "destructive", title: "取得資料失敗" });
         }
@@ -307,9 +441,28 @@ export default function AdminMachinePage() {
     [toast],
   );
 
+  /* ---------- 前端依 statusTab 篩選 ---------- */
+  const data = useMemo(() => {
+    if (statusTab === "all") return allData;
+    return allData.filter((app) => {
+      switch (statusTab) {
+        case "pending":
+          return app.status === "審核中";
+        case "scheduling":
+          return app.status === "待確認" || app.status === "已預約";
+        case "active":
+          return app.status === "使用中";
+        case "history":
+          return app.status === "已完成" || app.status === "不予通過";
+        default:
+          return true;
+      }
+    });
+  }, [allData, statusTab]);
+
   useEffect(() => {
-    fetchData(machineTab, statusTab);
-  }, [machineTab, statusTab, fetchData]);
+    fetchData(machineTab);
+  }, [machineTab, fetchData]);
 
   /* ---------- 動作：提出排程建議 ---------- */
   const handleProposeConfirm = async () => {
@@ -324,7 +477,7 @@ export default function AdminMachinePage() {
         });
         setProposeTarget(null);
         setProposedTime("");
-        fetchData(machineTab, statusTab);
+        fetchData(machineTab);
       } else {
         toast({
           variant: "destructive",
@@ -352,7 +505,7 @@ export default function AdminMachinePage() {
         });
         setRejectTarget(null);
         setRejectReason("");
-        fetchData(machineTab, statusTab);
+        fetchData(machineTab);
       } else {
         toast({
           variant: "destructive",
@@ -392,7 +545,7 @@ export default function AdminMachinePage() {
         </div>
         <Button
           variant="outline"
-          onClick={() => fetchData(machineTab, statusTab)}
+          onClick={() => fetchData(machineTab)}
           disabled={loading}
         >
           <RefreshCw
@@ -402,54 +555,60 @@ export default function AdminMachinePage() {
         </Button>
       </div>
 
-      {/* Machine Type Tabs */}
+      {/* Machine Type Tabs (pill style) */}
+      <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
+        {(["3d-printer", "laser-cutter"] as MachineType[]).map((mt) => (
+          <button
+            key={mt}
+            onClick={() => {
+              setMachineTab(mt);
+              setExpandedId(null);
+            }}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              machineTab === mt
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            {mt === "3d-printer" ? "3D 列印機" : "雷射切割機"}
+          </button>
+        ))}
+      </div>
+
+      {/* Status filter Tabs */}
       <Tabs
-        value={machineTab}
+        value={statusTab}
         onValueChange={(v) => {
-          setMachineTab(v as MachineType);
+          setStatusTab(v as MachineStatusFilter);
           setExpandedId(null);
         }}
       >
         <TabsList>
-          <TabsTrigger value="3d-printer">3D 列印機</TabsTrigger>
-          <TabsTrigger value="laser-cutter">雷射切割機</TabsTrigger>
+          {SUB_TABS.map((st) => (
+            <TabsTrigger key={st.value} value={st.value}>
+              {st.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         {(["3d-printer", "laser-cutter"] as MachineType[]).map((mt) => (
-          <TabsContent key={mt} value={mt} className="mt-4 space-y-4">
-            {/* Sub-tabs for status filter */}
-            <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
-              {SUB_TABS.map((st) => (
-                <button
-                  key={st.value}
-                  onClick={() => {
-                    setStatusTab(st.value);
-                    setExpandedId(null);
-                  }}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                    statusTab === st.value
-                      ? "bg-white text-slate-900 shadow-sm"
-                      : "text-slate-500 hover:text-slate-900"
-                  }`}
-                >
-                  {st.label}
-                </button>
-              ))}
-            </div>
-
+          <div
+            key={mt}
+            className={machineTab === mt ? "mt-4 space-y-4" : "hidden"}
+          >
             {/* Data Table */}
             <div className="border rounded-lg overflow-hidden">
-              <Table>
+              <Table style={{ tableLayout: "fixed" }}>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="w-10" />
-                    <TableHead>申請單號</TableHead>
-                    <TableHead>申請者</TableHead>
+                    <TableHead className="w-[160px]">申請單號</TableHead>
+                    <TableHead className="w-[120px]">申請者</TableHead>
                     <TableHead>用途</TableHead>
-                    <TableHead>預估時間</TableHead>
-                    <TableHead>申請日期</TableHead>
-                    <TableHead>狀態</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
+                    <TableHead className="w-[100px]">預估時間</TableHead>
+                    <TableHead className="w-[160px]">申請日期</TableHead>
+                    <TableHead className="w-[90px]">狀態</TableHead>
+                    <TableHead className="w-[80px] text-right">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -574,7 +733,7 @@ export default function AdminMachinePage() {
                 </TableBody>
               </Table>
             </div>
-          </TabsContent>
+          </div>
         ))}
       </Tabs>
 

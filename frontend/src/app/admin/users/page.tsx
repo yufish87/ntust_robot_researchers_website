@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { UserAPI } from "@/lib/api/user";
-import type { UserProfile, UserRole } from "@/lib/types/user";
+import type { UserProfile, UserRole, VerifyCode } from "@/lib/types/user";
 import {
   Table,
   TableBody,
@@ -43,15 +43,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Copy,
+  Dices,
   KeyRound,
   Loader2,
   MoreHorizontal,
   Plus,
+  RefreshCw,
   Search,
-  ShieldCheck,
-  ShieldMinus,
-  UserX,
 } from "lucide-react";
 
 /** 身份中文對照 */
@@ -135,9 +133,16 @@ export default function AdminUsersPage() {
   const { user: currentUser } = useAuthStore();
   const { toast } = useToast();
 
+  // Main tab
+  const [mainTab, setMainTab] = useState<"users" | "codes">("users");
+
   // Data
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Verify codes data
+  const [codes, setCodes] = useState<VerifyCode[]>([]);
+  const [codesLoading, setCodesLoading] = useState(true);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -154,13 +159,12 @@ export default function AdminUsersPage() {
 
   // Generate Code Dialog
   const [codeDialogOpen, setCodeDialogOpen] = useState(false);
+  const [codeValue, setCodeValue] = useState("");
   const [codeDesc, setCodeDesc] = useState("");
+  const [codeValidFrom, setCodeValidFrom] = useState("");
   const [codeValidUntil, setCodeValidUntil] = useState("");
   const [codeUsageLimit, setCodeUsageLimit] = useState(0);
   const [codeLoading, setCodeLoading] = useState(false);
-
-  // Code Result Dialog
-  const [codeResult, setCodeResult] = useState<string | null>(null);
 
   // Add User Dialog
   const [addUserOpen, setAddUserOpen] = useState(false);
@@ -192,6 +196,32 @@ export default function AdminUsersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Fetch verify codes
+  const fetchCodes = async () => {
+    setCodesLoading(true);
+    try {
+      const result = await UserAPI.listCodes();
+      setCodes(result.codes);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "無法取得驗證碼列表";
+      toast({
+        variant: "destructive",
+        title: "載入失敗",
+        description: message,
+      });
+    } finally {
+      setCodesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (mainTab === "codes") {
+      fetchCodes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mainTab]);
+
   // Filtered list
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -211,8 +241,7 @@ export default function AdminUsersPage() {
           return u.role === "member" && u.status === "active";
         case "admin":
           return (
-            (u.role === "admin" || u.role === "owner") &&
-            u.status === "active"
+            (u.role === "admin" || u.role === "owner") && u.status === "active"
           );
         case "disabled":
           return u.status === "deleted";
@@ -279,16 +308,19 @@ export default function AdminUsersPage() {
     setCodeLoading(true);
     try {
       const result = await UserAPI.generateCode({
+        code: codeValue.trim(),
         description: codeDesc,
+        validFrom: codeValidFrom,
         validUntil: codeValidUntil,
         usageLimit: codeUsageLimit,
       });
       setCodeDialogOpen(false);
+      setCodeValue("");
       setCodeDesc("");
+      setCodeValidFrom("");
       setCodeValidUntil("");
       setCodeUsageLimit(0);
-      setCodeResult(result.code);
-      toast({ title: "驗證碼已產生" });
+      toast({ title: "驗證碼已產生", description: `驗證碼: ${result.code}` });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "產生失敗";
       toast({
@@ -328,12 +360,64 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleCopyCode = async (code: string) => {
+  const generateRandomCode = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setCodeValue(code);
+  };
+
+  // Verify code actions
+  const [editCodeTarget, setEditCodeTarget] = useState<VerifyCode | null>(null);
+  const [editUsageLimit, setEditUsageLimit] = useState(0);
+  const [editCodeLoading, setEditCodeLoading] = useState(false);
+
+  const handleToggleActive = async (vc: VerifyCode) => {
     try {
-      await navigator.clipboard.writeText(code);
-      toast({ title: "已複製到剪貼簿" });
-    } catch {
-      toast({ variant: "destructive", title: "複製失敗" });
+      await UserAPI.updateCode({
+        code: vc.code,
+        isActive: !vc.isActive,
+      });
+      toast({
+        title: vc.isActive ? "已停用" : "已啟用",
+        description: `驗證碼 ${vc.code} 已${vc.isActive ? "停用" : "啟用"}。`,
+      });
+      fetchCodes();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "操作失敗";
+      toast({
+        variant: "destructive",
+        title: "操作失敗",
+        description: message,
+      });
+    }
+  };
+
+  const handleUpdateUsageLimit = async () => {
+    if (!editCodeTarget) return;
+    setEditCodeLoading(true);
+    try {
+      await UserAPI.updateCode({
+        code: editCodeTarget.code,
+        usageLimit: editUsageLimit,
+      });
+      toast({
+        title: "已更新",
+        description: `驗證碼 ${editCodeTarget.code} 的使用次數限制已更新。`,
+      });
+      setEditCodeTarget(null);
+      fetchCodes();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "更新失敗";
+      toast({
+        variant: "destructive",
+        title: "更新失敗",
+        description: message,
+      });
+    } finally {
+      setEditCodeLoading(false);
     }
   };
 
@@ -345,15 +429,10 @@ export default function AdminUsersPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">人員管理</h1>
-          <p className="text-muted-foreground">
-            管理社團成員、權限與驗證碼。
-          </p>
+          <p className="text-muted-foreground">管理社團成員、權限與驗證碼。</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setCodeDialogOpen(true)}
-          >
+          <Button variant="outline" onClick={() => setCodeDialogOpen(true)}>
             <KeyRound className="h-4 w-4 mr-2" />
             產生註冊碼
           </Button>
@@ -364,153 +443,348 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="搜尋學號或姓名..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      {/* Main Tabs: 人員 / 驗證碼 (pill style) + Refresh */}
+      <div className="flex items-center justify-between">
+        <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
+          <button
+            onClick={() => setMainTab("users")}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              mainTab === "users"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            人員
+          </button>
+          <button
+            onClick={() => setMainTab("codes")}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              mainTab === "codes"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            驗證碼
+          </button>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={mainTab === "users" ? fetchUsers : fetchCodes}
+          disabled={mainTab === "users" ? loading : codesLoading}
+        >
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${
+              (mainTab === "users" ? loading : codesLoading)
+                ? "animate-spin"
+                : ""
+            }`}
+          />
+          重新整理
+        </Button>
       </div>
 
-      {/* Tabs */}
-      <Tabs
-        value={tabFilter}
-        onValueChange={(v) => setTabFilter(v as TabFilter)}
-      >
-        <TabsList>
-          <TabsTrigger value="all">全部</TabsTrigger>
-          <TabsTrigger value="member">社員</TabsTrigger>
-          <TabsTrigger value="admin">管理員</TabsTrigger>
-          <TabsTrigger value="disabled">已停用</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* ===== 人員 Tab ===== */}
+      {mainTab === "users" && (
+        <div className="space-y-4">
+          {/* Sub filter + Search */}
+          <Tabs
+            value={tabFilter}
+            onValueChange={(v) => setTabFilter(v as TabFilter)}
+          >
+            <div className="flex items-center gap-4">
+              <TabsList>
+                <TabsTrigger value="all" className="w-16">
+                  全部
+                </TabsTrigger>
+                <TabsTrigger value="member" className="w-16">
+                  社員
+                </TabsTrigger>
+                <TabsTrigger value="admin" className="w-20">
+                  管理員
+                </TabsTrigger>
+                <TabsTrigger value="disabled" className="w-20">
+                  已停用
+                </TabsTrigger>
+              </TabsList>
+              <div className="relative max-w-sm flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="搜尋學號或姓名..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+          </Tabs>
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="w-[120px]">學號</TableHead>
-              <TableHead className="w-[100px]">姓名</TableHead>
-              <TableHead className="w-[120px]">系所</TableHead>
-              <TableHead className="w-[80px]">年級</TableHead>
-              <TableHead className="w-[90px]">身份</TableHead>
-              <TableHead className="w-[80px]">狀態</TableHead>
-              <TableHead className="w-[140px]">最近登入</TableHead>
-              <TableHead className="w-[60px] text-center">操作</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center h-32">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    載入中...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : filteredUsers.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="text-center h-32 text-muted-foreground"
-                >
-                  {users.length === 0
-                    ? "尚無使用者資料。"
-                    : "沒有符合篩選條件的使用者。"}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredUsers.map((u) => (
-                <TableRow key={u.studentId}>
-                  <TableCell className="font-mono text-xs">
-                    {u.studentId}
-                  </TableCell>
-                  <TableCell className="font-medium">{u.name}</TableCell>
-                  <TableCell className="text-sm">
-                    {u.department || "—"}
-                  </TableCell>
-                  <TableCell className="text-sm">{u.grade || "—"}</TableCell>
-                  <TableCell>{roleBadge(u.role)}</TableCell>
-                  <TableCell>{statusBadge(u.status)}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatLoginTime(u.lastLoginTime)}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {u.role === "owner" ? (
-                      <span className="text-muted-foreground text-xs">—</span>
-                    ) : (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {u.role === "member" && (
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setRoleTarget(u);
-                                setRoleNewRole("admin");
-                              }}
-                            >
-                              <ShieldCheck className="h-4 w-4 mr-2" />
-                              設為管理員
-                            </DropdownMenuItem>
-                          )}
-                          {u.role === "admin" && !isSelf(u) && (
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setRoleTarget(u);
-                                setRoleNewRole("member");
-                              }}
-                            >
-                              <ShieldMinus className="h-4 w-4 mr-2" />
-                              設為社員
-                            </DropdownMenuItem>
-                          )}
-                          {!isSelf(u) && u.status === "active" && (
-                            <DropdownMenuItem
-                              className="text-red-600 focus:text-red-600"
-                              onClick={() => setDeleteTarget(u)}
-                            >
-                              <UserX className="h-4 w-4 mr-2" />
-                              停用帳號
-                            </DropdownMenuItem>
-                          )}
-                          {isSelf(u) && (
-                            <DropdownMenuItem disabled>
-                              <span className="text-xs text-muted-foreground">
-                                無法對自己操作
-                              </span>
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </TableCell>
+          {/* Users Table */}
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[120px]">學號</TableHead>
+                  <TableHead className="w-[100px]">姓名</TableHead>
+                  <TableHead className="w-[120px]">系所</TableHead>
+                  <TableHead className="w-[80px]">年級</TableHead>
+                  <TableHead className="w-[90px]">身份</TableHead>
+                  <TableHead className="w-[80px]">狀態</TableHead>
+                  <TableHead className="w-[140px]">最近登入</TableHead>
+                  <TableHead className="w-[60px] text-center">操作</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center h-32">
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        載入中...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="text-center h-32 text-muted-foreground"
+                    >
+                      {users.length === 0
+                        ? "尚無使用者資料。"
+                        : "沒有符合篩選條件的使用者。"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredUsers.map((u) => (
+                    <TableRow key={u.studentId}>
+                      <TableCell className="font-mono text-xs">
+                        {u.studentId}
+                      </TableCell>
+                      <TableCell className="font-medium">{u.name}</TableCell>
+                      <TableCell className="text-sm">
+                        {u.department || "—"}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {u.grade || "—"}
+                      </TableCell>
+                      <TableCell>{roleBadge(u.role)}</TableCell>
+                      <TableCell>{statusBadge(u.status)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatLoginTime(u.lastLoginTime)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {u.role === "owner" ? (
+                          <span className="text-muted-foreground text-xs">
+                            —
+                          </span>
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {u.role === "member" && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setRoleTarget(u);
+                                    setRoleNewRole("admin");
+                                  }}
+                                >
+                                  設為管理員
+                                </DropdownMenuItem>
+                              )}
+                              {u.role === "admin" && !isSelf(u) && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setRoleTarget(u);
+                                    setRoleNewRole("member");
+                                  }}
+                                >
+                                  設為社員
+                                </DropdownMenuItem>
+                              )}
+                              {!isSelf(u) && u.status === "active" && (
+                                <DropdownMenuItem
+                                  className="text-red-600 focus:text-red-600"
+                                  onClick={() => setDeleteTarget(u)}
+                                >
+                                  停用帳號
+                                </DropdownMenuItem>
+                              )}
+                              {isSelf(u) && (
+                                <DropdownMenuItem disabled>
+                                  <span className="text-xs text-muted-foreground">
+                                    無法對自己操作
+                                  </span>
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-      {/* Footer count */}
-      {!loading && (
-        <p className="text-sm text-muted-foreground text-center">
-          共 {filteredUsers.length} 筆
-          {filteredUsers.length !== users.length &&
-            `（全部 ${users.length} 筆）`}
-        </p>
+          {/* Footer count */}
+          {!loading && (
+            <p className="text-sm text-muted-foreground text-center">
+              共 {filteredUsers.length} 筆
+              {filteredUsers.length !== users.length &&
+                `（全部 ${users.length} 筆）`}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ===== 驗證碼 Tab ===== */}
+      {mainTab === "codes" && (
+        <div className="space-y-4">
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[120px]">驗證碼</TableHead>
+                  <TableHead className="w-[140px]">說明</TableHead>
+                  <TableHead className="w-[140px]">生效時間</TableHead>
+                  <TableHead className="w-[140px]">失效時間</TableHead>
+                  <TableHead className="w-[80px] text-center">狀態</TableHead>
+                  <TableHead className="w-[60px] text-center">已使用</TableHead>
+                  <TableHead className="w-[80px] text-center">
+                    使用限制
+                  </TableHead>
+                  <TableHead className="w-[100px]">建立者</TableHead>
+                  <TableHead className="w-[140px]">建立時間</TableHead>
+                  <TableHead className="w-[80px] text-center">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {codesLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center h-32">
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        載入中...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : codes.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={10}
+                      className="text-center h-32 text-muted-foreground"
+                    >
+                      尚無驗證碼資料。
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  codes.map((vc) => (
+                    <TableRow key={vc.code}>
+                      <TableCell className="font-mono text-xs font-medium">
+                        {vc.code}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {vc.description || "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatLoginTime(vc.validFrom)}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatLoginTime(vc.validUntil)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {vc.isActive ? (
+                          <Badge
+                            variant="default"
+                            className="text-xs cursor-pointer"
+                            onClick={() => handleToggleActive(vc)}
+                          >
+                            啟用
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs cursor-pointer"
+                            onClick={() => handleToggleActive(vc)}
+                          >
+                            停用
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center text-sm">
+                        {vc.usedCount}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs font-mono"
+                          onClick={() => {
+                            setEditCodeTarget(vc);
+                            setEditUsageLimit(vc.usageLimit);
+                          }}
+                        >
+                          {vc.usageLimit === 0 ? "無限制" : vc.usageLimit}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {vc.createdBy || "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatLoginTime(vc.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleToggleActive(vc)}
+                            >
+                              {vc.isActive ? "停用此驗證碼" : "啟用此驗證碼"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setEditCodeTarget(vc);
+                                setEditUsageLimit(vc.usageLimit);
+                              }}
+                            >
+                              修改使用限制
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Footer count */}
+          {!codesLoading && (
+            <p className="text-sm text-muted-foreground text-center">
+              共 {codes.length} 筆
+            </p>
+          )}
+        </div>
       )}
 
       {/* ========== Dialogs ========== */}
@@ -598,7 +872,30 @@ export default function AdminUsersPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="code-desc">說明（選填）</Label>
+              <Label htmlFor="code-value">
+                驗證碼<span className="text-red-500 ml-1">*</span>
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="code-value"
+                  placeholder="請輸入驗證碼"
+                  value={codeValue}
+                  onChange={(e) => setCodeValue(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={generateRandomCode}
+                  title="隨機產生"
+                >
+                  <Dices className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="code-desc">說明</Label>
               <Input
                 id="code-desc"
                 placeholder="例：113-2 新進社員"
@@ -607,9 +904,22 @@ export default function AdminUsersPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="code-valid">失效時間（選填）</Label>
+              <Label htmlFor="code-valid-from">
+                生效時間<span className="text-red-500 ml-1">*</span>
+              </Label>
               <Input
-                id="code-valid"
+                id="code-valid-from"
+                type="datetime-local"
+                value={codeValidFrom}
+                onChange={(e) => setCodeValidFrom(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="code-valid-until">
+                失效時間<span className="text-red-500 ml-1">*</span>
+              </Label>
+              <Input
+                id="code-valid-until"
                 type="datetime-local"
                 value={codeValidUntil}
                 onChange={(e) => setCodeValidUntil(e.target.value)}
@@ -631,15 +941,17 @@ export default function AdminUsersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setCodeDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setCodeDialogOpen(false)}>
               取消
             </Button>
             <Button
               onClick={handleGenerateCode}
-              disabled={codeLoading}
+              disabled={
+                codeLoading ||
+                !codeValue.trim() ||
+                !codeValidFrom ||
+                !codeValidUntil
+              }
               className="min-w-[100px]"
             >
               {codeLoading ? (
@@ -648,36 +960,6 @@ export default function AdminUsersPage() {
                 "產生"
               )}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Code Result Dialog */}
-      <Dialog
-        open={!!codeResult}
-        onOpenChange={(open) => !open && setCodeResult(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>驗證碼已產生</DialogTitle>
-            <DialogDescription>
-              請複製以下驗證碼，提供給需要註冊的成員。
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
-            <code className="text-2xl font-mono font-bold tracking-widest flex-1 text-center">
-              {codeResult}
-            </code>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => codeResult && handleCopyCode(codeResult)}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setCodeResult(null)}>完成</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -724,6 +1006,60 @@ export default function AdminUsersPage() {
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 "新增"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Usage Limit Dialog */}
+      <Dialog
+        open={!!editCodeTarget}
+        onOpenChange={(open) => {
+          if (!open) setEditCodeTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle>修改使用限制</DialogTitle>
+            <DialogDescription className="sr-only">
+              修改驗證碼使用限制
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">驗證碼</span>
+              <span className="font-mono font-medium">
+                {editCodeTarget?.code}
+              </span>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-usage-limit">限制使用次數</Label>
+              <Input
+                id="edit-usage-limit"
+                type="number"
+                min={0}
+                value={editUsageLimit}
+                onChange={(e) => setEditUsageLimit(Number(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground">
+                設為 0 表示不限制使用次數。
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditCodeTarget(null)}>
+              取消
+            </Button>
+            <Button
+              onClick={handleUpdateUsageLimit}
+              disabled={editCodeLoading}
+              className="min-w-[100px]"
+            >
+              {editCodeLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "儲存"
               )}
             </Button>
           </DialogFooter>
