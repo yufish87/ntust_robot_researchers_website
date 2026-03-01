@@ -46,12 +46,43 @@
 - License: ISC
 - https://github.com/lucide-icons/lucide
 
+### Radix UI
+
+- Copyright (c) 2022 WorkOS
+- License: MIT
+- https://github.com/radix-ui/primitives
+
+### TanStack Query
+
+- Copyright (c) 2020 Tanner Linsley
+- License: MIT
+- https://github.com/TanStack/query
+
+### Axios
+
+- Copyright (c) 2014-present Matt Zabriskie
+- License: MIT
+- https://github.com/axios/axios
+
+### Sonner
+
+- Copyright (c) 2023 Emil Kowalski
+- License: MIT
+- https://github.com/emilkowalski/sonner
+
+### date-fns
+
+- Copyright (c) 2021 Sasha Koss
+- License: MIT
+- https://github.com/date-fns/date-fns
+
 ### 其他工具
 
 - ESLint: MIT License
 - class-variance-authority: Apache-2.0
 - clsx: MIT License
 - tailwind-merge: MIT License
+- tw-animate-css: MIT License
 
 ---
 

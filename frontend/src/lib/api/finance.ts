@@ -1,12 +1,5 @@
-import axios from "axios";
-
-export interface FinanceItem {
-  itemName: string;
-  itemSpec: string;
-  expenseType: string;
-  quantity: number;
-  totalPrice: number;
-}
+import api from "@/lib/api";
+import type { FinanceStatusFilter } from "@/lib/types/finance";
 
 export interface FinanceApplicationRequest {
   category: string;
@@ -15,39 +8,81 @@ export interface FinanceApplicationRequest {
   invoiceNumber?: string;
   invoiceDate: string;
   totalAmount: number;
-  items: FinanceItem[];
-  fileId: string; // From Direct Upload
+  items: {
+    itemName: string;
+    itemSpec: string;
+    expenseType: string;
+    quantity: number;
+    totalPrice: number;
+  }[];
+  fileId: string;
 }
 
 export const FinanceAPI = {
-  // Submit Application
+  /** 提交報帳申請 */
   submit: async (data: FinanceApplicationRequest) => {
-    const res = await axios.post("/api/applications/finance", data);
-    return res.data; // { success: true, ... }
+    const res = await api.post("/applications/finance", data);
+    return res.data;
   },
 
-  // Get My Applications
+  /** 取得我的報帳申請 */
   getMyApplications: async () => {
-    // We can reuse the same endpoint with GET or different path.
-    // Plan says: GET /applications/finance/my for GAS, but BFF needs a route too.
-    // Let's use GET /api/applications/finance
-    const res = await axios.get("/api/applications/finance");
+    const res = await api.get("/applications/finance");
     return res.data;
   },
 
+  /** 更新附件 */
   updateFile: async (applicationId: string, fileId: string) => {
-    const res = await axios.post("/api/applications/finance/update-file", {
+    const res = await api.post("/applications/finance/update-file", {
       applicationId,
-      fileId
+      fileId,
     });
     return res.data;
   },
 
-  // Cancel Application
+  /** 取消申請 */
   cancel: async (applicationId: string) => {
-    const res = await axios.post("/api/applications/finance/cancel", {
-      applicationId
+    const res = await api.post("/applications/finance/cancel", {
+      applicationId,
     });
     return res.data;
-  }
+  },
+
+  /** 回報已投遞發票 */
+  submitInvoice: async (applicationId: string) => {
+    const res = await api.post("/applications/finance/submit-invoice", {
+      applicationId,
+    });
+    return res.data;
+  },
+};
+
+/** 管理員 - 財務審核 API */
+export const FinanceAdminAPI = {
+  /** 取得申請列表 (依狀態篩選) */
+  list: async (status: FinanceStatusFilter = "all") => {
+    const res = await api.get("/admin/finance/list", { params: { status } });
+    return res.data;
+  },
+
+  /** 通過申請 */
+  approve: async (applicationId: string) => {
+    const res = await api.post("/admin/finance/approve", { applicationId });
+    return res.data;
+  },
+
+  /** 駁回申請 */
+  reject: async (applicationId: string, rejectReason: string) => {
+    const res = await api.post("/admin/finance/reject", {
+      applicationId,
+      rejectReason,
+    });
+    return res.data;
+  },
+
+  /** 確認撥款 */
+  disburse: async (applicationId: string) => {
+    const res = await api.post("/admin/finance/disburse", { applicationId });
+    return res.data;
+  },
 };

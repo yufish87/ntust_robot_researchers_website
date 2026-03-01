@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { fileName, mimeType, fileSize, type } = body;
+    const { fileName, mimeType, fileSize, type, semester, courseTitle } = body;
 
     // Call GAS to get Session URI
     const gasUrl = process.env.NEXT_PUBLIC_GAS_API_URL;
@@ -21,7 +21,9 @@ export async function POST(req: NextRequest) {
         fileName,
         mimeType,
         fileSize,
-        type
+        type,
+        semester,
+        courseTitle
       }
     };
 
