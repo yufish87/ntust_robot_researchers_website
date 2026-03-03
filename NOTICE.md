@@ -76,6 +76,24 @@
 - License: MIT
 - https://github.com/date-fns/date-fns
 
+### Zustand
+
+- Copyright (c) 2019 Paul Henschel
+- License: MIT
+- https://github.com/pmndrs/zustand
+
+### Embla Carousel
+
+- Copyright (c) 2019 David Jerleke
+- License: MIT
+- https://github.com/davidjerleke/embla-carousel
+
+### js-cookie
+
+- Copyright (c) 2018 Klaus Hartl, Fagner Brack, GitHub Contributors
+- License: MIT
+- https://github.com/js-cookie/js-cookie
+
 ### 其他工具
 
 - ESLint: MIT License

@@ -136,3 +136,15 @@
       transition: background-color 5000s ease-in-out 0s;
   }
 }
+
+/* Hero 拼圖 zoom-in 動畫 */
+@keyframes zoomIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

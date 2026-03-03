@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionToken } from "@/lib/session";
 
 const GAS_API_URL = process.env.NEXT_PUBLIC_GAS_API_URL;
 
@@ -33,7 +34,7 @@ export async function proxyToGas(
     const userAgent = req.headers.get("user-agent") || "unknown";
     const xForwardedFor = req.headers.get("x-forwarded-for");
     const ip = xForwardedFor ? xForwardedFor.split(",")[0] : "127.0.0.1";
-    const token = req.cookies.get("auth_token")?.value;
+    const token = getSessionToken(req);
 
     // 3. Prepare Payload
     let body = undefined;

@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   {
-    title: "概覽",
+    title: "首頁",
     href: "/dashboard",
     icon: Home,
   },

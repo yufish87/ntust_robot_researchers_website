@@ -34,7 +34,12 @@ export default function AdminCoursesPage() {
             const res = await fetch('/api/courses');
             const json = await res.json();
             if (json.success) {
-                setCourses(json.data);
+                const sorted = [...json.data].sort((a: Course, b: Course) => {
+                    const dateA = a.courseDate || '';
+                    const dateB = b.courseDate || '';
+                    return dateB.localeCompare(dateA);
+                });
+                setCourses(sorted);
             }
         } catch (error) {
             console.error(error);

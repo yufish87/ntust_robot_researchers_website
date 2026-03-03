@@ -2,30 +2,48 @@ import { PublicSidebar } from "@/components/layout/public-sidebar";
 import { HomeHero } from "@/components/home/home-hero";
 import {
   AboutSection,
-  ContactSection,
   NewsSection,
 } from "@/components/home/home-info-section";
 import { CourseSection } from "@/components/home/home-course-section";
 import { ScrollIndicator } from "@/components/home/scroll-indicator";
+import { SiteFooter } from "@/components/home/site-footer";
 
 import fs from "fs/promises";
 import path from "path";
 
 export default async function Home() {
-  // Read images from public/image/Carousel
-  const carouselDir = path.join(process.cwd(), "public", "image", "Carousel");
-  let carouselImages: { src: string; text: string }[] = [];
+  // 讀取競賽成果圖片
+  const competitionDir = path.join(process.cwd(), "public", "image", "Competition");
+  let awardImages: { src: string; text: string }[] = [];
 
   try {
-    const files = await fs.readdir(carouselDir);
-    carouselImages = files
+    const files = await fs.readdir(competitionDir);
+    awardImages = files
       .filter((file) => /\.(jpg|jpeg|png|webp)$/i.test(file))
       .map((file) => ({
-        src: `/image/Carousel/${encodeURIComponent(file)}`,
+        src: `/image/Competition/${encodeURIComponent(file)}`,
         text: path.parse(file).name,
       }));
   } catch (err) {
-    console.error("Failed to read carousel images", err);
+    console.error("Failed to read competition images", err);
+  }
+
+  // 讀取 Hero 拼圖底圖
+  const mosaicDir = path.join(process.cwd(), "public", "image", "Mosaic");
+  let mosaicImages: string[] = [];
+
+  try {
+    const files = await fs.readdir(mosaicDir);
+    mosaicImages = files
+      .filter((file) => /\.(jpg|jpeg|png|webp)$/i.test(file))
+      .map((file) => `/image/Mosaic/${encodeURIComponent(file)}`);
+    // Fisher-Yates shuffle
+    for (let i = mosaicImages.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [mosaicImages[i], mosaicImages[j]] = [mosaicImages[j], mosaicImages[i]];
+    }
+  } catch (err) {
+    console.error("Failed to read mosaic images", err);
   }
 
   return (
@@ -46,24 +64,22 @@ export default async function Home() {
           </a>
         </div>
 
-        <div className="max-w-7xl mx-auto flex flex-col">
-          {/* 1. Hero Section */}
-          <section
-            id="hero"
-            className="h-[88vh] flex items-center px-4 md:px-8 lg:px-12 py-12 md:py-0 relative"
-          >
-            <HomeHero carouselImages={carouselImages} />
+        {/* 1. Hero Section — 全寬，不受 max-w-7xl 限制 */}
+        <section
+          id="hero"
+          className="h-[88vh] flex items-center justify-center relative"
+        >
+          <HomeHero mosaicImages={mosaicImages} />
+        </section>
 
-            {/* Scroll Down Indicator */}
-            {/* Handled by global ScrollIndicator component */}
-          </section>
+        <div className="max-w-7xl mx-auto flex flex-col">
 
           {/* 2. About Section - Alt Background (Deep) */}
           <section
             id="about"
             className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
           >
-            <AboutSection />
+            <AboutSection awardImages={awardImages} />
           </section>
 
           {/* 3. News Section (Base/Light) */}
@@ -82,18 +98,8 @@ export default async function Home() {
             <CourseSection />
           </section>
 
-          {/* 5. Contact Section (Base/Light) */}
-          <section
-            id="contact"
-            className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20"
-          >
-            <ContactSection />
-          </section>
-
-          {/* Footer Copyright */}
-          <footer className="text-center text-slate-500 text-xs py-8 border-t border-white/5 bg-black/20">
-            {new Date().getFullYear()} 國立臺灣科技大學機器人研究社
-          </footer>
+          {/* Footer (含聯絡資訊) */}
+          <SiteFooter />
 
           <ScrollIndicator />
         </div>

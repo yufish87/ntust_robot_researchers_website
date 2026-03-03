@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionToken } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get("auth_token")?.value;
+    const token = getSessionToken(req);
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const payload = {

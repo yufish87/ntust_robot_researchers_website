@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionToken } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   let step = "init";
   try {
-    // Get Token from Cookie
-    const token = req.cookies.get("auth_token")?.value;
+    // 從加密 cookie 解密取得 token
+    const token = getSessionToken(req);
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized: No token found" }, { status: 401 });
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get("auth_token")?.value;
+    const token = getSessionToken(req);
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized: No token found" }, { status: 401 });

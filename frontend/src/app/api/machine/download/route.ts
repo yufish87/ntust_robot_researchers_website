@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { getSessionToken } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,8 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: "Missing fileId" }, { status: 400 });
     }
 
-    // Get auth token from cookie (same pattern as other machine API routes)
-    const token = request.cookies.get("auth_token")?.value;
+    // 從加密 cookie 解密取得 token
+    const token = getSessionToken(request);
     if (!token) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

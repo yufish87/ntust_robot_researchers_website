@@ -27,12 +27,12 @@ const navItems = [
   { title: "社團簡介", href: "#about", icon: Info },
   { title: "最新公告", href: "#news", icon: Megaphone },
   { title: "課程資訊", href: "#courses", icon: BookOpen },
-  { title: "聯絡我們", href: "#contact", icon: Phone },
+  { title: "聯絡我們", href: "#footer", icon: Phone },
 ];
 
 export function PublicSidebar() {
-  const { token, logout } = useAuthStore();
-  const isAuthenticated = !!token;
+  const { user, logout } = useAuthStore();
+  const isAuthenticated = !!user;
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -78,7 +78,7 @@ export function PublicSidebar() {
 
       {/* Footer / Auth */}
       <div className="p-4 border-t border-slate-200 bg-white space-y-2">
-        {mounted && isAuthenticated ? (
+        {mounted && (isAuthenticated ? (
           <>
             <Button
               onClick={() => router.push("/dashboard")}
@@ -99,7 +99,7 @@ export function PublicSidebar() {
         ) : (
           <>
             <LoginModal>
-              <Button className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start cursor-pointer">
+              <Button className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start cursor-pointer border border-transparent">
                 <LogIn className="mr-3 h-4 w-4" />
                 登入系統
               </Button>
@@ -107,14 +107,14 @@ export function PublicSidebar() {
             <RegisterModal>
               <Button
                 variant="outline"
-                className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start"
+                className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start cursor-pointer"
               >
                 <UserPlus className="mr-3 h-4 w-4" />
                 註冊帳號
               </Button>
             </RegisterModal>
           </>
-        )}
+        ))}
       </div>
     </div>
   );

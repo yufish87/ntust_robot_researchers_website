@@ -64,7 +64,7 @@ export default function CoursesPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">課程專區</h1>
                     <p className="text-muted-foreground">
-                        查看社團課程、講義與錄影存檔。(資源僅限社團內部人員查看，請勿外流。)
+                        查看社團課程、講義與錄影存檔。(資源僅限社團內部人員查看，請勿外流)
                     </p>
                 </div>
             </div>

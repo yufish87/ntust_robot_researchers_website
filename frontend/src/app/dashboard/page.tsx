@@ -1,36 +1,91 @@
-'use client';
+import { HomeHero } from "@/components/home/home-hero";
+import {
+  AboutSection,
+  NewsSection,
+} from "@/components/home/home-info-section";
+import { CourseSection } from "@/components/home/home-course-section";
+import { ScrollIndicator } from "@/components/home/scroll-indicator";
+import { SiteFooter } from "@/components/home/site-footer";
 
-import { useAuthStore } from '@/store/useAuthStore';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import fs from "fs/promises";
+import path from "path";
 
-export default function DashboardPage() {
-  const { user, logout, isAuthenticated } = useAuthStore();
-  const router = useRouter();
+export default async function DashboardPage() {
+  // 讀取競賽成果圖片
+  const competitionDir = path.join(process.cwd(), "public", "image", "Competition");
+  let awardImages: { src: string; text: string }[] = [];
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push('/auth/login');
+  try {
+    const files = await fs.readdir(competitionDir);
+    awardImages = files
+      .filter((file) => /\.(jpg|jpeg|png|webp)$/i.test(file))
+      .map((file) => ({
+        src: `/image/Competition/${encodeURIComponent(file)}`,
+        text: path.parse(file).name,
+      }));
+  } catch (err) {
+    console.error("Failed to read competition images", err);
+  }
+
+  // 讀取 Hero 拼圖底圖
+  const mosaicDir = path.join(process.cwd(), "public", "image", "Mosaic");
+  let mosaicImages: string[] = [];
+
+  try {
+    const files = await fs.readdir(mosaicDir);
+    mosaicImages = files
+      .filter((file) => /\.(jpg|jpeg|png|webp)$/i.test(file))
+      .map((file) => `/image/Mosaic/${encodeURIComponent(file)}`);
+    // Fisher-Yates shuffle
+    for (let i = mosaicImages.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [mosaicImages[i], mosaicImages[j]] = [mosaicImages[j], mosaicImages[i]];
     }
-  }, [isAuthenticated, router]);
-
-  if (!user) return null;
+  } catch (err) {
+    console.error("Failed to read mosaic images", err);
+  }
 
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">概覽</h1>
-        <p className="text-muted-foreground">
-          查看最新的社團公告與系統資訊。
-        </p>
-      </div>
-      <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-semibold mb-2">公告消息</h2>
-        <p className="text-gray-600">目前沒有新的公告。</p>
-      </div>
+    <div className="-m-8 min-h-screen bg-[#3a3745] border-l border-white/10 selection:bg-[#ffc000] selection:text-[#34313c] overflow-y-auto scroll-smooth">
+      {/* 1. Hero Section — 全寬 */}
+      <section
+        id="hero"
+        className="h-[88vh] flex items-center justify-center relative"
+      >
+        <HomeHero mosaicImages={mosaicImages} />
+      </section>
 
+      <div className="max-w-7xl mx-auto flex flex-col">
 
+        {/* 2. 社團簡介 */}
+        <section
+          id="about"
+          className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
+        >
+          <AboutSection awardImages={awardImages} />
+        </section>
+
+        {/* 3. 最新消息 */}
+        <section
+          id="news"
+          className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20"
+        >
+          <NewsSection />
+        </section>
+
+        {/* 4. 課程資訊 (社員版) */}
+        <section
+          id="courses"
+          className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
+        >
+          <CourseSection memberView />
+        </section>
+
+        {/* Footer (含聯絡資訊) */}
+        <SiteFooter />
+
+        <ScrollIndicator />
+      </div>
     </div>
   );
 }
