@@ -1,40 +1,103 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import { HomeCarousel } from "./home-carousel";
+import { useState, useEffect } from "react";
 
 interface HomeHeroProps {
-  carouselImages?: { src: string; text: string }[];
+  mosaicImages?: string[];
 }
 
-export function HomeHero({ carouselImages = [] }: HomeHeroProps) {
+export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
+  // 用循環填滿足夠多的格子
+  const tileCount = 40;
+  const tiles: string[] = [];
+  if (mosaicImages.length > 0) {
+    for (let i = 0; i < tileCount; i++) {
+      tiles.push(mosaicImages[i % mosaicImages.length]);
+    }
+  }
+
+  // 隨機動畫順序 — 只在 client 端生成，避免 hydration mismatch
+  const [delays, setDelays] = useState<number[]>(
+    () => Array.from({ length: tileCount }, (_, i) => i * 50) // SSR: 固定順序
+  );
+
+  useEffect(() => {
+    // Client: 隨機打亂出現順序
+    const indices = Array.from({ length: tileCount }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    setDelays(indices.map((order) => order * 50));
+  }, [tileCount]);
+
   return (
-    <section className="w-full flex flex-col lg:flex-row items-center gap-8 lg:gap-12 py-8 md:py-12">
-      {/* Left Content */}
-      <div className="flex-1 space-y-6 text-center lg:text-left">
+    <section className="w-full h-full relative flex items-center justify-center overflow-hidden">
+      {/* 拼圖底圖 */}
+      {tiles.length > 0 && (
+        <div
+          className="absolute top-0 -bottom-4 -left-4 -right-4 grid opacity-[0.2] pointer-events-none"
+          style={{
+            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+            gridAutoRows: "135px",
+          }}
+          aria-hidden="true"
+        >
+          {tiles.map((src, i) => (
+            <div
+              key={i}
+              className="relative overflow-hidden animate-[zoomIn_0.4s_ease-out_both]"
+              style={{ animationDelay: `${delays[i]}ms` }}
+            >
+              <Image
+                src={src}
+                alt=""
+                fill
+                sizes="200px"
+                className="object-cover"
+                loading="lazy"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 上層遮罩 — 中間加重、外圍保持透明 */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse 85% 85% at center, rgba(52,49,60,1) 0%, rgba(52,49,60,0.4) 70%)",
+        }}
+      />
+
+      {/* 主內容 */}
+      <div className="relative z-10 space-y-6 max-w-2xl mx-auto text-center">
         <div className="space-y-4">
-          <div className="relative mx-auto lg:mx-0">
-             <Image 
-               src="/image/Bar_Logo_Yellow.png" 
-               alt="NTUST Robot Researchers Club" 
-               width={500}
-               height={120}
-               className="w-[300px] md:w-[400px] lg:w-[500px] h-auto object-contain object-left"
-               priority
-             />
+          <div className="flex justify-center">
+            <Image
+              src="/image/Bar_Logo_Yellow.png"
+              alt="NTUST Robot Researchers Club"
+              width={650}
+              height={150}
+              className="w-[350px] md:w-[500px] lg:w-[650px] h-auto object-contain"
+              priority
+            />
           </div>
-          <p className="text-slate-300 text-base md:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed">
-            探索科技極限，實踐創客精神。<br className="hidden md:inline" />
-            從基礎教學到國際競賽，我們提供最完整的資源與舞台，讓你的機器人夢想不再只是夢想。
+          <p className="text-slate-300 text-base md:text-lg leading-relaxed">
+            探索科技極限，實踐創客精神。
+            <br />
+            從基礎教學到國際競賽，我們提供最完整的資源與舞台，
+            <br />
+            讓你的機器人夢想不再只是夢想。
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-          <Button 
-            size="lg" 
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Button
+            size="lg"
             className="bg-[#ffc000] hover:bg-yellow-500 text-[#34313c] font-bold px-8 rounded-full shadow-lg hover:shadow-xl transition-all border-none cursor-pointer"
             onClick={(e) => {
               e.preventDefault();
@@ -46,9 +109,9 @@ export function HomeHero({ carouselImages = [] }: HomeHeroProps) {
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
 
-          <Button 
-            variant="outline" 
-            size="lg" 
+          <Button
+            variant="outline"
+            size="lg"
             className="px-8 rounded-full border-slate-500 text-slate-200 hover:bg-white/10 hover:text-white hover:border-white bg-transparent cursor-pointer"
             onClick={(e) => {
               e.preventDefault();
@@ -60,33 +123,23 @@ export function HomeHero({ carouselImages = [] }: HomeHeroProps) {
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
-        
-        {/* Simple Stats or Highlights */}
-        <div className="pt-4 flex items-center justify-center lg:justify-start gap-8 text-slate-400 text-sm font-medium">
-          <div className="flex flex-col items-center lg:items-start">
-             <span className="text-2xl font-bold text-[#ffc000]">10+</span>
-             <span>年度競賽獎項</span>
+
+        {/* Stats */}
+        <div className="pt-4 flex items-center justify-center gap-8 text-slate-400 text-sm font-medium">
+          <div className="flex flex-col items-center">
+            <span className="text-2xl font-bold text-[#ffc000]">10+</span>
+            <span>年度競賽獎項</span>
           </div>
           <div className="w-px h-8 bg-slate-600"></div>
-          <div className="flex flex-col items-center lg:items-start">
-             <span className="text-2xl font-bold text-[#ffc000]">50+</span>
-             <span>專業社課時數</span>
+          <div className="flex flex-col items-center">
+            <span className="text-2xl font-bold text-[#ffc000]">50+</span>
+            <span>專業社課時數</span>
           </div>
-           <div className="w-px h-8 bg-slate-600"></div>
-          <div className="flex flex-col items-center lg:items-start">
-             <span className="text-2xl font-bold text-[#ffc000]">臺科大</span>
-             <span>專業技術社團</span>
+          <div className="w-px h-8 bg-slate-600"></div>
+          <div className="flex flex-col items-center">
+            <span className="text-2xl font-bold text-[#ffc000]">臺灣科技大學</span>
+            <span>專業技術社團</span>
           </div>
-        </div>
-      </div>
-
-      {/* Right Content - Carousel */}
-      <div className="flex-1 w-full max-w-[600px] lg:max-w-[700px]">
-        <div className="relative aspect-[4/3] shadow-2xl rounded-2xl overflow-hidden border-4 border-slate-700/50">
-          <HomeCarousel images={carouselImages} />
-          {/* Decorative Elements */}
-          <div className="absolute -z-10 top-[-20px] right-[-20px] w-full h-full bg-[#ffc000]/10 rounded-2xl"></div>
-          <div className="absolute -z-10 bottom-[-20px] left-[-20px] w-full h-full bg-slate-700/30 rounded-2xl"></div>
         </div>
       </div>
     </section>

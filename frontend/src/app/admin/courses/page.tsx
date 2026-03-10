@@ -34,7 +34,12 @@ export default function AdminCoursesPage() {
             const res = await fetch('/api/courses');
             const json = await res.json();
             if (json.success) {
-                setCourses(json.data);
+                const sorted = [...json.data].sort((a: Course, b: Course) => {
+                    const dateA = a.courseDate || '';
+                    const dateB = b.courseDate || '';
+                    return dateB.localeCompare(dateA);
+                });
+                setCourses(sorted);
             }
         } catch (error) {
             console.error(error);
@@ -133,13 +138,13 @@ export default function AdminCoursesPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/50">
-                            <TableHead className="w-[160px]">課程 ID</TableHead>
-                            <TableHead className="w-[80px]">學期</TableHead>
-                            <TableHead>課程名稱</TableHead>
-                            <TableHead className="w-[90px]">權限</TableHead>
-                            <TableHead className="w-[190px]">教材</TableHead>
+                            <TableHead className="w-[140px]">課程 ID</TableHead>
+                            <TableHead className="w-[60px]">學期</TableHead>
+                            <TableHead className="w-[220px]">課程名稱</TableHead>
+                            <TableHead className="w-[60px]">權限</TableHead>
+                            <TableHead className="w-[160px]">教材</TableHead>
                             <TableHead className="w-[110px]">上傳者</TableHead>
-                            <TableHead className="w-[160px]">上課時間</TableHead>
+                            <TableHead className="w-[120px]">上課時間</TableHead>
                             <TableHead className="w-[110px] text-center">操作</TableHead>
                         </TableRow>
                     </TableHeader>

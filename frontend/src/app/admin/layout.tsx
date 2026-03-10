@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useToast } from "@/hooks/use-toast";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { Loader2 } from "lucide-react";
 
 export default function AdminLayout({
@@ -19,7 +20,7 @@ export default function AdminLayout({
 
   const isAdmin = useMemo(
     () => user?.role === "admin" || user?.role === "owner",
-    [user?.role]
+    [user?.role],
   );
 
   // 等待 zustand persist hydration 完成，避免 SSR 時 user 為 null 就跳轉
@@ -62,10 +63,10 @@ export default function AdminLayout({
   return (
     <div className="flex h-full overflow-hidden bg-white">
       <AdminSidebar />
-      <main className="flex-1 ml-64 overflow-y-scroll h-full p-8">
+      <MobileNav variant="admin" />
+      <main className="flex-1 lg:ml-64 overflow-y-scroll h-full p-4 pt-14 lg:p-8">
         {children}
       </main>
     </div>
   );
 }
-

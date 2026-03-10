@@ -22,23 +22,23 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { LoginModal } from "@/components/auth/login-modal";
 import { RegisterModal } from "@/components/auth/register-modal";
 
-const navItems = [
+export const publicNavItems = [
   { title: "首頁", href: "#hero", icon: Home },
   { title: "社團簡介", href: "#about", icon: Info },
   { title: "最新公告", href: "#news", icon: Megaphone },
   { title: "課程資訊", href: "#courses", icon: BookOpen },
-  { title: "聯絡我們", href: "#contact", icon: Phone },
+  { title: "聯絡我們", href: "#footer", icon: Phone },
 ];
 
 export function PublicSidebar() {
-  const { token, logout } = useAuthStore();
-  const isAuthenticated = !!token;
+  const { user, logout } = useAuthStore();
+  const isAuthenticated = !!user;
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   return (
-    <div className="flex bg-slate-50 border-r border-slate-200 h-screen w-64 flex-col fixed left-0 top-0 hidden md:flex z-50">
+    <div className="hidden lg:flex bg-slate-50 border-r border-slate-200 h-screen w-64 flex-col fixed left-0 top-0 z-50">
       {/* Header */}
       <div className="p-6 flex flex-col items-center gap-2 border-b border-slate-100">
         <div className="relative w-full h-12">
@@ -58,7 +58,7 @@ export function PublicSidebar() {
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-        {navItems.map((item) => (
+        {publicNavItems.map((item) => (
           <div key={item.href} className="block">
             <Button
               variant="ghost"
@@ -78,43 +78,44 @@ export function PublicSidebar() {
 
       {/* Footer / Auth */}
       <div className="p-4 border-t border-slate-200 bg-white space-y-2">
-        {mounted && isAuthenticated ? (
-          <>
-            <Button
-              onClick={() => router.push("/dashboard")}
-              className="w-full bg-[#ffc000] hover:bg-yellow-400 text-[#34313c] font-bold justify-start cursor-pointer"
-            >
-              <LayoutDashboard className="mr-3 h-4 w-4" />
-              進入系統
-            </Button>
-            <Button
-              variant="outline"
-              onClick={logout}
-              className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start cursor-pointer"
-            >
-              <LogOut className="mr-3 h-4 w-4" />
-              登出系統
-            </Button>
-          </>
-        ) : (
-          <>
-            <LoginModal>
-              <Button className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start cursor-pointer">
-                <LogIn className="mr-3 h-4 w-4" />
-                登入系統
+        {mounted &&
+          (isAuthenticated ? (
+            <>
+              <Button
+                onClick={() => router.push("/dashboard")}
+                className="w-full bg-[#ffc000] hover:bg-yellow-400 text-[#34313c] font-bold justify-start cursor-pointer"
+              >
+                <LayoutDashboard className="mr-3 h-4 w-4" />
+                進入系統
               </Button>
-            </LoginModal>
-            <RegisterModal>
               <Button
                 variant="outline"
-                className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start"
+                onClick={logout}
+                className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start cursor-pointer"
               >
-                <UserPlus className="mr-3 h-4 w-4" />
-                註冊帳號
+                <LogOut className="mr-3 h-4 w-4" />
+                登出系統
               </Button>
-            </RegisterModal>
-          </>
-        )}
+            </>
+          ) : (
+            <>
+              <LoginModal>
+                <Button className="w-full bg-[#34313c] hover:bg-[#2d2a33] text-white font-bold justify-start cursor-pointer border border-transparent">
+                  <LogIn className="mr-3 h-4 w-4" />
+                  登入系統
+                </Button>
+              </LoginModal>
+              <RegisterModal>
+                <Button
+                  variant="outline"
+                  className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start cursor-pointer"
+                >
+                  <UserPlus className="mr-3 h-4 w-4" />
+                  註冊帳號
+                </Button>
+              </RegisterModal>
+            </>
+          ))}
       </div>
     </div>
   );

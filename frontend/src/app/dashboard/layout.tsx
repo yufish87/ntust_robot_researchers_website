@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/layout/sidebar";
+import { MobileNav } from "@/components/layout/mobile-nav";
 
 export default function DashboardLayout({
   children,
@@ -8,7 +9,8 @@ export default function DashboardLayout({
   return (
     <div className="flex h-full overflow-hidden bg-white">
       <AppSidebar />
-      <main className="flex-1 ml-64 overflow-y-scroll h-full p-8">
+      <MobileNav variant="dashboard" />
+      <main className="flex-1 lg:ml-64 overflow-y-scroll h-full p-4 pt-14 lg:p-8">
         {children}
       </main>
     </div>

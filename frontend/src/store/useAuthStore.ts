@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "@/lib/api";
-import Cookies from "js-cookie";
 
 interface User {
   studentId: string;
@@ -12,11 +11,10 @@ interface User {
 }
 
 interface AuthState {
-  token: string | null;
   user: User | null;
-  login: (payload: any) => Promise<void>;
-  register: (payload: any) => Promise<void>;
-  logout: () => void;
+  login: (payload: { studentId: string; password: string }) => Promise<void>;
+  register: (payload: Record<string, string>) => Promise<void>;
+  logout: () => Promise<void>;
   isAuthenticated: () => boolean;
   updateUser: (partial: Partial<User>) => void;
 }
@@ -25,7 +23,6 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      token: null,
       user: null,
 
       login: async (payload) => {
@@ -33,13 +30,9 @@ export const useAuthStore = create<AuthState>()(
         const res = await api.post("/auth/login", payload);
 
         if (res.data.success) {
-          const token = res.data.data.token;
-
-          // Set Cookie for Middleware
-          Cookies.set("auth_token", token, { expires: 1 }); // 1 day
-
+          // token 已由 server-side BFF proxy 設定為 HttpOnly cookie
+          // client 只收到 user info
           set({
-            token: token,
             user: res.data.data.user,
           });
         } else {
@@ -58,17 +51,18 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      logout: () => {
-        // Remove Cookie
-        Cookies.remove("auth_token");
-        set({ token: null, user: null });
-
-        // Force reload to clear any server-side cached states or middleware context if needed
-        // window.location.href = '/login';
+      logout: async () => {
+        try {
+          // 呼叫 server-side API 清除 HttpOnly cookie
+          await api.post("/auth/logout");
+        } catch {
+          // 即使呼叫失敗也清除 client state
+        }
+        set({ user: null });
       },
 
       isAuthenticated: () => {
-        return !!get().token;
+        return !!get().user;
       },
 
       updateUser: (partial) => {
@@ -80,25 +74,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      // Rehydration 時驗證 Cookie 是否仍存在
-      // Cookie (1 天過期) 是認證的唯一真相來源；
-      // 若 Cookie 已失效，localStorage 中的殘留 token 必須清除，避免誤判為登入狀態。
-      merge: (persistedState, currentState) => {
-        const persisted = persistedState as Partial<AuthState>;
-
-        if (persisted?.token) {
-          const cookieExists =
-            typeof document !== "undefined" && !!Cookies.get("auth_token");
-
-          if (!cookieExists) {
-            // Cookie 已過期或被清除 → 不還原舊的認證狀態
-            return { ...currentState, token: null, user: null };
-          }
-        }
-
-        // Cookie 仍有效 (或本來就沒有 token) → 正常還原
-        return { ...currentState, ...persisted };
-      },
     },
   ),
 );
+

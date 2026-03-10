@@ -4,3 +4,6 @@ docs/
 # Exclude GAS backend code from GitHub (Managed by Clasp)
 gas-backend/
 .clasp.json
+.claspignore
+gas-backend-public/
+.vscode/

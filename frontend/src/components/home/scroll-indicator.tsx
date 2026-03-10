@@ -38,7 +38,7 @@ export function ScrollIndicator() {
         
         {/* Scroll Down Button (Visible when at top) */}
         <button
-          onClick={() => scrollTo("#about")}
+          onClick={() => scrollTo("#footer")}
           className={cn(
             "absolute inset-0 flex items-center justify-center rounded-full shadow-lg border border-white/10 transition-all duration-500",
             "bg-[#34313c] text-[#ffc000] hover:bg-[#2d2a33] hover:scale-110",

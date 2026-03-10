@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CourseDetailModal } from "@/components/course/CourseDetailModal";
 
-export function CourseSection({ className }: { className?: string }) {
+export function CourseSection({ className, memberView = false }: { className?: string; memberView?: boolean }) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const fetchedRef = useRef(false);
@@ -26,30 +26,43 @@ export function CourseSection({ className }: { className?: string }) {
       try {
         setLoading(true);
         // P0: 首頁一律使用公開端點，避免 Zustand rehydrate 造成 user 變化時 double fetch
-        const res = await fetch("/api/courses/public");
+        const endpoint = memberView ? "/api/courses" : "/api/courses/public";
+        const res = await fetch(endpoint);
         const json = await res.json();
         if (json.success) {
           let data = json.data as Course[];
 
-          // Filter: Only show upcoming courses within next 30 days
-          const now = new Date();
-          const future30d = new Date();
-          future30d.setDate(now.getDate() + 30);
+          if (!memberView) {
+            // 公開版: 僅顯示未來 30 天課程
+            const now = new Date();
+            const future30d = new Date();
+            future30d.setDate(now.getDate() + 30);
 
-          data = data.filter((c) => {
-            if (!c.courseDate) return false;
-            const dateStr = c.courseDate.replace(" ", "T");
-            const cTime = new Date(dateStr);
-            return (
-              !isNaN(cTime.getTime()) && cTime >= now && cTime <= future30d
+            data = data.filter((c) => {
+              if (!c.courseDate) return false;
+              const dateStr = c.courseDate.replace(" ", "T");
+              const cTime = new Date(dateStr);
+              return (
+                !isNaN(cTime.getTime()) && cTime >= now && cTime <= future30d
+              );
+            });
+
+            // 公開版: 近到遠，最多 5 筆
+            const sorted = data.sort((a, b) =>
+              (a.courseDate || "").localeCompare(b.courseDate || ""),
             );
-          });
-
-          // Sort by date (asc) - Nearest first
-          const sorted = data.sort((a, b) =>
-            (a.courseDate || "").localeCompare(b.courseDate || ""),
-          );
-          setCourses(sorted.slice(0, 5)); // Show top 5
+            setCourses(sorted.slice(0, 5));
+          } else {
+            // 社員版: 按與現在的時間差排序（含過去和未來），取最近 3 堂
+            const now = Date.now();
+            const withDate = data.filter((c) => c.courseDate);
+            const sorted = withDate.sort((a, b) => {
+              const diffA = Math.abs(new Date(a.courseDate!.replace(" ", "T")).getTime() - now);
+              const diffB = Math.abs(new Date(b.courseDate!.replace(" ", "T")).getTime() - now);
+              return diffA - diffB;
+            });
+            setCourses(sorted.slice(0, 3));
+          }
         }
       } catch (error) {
         console.error("Failed to fetch courses", error);
@@ -70,11 +83,21 @@ export function CourseSection({ className }: { className?: string }) {
             <h3 className="text-2xl font-bold text-white">課程資訊</h3>
           </div>
           <p className="text-sm text-slate-400">
-            近期社課內容與時間
-            <br />
-            在這裡查看未來30天的課程
-            <br />
-            登入社團系統可查看所有課程資料
+            {memberView ? (
+              <>
+                社團課程與教學資源
+                <br />
+                點擊課程查看講義與錄影
+              </>
+            ) : (
+              <>
+                近期社課內容與時間
+                <br />
+                在這裡查看未來30天的課程
+                <br />
+                登入社團系統可查看所有課程資料
+              </>
+            )}
           </p>
         </div>
 
@@ -108,10 +131,18 @@ export function CourseSection({ className }: { className?: string }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {courses.map((course) => (
+                  {courses.map((course) => {
+                    const isPast = course.courseDate
+                      ? new Date(course.courseDate.replace(" ", "T")) < new Date()
+                      : false;
+
+                    return (
                     <tr
                       key={course.id}
-                      className="hover:bg-white/5 transition-colors cursor-pointer group"
+                      className={cn(
+                        "hover:bg-white/5 transition-colors cursor-pointer group",
+                        isPast && "opacity-50"
+                      )}
                       onClick={() => {
                         setSelectedCourse(course);
                         setIsModalOpen(true);
@@ -131,7 +162,14 @@ export function CourseSection({ className }: { className?: string }) {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-base text-slate-200">
-                        {course.courseDate || course.uploadTime.split(" ")[0]}
+                        <span className="flex items-center gap-2">
+                          {course.courseDate || course.uploadTime.split(" ")[0]}
+                          {isPast && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-500 text-slate-400">
+                              已結束
+                            </Badge>
+                          )}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <div className="flex items-center justify-center gap-2">
@@ -141,7 +179,8 @@ export function CourseSection({ className }: { className?: string }) {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

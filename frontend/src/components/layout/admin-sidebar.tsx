@@ -19,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const adminNavItems = [
+export const adminNavItems = [
   {
     title: "管理總覽",
     href: "/admin",
@@ -69,7 +69,7 @@ export function AdminSidebar() {
   };
 
   return (
-    <div className="flex bg-black h-screen w-64 flex-col fixed left-0 top-0">
+    <div className="hidden lg:flex bg-black h-screen w-64 flex-col fixed left-0 top-0">
       {/* Header */}
       <div className="p-6 flex flex-col items-center gap-2 border-b border-white/10">
         <div className="relative w-full h-12">

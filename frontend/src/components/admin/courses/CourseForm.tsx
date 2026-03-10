@@ -1,13 +1,26 @@
-'use client';
+"use client";
 
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Trash2, Upload, FileText, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useRef, useState, useEffect, useCallback } from "react";
@@ -29,13 +42,13 @@ function getDefaultSemester(): string {
 
 function getNextTuesday(): string {
   const now = new Date();
-  const days = ((2 - now.getDay() + 7) % 7) || 7;
+  const days = (2 - now.getDay() + 7) % 7 || 7;
   const d = new Date(now);
   d.setDate(now.getDate() + days);
   d.setHours(19, 0, 0, 0);
   const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${dd}T19:00`;
 }
 
@@ -107,7 +120,11 @@ type PendingFilesMap = Map<string, File>;
 // CourseForm
 // ---------------------------------------------------------------------------
 
-export function CourseForm({ defaultValues, onSubmit, isLoading }: CourseFormProps) {
+export function CourseForm({
+  defaultValues,
+  onSubmit,
+  isLoading,
+}: CourseFormProps) {
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema) as any,
     defaultValues: {
@@ -120,7 +137,7 @@ export function CourseForm({ defaultValues, onSubmit, isLoading }: CourseFormPro
       videos: [] as ResourceFormItem[],
       others: [] as ResourceFormItem[],
       ...defaultValues,
-    }
+    },
   });
 
   // 暫存待上傳的 File 物件 (key 例如 "handouts.0", "others.1")
@@ -154,38 +171,44 @@ export function CourseForm({ defaultValues, onSubmit, isLoading }: CourseFormPro
         // 1. 刪除舊檔案
         for (const oldFileId of deletions) {
           try {
-            await axios.post('/api/upload/delete', { fileId: oldFileId });
+            await axios.post("/api/upload/delete", { fileId: oldFileId });
           } catch (e) {
-            console.warn('刪除舊檔案失敗 (ignored):', oldFileId, e);
+            console.warn("刪除舊檔案失敗 (ignored):", oldFileId, e);
           }
         }
         deletions.clear();
 
         // 2. 上傳新檔案
         for (const [key, file] of pending.entries()) {
-          const [section, idxStr] = key.split('.');
+          const [section, idxStr] = key.split(".");
           const idx = parseInt(idxStr, 10);
-          const arr = (values as any)[section] as ResourceFormItem[] | undefined;
+          const arr = (values as any)[section] as
+            | ResourceFormItem[]
+            | undefined;
           if (!arr || !arr[idx]) continue;
 
           // 1. Init
-          const initRes = await axios.post('/api/upload/init', {
+          const initRes = await axios.post("/api/upload/init", {
             fileName: file.name,
-            mimeType: file.type || 'application/pdf',
+            mimeType: file.type || "application/pdf",
             fileSize: file.size,
-            type: 'course',
-            semester: values.semester || '',
-            courseTitle: values.title || '未命名',
+            type: "course",
+            semester: values.semester || "",
+            courseTitle: values.title || "未命名",
           });
           const { sessionUri, fileId: uploadedFileId } = initRes.data;
-          if (!sessionUri) throw new Error('無法取得上傳連結');
+          if (!sessionUri) throw new Error("無法取得上傳連結");
 
           // 2. PUT file content
           await new Promise<void>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
-            xhr.open('PUT', sessionUri);
-            xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve() : reject(new Error(`上傳失敗: ${xhr.status}`));
-            xhr.onerror = () => uploadedFileId ? resolve() : reject(new Error('網路錯誤'));
+            xhr.open("PUT", sessionUri);
+            xhr.onload = () =>
+              xhr.status >= 200 && xhr.status < 300
+                ? resolve()
+                : reject(new Error(`上傳失敗: ${xhr.status}`));
+            xhr.onerror = () =>
+              uploadedFileId ? resolve() : reject(new Error("網路錯誤"));
             xhr.send(file);
           });
 
@@ -203,28 +226,46 @@ export function CourseForm({ defaultValues, onSubmit, isLoading }: CourseFormPro
     onSubmit(values);
   };
 
-  const { fields: handoutFields, append: appendHandout, remove: removeHandout } = useFieldArray({
+  const {
+    fields: handoutFields,
+    append: appendHandout,
+    remove: removeHandout,
+  } = useFieldArray({
     control: form.control,
-    name: "handouts"
+    name: "handouts",
   });
-  const { fields: videoFields, append: appendVideo, remove: removeVideo } = useFieldArray({
+  const {
+    fields: videoFields,
+    append: appendVideo,
+    remove: removeVideo,
+  } = useFieldArray({
     control: form.control,
-    name: "videos"
+    name: "videos",
   });
-  const { fields: otherFields, append: appendOther, remove: removeOther } = useFieldArray({
+  const {
+    fields: otherFields,
+    append: appendOther,
+    remove: removeOther,
+  } = useFieldArray({
     control: form.control,
-    name: "others"
+    name: "others",
   });
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(handleFormSubmit)}
+        className="space-y-6"
+      >
         <FormField
           control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>課程名稱<RequiredMark /></FormLabel>
+              <FormLabel>
+                課程名稱
+                <RequiredMark />
+              </FormLabel>
               <FormControl>
                 <Input placeholder="例如：Python 基礎入門" {...field} />
               </FormControl>
@@ -233,13 +274,16 @@ export function CourseForm({ defaultValues, onSubmit, isLoading }: CourseFormPro
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="semester"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>學期<RequiredMark /></FormLabel>
+                <FormLabel>
+                  學期
+                  <RequiredMark />
+                </FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="w-full">
@@ -248,7 +292,9 @@ export function CourseForm({ defaultValues, onSubmit, isLoading }: CourseFormPro
                   </FormControl>
                   <SelectContent position="popper" sideOffset={4}>
                     {semesterOptions.map((sem) => (
-                      <SelectItem key={sem} value={sem}>{sem}</SelectItem>
+                      <SelectItem key={sem} value={sem}>
+                        {sem}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -262,7 +308,10 @@ export function CourseForm({ defaultValues, onSubmit, isLoading }: CourseFormPro
             name="permission"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>權限設定<RequiredMark /></FormLabel>
+                <FormLabel>
+                  權限設定
+                  <RequiredMark />
+                </FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="w-full">
@@ -270,7 +319,9 @@ export function CourseForm({ defaultValues, onSubmit, isLoading }: CourseFormPro
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent position="popper" sideOffset={4}>
-                    <SelectItem value="visitor">公開（首頁隱藏錄影）</SelectItem>
+                    <SelectItem value="visitor">
+                      公開（首頁隱藏錄影）
+                    </SelectItem>
                     <SelectItem value="member">社員（僅社員可見）</SelectItem>
                   </SelectContent>
                 </Select>
@@ -301,7 +352,11 @@ export function CourseForm({ defaultValues, onSubmit, isLoading }: CourseFormPro
             <FormItem>
               <FormLabel>課程說明</FormLabel>
               <FormControl>
-                <Textarea placeholder="課程簡介..." className="h-24" {...field} />
+                <Textarea
+                  placeholder="課程簡介..."
+                  className="h-24"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -357,7 +412,11 @@ export function CourseForm({ defaultValues, onSubmit, isLoading }: CourseFormPro
           onOldFileDeletion={addPendingDeletion}
         />
 
-        <Button type="submit" disabled={isLoading || isUploading} className="w-full">
+        <Button
+          type="submit"
+          disabled={isLoading || isUploading}
+          className="w-full"
+        >
           {isUploading ? "上傳檔案中..." : isLoading ? "處理中..." : "送出"}
         </Button>
       </form>
@@ -385,7 +444,18 @@ interface ResourceSectionProps {
 }
 
 function ResourceSection({
-  label, fields, onAppend, onRemove, control, namePrefix, urlPlaceholder, addLabel, showUpload = true, formControl, onPendingFile, onOldFileDeletion,
+  label,
+  fields,
+  onAppend,
+  onRemove,
+  control,
+  namePrefix,
+  urlPlaceholder,
+  addLabel,
+  showUpload = true,
+  formControl,
+  onPendingFile,
+  onOldFileDeletion,
 }: ResourceSectionProps) {
   return (
     <div>
@@ -440,7 +510,17 @@ interface ResourceItemProps {
   onOldFileDeletion: (fileId: string) => void;
 }
 
-function ResourceItem({ index, control, namePrefix, urlPlaceholder, onRemove, showUpload = true, formControl, onPendingFile, onOldFileDeletion }: ResourceItemProps) {
+function ResourceItem({
+  index,
+  control,
+  namePrefix,
+  urlPlaceholder,
+  onRemove,
+  showUpload = true,
+  formControl,
+  onPendingFile,
+  onOldFileDeletion,
+}: ResourceItemProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingFileName, setPendingFileName] = useState<string | null>(null);
   const [driveFileName, setDriveFileName] = useState<string | null>(null);
@@ -448,11 +528,14 @@ function ResourceItem({ index, control, namePrefix, urlPlaceholder, onRemove, sh
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // 監聽 form 的 semester 和 title，用於上傳建立子資料夾
-  const semester = useWatch({ control: formControl, name: 'semester' });
-  const courseTitle = useWatch({ control: formControl, name: 'title' });
+  const semester = useWatch({ control: formControl, name: "semester" });
+  const courseTitle = useWatch({ control: formControl, name: "title" });
 
   // 監聽 fileId 欄位，如有值嘗試取得檔名
-  const fileIdValue = useWatch({ control, name: `${namePrefix}.${index}.fileId` });
+  const fileIdValue = useWatch({
+    control,
+    name: `${namePrefix}.${index}.fileId`,
+  });
 
   useEffect(() => {
     if (!fileIdValue || pendingFileName) return;
@@ -460,9 +543,9 @@ function ResourceItem({ index, control, namePrefix, urlPlaceholder, onRemove, sh
     const fetchFileName = async () => {
       try {
         const res = await fetch(`/api/courses/access`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'getFileName', fileId: fileIdValue }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "getFileName", fileId: fileIdValue }),
         });
         const json = await res.json();
         if (json.success && json.data?.name) {
@@ -494,7 +577,13 @@ function ResourceItem({ index, control, namePrefix, urlPlaceholder, onRemove, sh
             </FormItem>
           )}
         />
-        <Button type="button" variant="ghost" size="icon" onClick={onRemove} className="shrink-0">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onRemove}
+          className="shrink-0"
+        >
           <Trash2 className="w-4 h-4 text-destructive" />
         </Button>
       </div>
@@ -511,7 +600,9 @@ function ResourceItem({ index, control, namePrefix, urlPlaceholder, onRemove, sh
               const isPending = !!pendingFileName;
               const hasFileId = !!fileIdField.value && !pendingFileName;
 
-              const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+              const handleFileSelect = (
+                e: React.ChangeEvent<HTMLInputElement>,
+              ) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
 
@@ -528,7 +619,7 @@ function ResourceItem({ index, control, namePrefix, urlPlaceholder, onRemove, sh
                 onPendingFile(fileKey, file);
 
                 // 清除 input 值讓同檔名可重選
-                if (fileInputRef.current) fileInputRef.current.value = '';
+                if (fileInputRef.current) fileInputRef.current.value = "";
               };
 
               const handleClearAndEdit = () => {
@@ -552,7 +643,9 @@ function ResourceItem({ index, control, namePrefix, urlPlaceholder, onRemove, sh
                 return (
                   <FormItem>
                     <div className="flex gap-2 items-center min-w-0">
-                      <div className={`flex items-center gap-2 flex-1 min-w-0 h-9 px-3 border rounded-md text-sm overflow-hidden ${uploadError ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+                      <div
+                        className={`flex items-center gap-2 flex-1 min-w-0 h-9 px-3 border rounded-md text-sm overflow-hidden ${uploadError ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"}`}
+                      >
                         {isUploading ? (
                           <Loader2 className="w-4 h-4 text-amber-600 shrink-0 animate-spin" />
                         ) : uploadError ? (
@@ -560,7 +653,9 @@ function ResourceItem({ index, control, namePrefix, urlPlaceholder, onRemove, sh
                         ) : (
                           <Upload className="w-4 h-4 text-amber-600 shrink-0" />
                         )}
-                        <span className={`truncate ${uploadError ? 'text-red-700' : 'text-amber-700'}`}>
+                        <span
+                          className={`truncate ${uploadError ? "text-red-700" : "text-amber-700"}`}
+                        >
                           {uploadError
                             ? `上傳失敗: ${uploadError}`
                             : isUploading
