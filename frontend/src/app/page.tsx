@@ -1,9 +1,8 @@
 import { PublicSidebar } from "@/components/layout/public-sidebar";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { HomeHero } from "@/components/home/home-hero";
-import {
-  AboutSection,
-  NewsSection,
-} from "@/components/home/home-info-section";
+import { AboutSection } from "@/components/home/home-info-section";
+import { AnnouncementSection } from "@/components/home/home-announcement-section";
 import { CourseSection } from "@/components/home/home-course-section";
 import { ScrollIndicator } from "@/components/home/scroll-indicator";
 import { SiteFooter } from "@/components/home/site-footer";
@@ -13,7 +12,12 @@ import path from "path";
 
 export default async function Home() {
   // 讀取競賽成果圖片
-  const competitionDir = path.join(process.cwd(), "public", "image", "Competition");
+  const competitionDir = path.join(
+    process.cwd(),
+    "public",
+    "image",
+    "Competition",
+  );
   let awardImages: { src: string; text: string }[] = [];
 
   try {
@@ -37,11 +41,6 @@ export default async function Home() {
     mosaicImages = files
       .filter((file) => /\.(jpg|jpeg|png|webp)$/i.test(file))
       .map((file) => `/image/Mosaic/${encodeURIComponent(file)}`);
-    // Fisher-Yates shuffle
-    for (let i = mosaicImages.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [mosaicImages[i], mosaicImages[j]] = [mosaicImages[j], mosaicImages[i]];
-    }
   } catch (err) {
     console.error("Failed to read mosaic images", err);
   }
@@ -51,19 +50,11 @@ export default async function Home() {
       {/* Sidebar - Visible on Desktop */}
       <PublicSidebar />
 
-      {/* Main Content */}
-      <main className="flex-1 md:ml-64 w-full h-screen overflow-y-auto scroll-smooth">
-        {/* Mobile Header */}
-        <div className="md:hidden flex justify-between items-center px-4 py-4 sticky top-0 bg-[#34313c]/95 backdrop-blur-md z-50 border-b border-white/10">
-          <span className="font-bold text-lg text-white">NTUST RRC</span>
-          <a
-            href="/auth/login"
-            className="text-sm font-bold text-[#34313c] bg-[#ffc000] px-4 py-1.5 rounded-full hover:bg-yellow-400 transition-colors"
-          >
-            登入
-          </a>
-        </div>
+      {/* Mobile Nav */}
+      <MobileNav variant="public" />
 
+      {/* Main Content */}
+      <main className="flex-1 lg:ml-64 w-full h-screen overflow-y-auto scroll-smooth pt-14 lg:pt-0">
         {/* 1. Hero Section — 全寬，不受 max-w-7xl 限制 */}
         <section
           id="hero"
@@ -73,7 +64,6 @@ export default async function Home() {
         </section>
 
         <div className="max-w-7xl mx-auto flex flex-col">
-
           {/* 2. About Section - Alt Background (Deep) */}
           <section
             id="about"
@@ -87,7 +77,7 @@ export default async function Home() {
             id="news"
             className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20"
           >
-            <NewsSection />
+            <AnnouncementSection />
           </section>
 
           {/* 4. Course Section - Alt Background (Deep) */}

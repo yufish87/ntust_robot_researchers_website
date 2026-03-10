@@ -1,8 +1,6 @@
 import { HomeHero } from "@/components/home/home-hero";
-import {
-  AboutSection,
-  NewsSection,
-} from "@/components/home/home-info-section";
+import { AboutSection } from "@/components/home/home-info-section";
+import { AnnouncementSection } from "@/components/home/home-announcement-section";
 import { CourseSection } from "@/components/home/home-course-section";
 import { ScrollIndicator } from "@/components/home/scroll-indicator";
 import { SiteFooter } from "@/components/home/site-footer";
@@ -12,7 +10,12 @@ import path from "path";
 
 export default async function DashboardPage() {
   // 讀取競賽成果圖片
-  const competitionDir = path.join(process.cwd(), "public", "image", "Competition");
+  const competitionDir = path.join(
+    process.cwd(),
+    "public",
+    "image",
+    "Competition",
+  );
   let awardImages: { src: string; text: string }[] = [];
 
   try {
@@ -36,17 +39,12 @@ export default async function DashboardPage() {
     mosaicImages = files
       .filter((file) => /\.(jpg|jpeg|png|webp)$/i.test(file))
       .map((file) => `/image/Mosaic/${encodeURIComponent(file)}`);
-    // Fisher-Yates shuffle
-    for (let i = mosaicImages.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [mosaicImages[i], mosaicImages[j]] = [mosaicImages[j], mosaicImages[i]];
-    }
   } catch (err) {
     console.error("Failed to read mosaic images", err);
   }
 
   return (
-    <div className="-m-8 min-h-screen bg-[#3a3745] border-l border-white/10 selection:bg-[#ffc000] selection:text-[#34313c] overflow-y-auto scroll-smooth">
+    <div className="-m-4 lg:-m-8 min-h-screen bg-[#3a3745] border-l border-white/10 selection:bg-[#ffc000] selection:text-[#34313c] overflow-y-auto scroll-smooth">
       {/* 1. Hero Section — 全寬 */}
       <section
         id="hero"
@@ -56,7 +54,6 @@ export default async function DashboardPage() {
       </section>
 
       <div className="max-w-7xl mx-auto flex flex-col">
-
         {/* 2. 社團簡介 */}
         <section
           id="about"
@@ -66,11 +63,8 @@ export default async function DashboardPage() {
         </section>
 
         {/* 3. 最新消息 */}
-        <section
-          id="news"
-          className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20"
-        >
-          <NewsSection />
+        <section id="news" className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20">
+          <AnnouncementSection memberView />
         </section>
 
         {/* 4. 課程資訊 (社員版) */}

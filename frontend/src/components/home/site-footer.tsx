@@ -56,7 +56,7 @@ export function SiteFooter({ className }: { className?: string }) {
         </div>
 
         {/* 聯絡資訊 */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 text-sm text-slate-400 mb-8">
+        <div className="flex flex-wrap gap-4 sm:gap-8 text-sm text-slate-400 mb-8">
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-[#ffc000]" />
             <a href="mailto:ntust.robot@gmail.com" className="hover:text-white transition-colors">
@@ -85,8 +85,8 @@ export function SiteFooter({ className }: { className?: string }) {
               @ntust.robot
             </a>
           </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#ffc000]" />
+          <div className="flex items-center gap-2 basis-full sm:basis-auto">
+            <MapPin className="w-4 h-4 text-[#ffc000] shrink-0" />
             <a
               href="https://maps.app.goo.gl/tpPr18kFj16vtTFN6"
               target="_blank"

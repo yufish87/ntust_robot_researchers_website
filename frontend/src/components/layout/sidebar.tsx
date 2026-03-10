@@ -4,11 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
-import { 
-  CreditCard, 
-  Home, 
-  Settings, 
-  LogOut, 
+import {
+  CreditCard,
+  Home,
+  Settings,
+  LogOut,
   User,
   Wrench,
   Printer,
@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const navItems = [
+export const dashboardNavItems = [
   {
     title: "首頁",
     href: "/dashboard",
@@ -72,7 +72,7 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
-  const router = useRouter(); 
+  const router = useRouter();
 
   const isAdmin = user?.role === "admin" || user?.role === "owner";
 
@@ -82,43 +82,60 @@ export function AppSidebar() {
   };
 
   return (
-    <div className="flex h-screen w-64 flex-col fixed left-0 top-0" style={{ backgroundColor: "#34313d" }}>
+    <div
+      className="hidden lg:flex h-screen w-64 flex-col fixed left-0 top-0"
+      style={{ backgroundColor: "#34313d" }}
+    >
       {/* Header */}
       <div className="p-6 flex flex-col items-center gap-2 border-b border-white/10">
         <div className="relative w-full h-12">
-           <Image 
-             src="/image/Bar_Logo_Yellow.png" 
-             alt="RRC Logo" 
-             fill
-             className="object-contain"
-             sizes="20vw"
-             priority
-           />
+          <Image
+            src="/image/Bar_Logo_Yellow.png"
+            alt="RRC Logo"
+            fill
+            className="object-contain"
+            sizes="20vw"
+            priority
+          />
         </div>
-        <p className="text-base font-bold text-white tracking-[0.2em] mt-1 text-center">資源管理系統</p>
+        <p className="text-base font-bold text-white tracking-[0.2em] mt-1 text-center">
+          資源管理系統
+        </p>
       </div>
 
       {/* Nav */}
       <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-        {navItems.map((item) => {
-          const isActive = item.href === "/dashboard" 
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(item.href + "/");
+        {dashboardNavItems.map((item) => {
+          const isActive =
+            item.href === "/dashboard"
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link key={item.href} href={item.href}>
               <Button
                 variant="ghost"
                 className={cn(
                   "w-full justify-start mb-1",
-                  isActive 
-                    ? "font-semibold hover:bg-white/10" 
-                    : "text-white/60 hover:text-white hover:bg-white/10"
+                  isActive
+                    ? "font-semibold hover:bg-white/10"
+                    : "text-white/60 hover:text-white hover:bg-white/10",
                 )}
-                style={isActive ? { backgroundColor: "rgba(255,192,0,0.15)", color: "#ffc000" } : undefined}
+                style={
+                  isActive
+                    ? {
+                        backgroundColor: "rgba(255,192,0,0.15)",
+                        color: "#ffc000",
+                      }
+                    : undefined
+                }
               >
                 <item.icon
                   className={cn("mr-3 h-5 w-5")}
-                  style={isActive ? { color: "#ffc000" } : { color: "rgba(255,255,255,0.4)" }}
+                  style={
+                    isActive
+                      ? { color: "#ffc000" }
+                      : { color: "rgba(255,255,255,0.4)" }
+                  }
                 />
                 {item.title}
               </Button>
@@ -131,13 +148,19 @@ export function AppSidebar() {
       <div className="p-4 border-t border-white/10">
         <div className="flex items-center gap-3 mb-3 px-2">
           <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-             <User className="w-4 h-4 text-white/60" />
+            <User className="w-4 h-4 text-white/60" />
           </div>
           <div className="overflow-hidden">
-            <p className="text-sm font-medium text-white truncate">{user?.name || "使用者"}</p>
+            <p className="text-sm font-medium text-white truncate">
+              {user?.name || "使用者"}
+            </p>
             <div className="space-y-0.5 mt-0.5">
-               <p className="text-xs text-white/50 break-words leading-tight">{user?.department || "未設定系所"}</p>
-               <p className="text-xs text-white/40 font-mono">{user?.studentId || "未登入"}</p>
+              <p className="text-xs text-white/50 break-words leading-tight">
+                {user?.department || "未設定系所"}
+              </p>
+              <p className="text-xs text-white/40 font-mono">
+                {user?.studentId || "未登入"}
+              </p>
             </div>
           </div>
         </div>
@@ -159,8 +182,8 @@ export function AppSidebar() {
           </>
         )}
 
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="w-full justify-start text-white/60 hover:text-red-400 hover:bg-red-500/10"
           onClick={handleLogout}
         >

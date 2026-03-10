@@ -6,3 +6,4 @@ gas-backend/
 .clasp.json
 .claspignore
 gas-backend-public/
+.vscode/
