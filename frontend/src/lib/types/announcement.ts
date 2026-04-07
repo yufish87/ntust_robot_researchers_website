@@ -3,6 +3,7 @@
 export interface AnnouncementAttachment {
   title: string;
   link: string;
+  fileId?: string;
 }
 
 export interface Announcement {

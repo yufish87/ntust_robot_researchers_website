@@ -235,7 +235,7 @@ export function EquipmentDetailModal({
                   }}
                 >
                   <ShoppingCart className="mr-2 h-5 w-5" />
-                  加入購物車
+                  加入借用清單
                 </Button>
               </div>
 

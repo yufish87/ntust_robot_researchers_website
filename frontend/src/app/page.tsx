@@ -54,11 +54,11 @@ export default async function Home() {
       <MobileNav variant="public" />
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 w-full h-screen overflow-y-auto scroll-smooth pt-14 lg:pt-0">
+      <main className="flex-1 lg:ml-64 w-full h-[100svh] overflow-y-auto scroll-smooth pt-14 lg:pt-0 pb-[env(safe-area-inset-bottom)]">
         {/* 1. Hero Section — 全寬，不受 max-w-7xl 限制 */}
         <section
           id="hero"
-          className="h-[88vh] flex items-center justify-center relative"
+          className="min-h-[88svh] flex items-center justify-center relative"
         >
           <HomeHero mosaicImages={mosaicImages} />
         </section>

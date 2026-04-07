@@ -1,5 +1,5 @@
 // P4: Server Component — 靜態區段不需要 "use client"
-import { Megaphone, Info, Trophy } from "lucide-react";
+import { Info, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -8,29 +8,6 @@ interface AwardImage {
   text: string;
 }
 
-// 1. Latest News Section
-export function NewsSection({ className }: { className?: string }) {
-  return (
-    <div className={cn("w-full py-8 md:py-12", className)}>
-      <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
-        {/* Header */}
-        <div className="md:w-1/4 shrink-0">
-          <div className="flex items-center gap-3 mb-2">
-            <Megaphone className="h-6 w-6 text-[#ffc000]" />
-            <h3 className="text-2xl font-bold text-white">最新公告</h3>
-          </div>
-          <p className="text-sm text-slate-400">社團最新消息與異動</p>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 w-full bg-white/5 rounded-xl p-6 min-h-[150px] flex items-center justify-center text-slate-500 italic">
-          <p>目前沒有新公告</p>
-          {/* TODO: Integrate with News API */}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // 2. About Us Section (含競賽成果圖片)
 export function AboutSection({
