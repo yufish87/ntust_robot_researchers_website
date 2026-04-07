@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EquipmentAdminAPI } from "@/lib/api/equipment";
 import type {
   EquipmentApplication,
@@ -158,9 +159,8 @@ function ExpandedRow({ app }: { app: EquipmentApplication }) {
 /* ================================================================== */
 export default function AdminEquipmentPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<EquipmentStatusFilter>("pending");
-  const [allData, setAllData] = useState<EquipmentApplication[]>([]);
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -171,26 +171,15 @@ export default function AdminEquipmentPage() {
   // 歸還確認 Dialog
   const [returnTarget, setReturnTarget] = useState<string | null>(null);
 
-  /* ---------- 資料載入（一次取全部，前端分類）---------- */
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  /* ---------- 資料載入（useQuery 快取）---------- */
+  const { data: allData = [], isLoading: loading } = useQuery({
+    queryKey: ["admin-equipment"],
+    queryFn: async () => {
       const res = await EquipmentAdminAPI.list("all");
-      if (res.success) {
-        setAllData(res.data ?? []);
-      } else {
-        toast({ variant: "destructive", title: "取得資料失敗" });
-      }
-    } catch {
-      toast({
-        variant: "destructive",
-        title: "取得資料失敗",
-        description: "請稍後再試",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+      if (res.success) return res.data ?? [];
+      throw new Error("取得資料失敗");
+    },
+  });
 
   /* ---------- 前端依 tab 篩選 ---------- */
   const data = useMemo(() => {
@@ -209,10 +198,6 @@ export default function AdminEquipmentPage() {
     });
   }, [allData, tab]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   /* ---------- 動作 ---------- */
   const handleApprove = async (id: string) => {
     setActionLoading(id);
@@ -220,7 +205,7 @@ export default function AdminEquipmentPage() {
       const res = await EquipmentAdminAPI.approve(id);
       if (res.success) {
         toast({ title: "已核准", description: `申請 ${id} 已通過` });
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-equipment"] });
       } else {
         toast({
           variant: "destructive",
@@ -247,7 +232,7 @@ export default function AdminEquipmentPage() {
         });
         setRejectTarget(null);
         setRejectReason("");
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-equipment"] });
       } else {
         toast({
           variant: "destructive",
@@ -273,7 +258,7 @@ export default function AdminEquipmentPage() {
           description: `申請 ${returnTarget} 器材已歸還`,
         });
         setReturnTarget(null);
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-equipment"] });
       } else {
         toast({
           variant: "destructive",
@@ -301,7 +286,7 @@ export default function AdminEquipmentPage() {
         </div>
         <Button
           variant="outline"
-          onClick={() => fetchData()}
+          onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-equipment"] })}
           disabled={loading}
         >
           <RefreshCw

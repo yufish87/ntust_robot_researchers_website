@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_TC } from "next/font/google";
 import { Geist_Mono } from "next/font/google";
+import { QueryProvider } from "@/components/providers/query-provider";
 import "./globals.css";
 
 const notoSansTC = Noto_Sans_TC({
@@ -31,7 +32,7 @@ export default function RootLayout({
         style={{ fontFamily: "var(--font-noto-sans-tc), sans-serif" }}
         suppressHydrationWarning
       >
-        {children}
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );

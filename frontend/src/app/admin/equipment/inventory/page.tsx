@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InventoryAPI } from "@/lib/api/inventory";
 import type {
   InventoryItem,
@@ -78,8 +79,6 @@ function InventoryBadge({ checked }: { checked: boolean }) {
 export default function InventoryPage() {
   const { toast } = useToast();
   const [tab, setTab] = useState<InventoryTabFilter>("all");
-  const [allData, setAllData] = useState<InventoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -98,29 +97,15 @@ export default function InventoryPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   /* ---------- 資料載入 ---------- */
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const queryClient = useQueryClient();
+  const { data: allData = [], isLoading: loading } = useQuery({
+    queryKey: ["admin-inventory"],
+    queryFn: async () => {
       const res = await InventoryAPI.list();
-      if (res.success) {
-        setAllData(res.data ?? []);
-      } else {
-        toast({ variant: "destructive", title: "取得資料失敗" });
-      }
-    } catch {
-      toast({
-        variant: "destructive",
-        title: "取得資料失敗",
-        description: "請稍後再試",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+      if (res.success) return res.data ?? [];
+      throw new Error("取得資料失敗");
+    },
+  });
 
   /* ---------- 篩選 + 搜尋 ---------- */
   const ABNORMAL_STATUSES = ["維修中", "已報廢", "遺失"];
@@ -185,7 +170,7 @@ export default function InventoryPage() {
         setCheckTarget(null);
         setCheckResult(null);
         setCheckCondition("");
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
       } else {
         toast({
           variant: "destructive",
@@ -217,7 +202,7 @@ export default function InventoryPage() {
         });
         setResolveTarget(null);
         setResolveCondition("");
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
       } else {
         toast({
           variant: "destructive",
@@ -243,7 +228,7 @@ export default function InventoryPage() {
           description: "所有盤點標記已清除",
         });
         setShowResetConfirm(false);
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
       } else {
         toast({
           variant: "destructive",
@@ -281,7 +266,7 @@ export default function InventoryPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => fetchData()}
+            onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-inventory"] })}
             disabled={loading}
           >
             <RefreshCw

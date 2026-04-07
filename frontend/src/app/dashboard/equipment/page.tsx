@@ -1,7 +1,8 @@
 'use client';
 
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
 import api from '@/lib/api';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,56 +26,39 @@ interface EquipmentIndex {
 
 export default function EquipmentCatalogPage() {
     const { isAuthenticated } = useAuthStore();
-    // const router = useRouter(); // No longer needed for details, maybe for other things? kept just in case or remove. Remove for clean up.
-    const [catalog, setCatalog] = useState<EquipmentIndex[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [categories, setCategories] = useState<string[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
     
     // Modal State
     const [selectedCode, setSelectedCode] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        fetchCatalog();
-    }, []);
-
-    const fetchCatalog = async () => {
-        setLoading(true);
-        let retries = 3;
-        while (retries > 0) {
-            try {
+    /* ---------- 資料載入（useQuery 快取）---------- */
+    const { data: catalog = [], isLoading: loading } = useQuery({
+        queryKey: ['equipment-catalog'],
+        queryFn: async () => {
+            let retries = 3;
+            while (retries > 0) {
                 const res = await api.get('/equipment/catalog');
                 if (res.data.success) {
-                    const data: EquipmentIndex[] = res.data.data;
-                    setCatalog(data);
-                    
-                    // Extract unique categories and sort "其它" to the end
-                    const uniqueCats = Array.from(new Set(data.map(item => item.category))).filter(Boolean);
-                    const sortedCats = uniqueCats.filter(c => c !== '其它');
-                    if (uniqueCats.includes('其它')) {
-                        sortedCats.push('其它');
-                    }
-                    setCategories(['All', ...sortedCats]);
-                    setLoading(false);
-                    return;
-                } else {
-                    console.error("Failed to fetch catalog:", res.data.message);
-                    if (res.data.message && typeof res.data.message === 'string' && res.data.message.includes('Server is busy')) {
-                         await new Promise(r => setTimeout(r, 1500));
-                         retries--;
-                         continue;
-                    }
-                    break; // Other error, don't retry
+                    return res.data.data as EquipmentIndex[];
                 }
-            } catch (error) {
-                console.error("Error fetching catalog:", error);
-                await new Promise(r => setTimeout(r, 1500));
-                retries--;
+                if (res.data.message?.includes('Server is busy')) {
+                    await new Promise(r => setTimeout(r, 1500));
+                    retries--;
+                    continue;
+                }
+                throw new Error(res.data.message || 'Failed to fetch catalog');
             }
-        }
-        setLoading(false);
-    };
+            throw new Error('Server is busy');
+        },
+    });
+
+    const categories = useMemo(() => {
+        const uniqueCats = Array.from(new Set(catalog.map(item => item.category))).filter(Boolean);
+        const sortedCats = uniqueCats.filter(c => c !== '其它');
+        if (uniqueCats.includes('其它')) sortedCats.push('其它');
+        return ['All', ...sortedCats];
+    }, [catalog]);
 
     const filteredCatalog = selectedCategory === 'All' 
         ? catalog 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FinanceAdminAPI } from "@/lib/api/finance";
 import type {
   FinanceApplication,
@@ -52,9 +53,8 @@ const TABS: { key: TabKey; label: string; filter: FinanceStatusFilter }[] = [
 
 export default function AdminFinancePage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>("pending");
-  const [allData, setAllData] = useState<FinanceApplication[]>([]);
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Detail modal
@@ -70,31 +70,15 @@ export default function AdminFinancePage() {
     null,
   );
 
-  /* ---------- 資料載入（一次取全部，前端分類）---------- */
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  /* ---------- 資料載入（useQuery 快取）---------- */
+  const { data: allData = [], isLoading: loading } = useQuery<FinanceApplication[]>({
+    queryKey: ["admin-finance"],
+    queryFn: async () => {
       const res = await FinanceAdminAPI.list("all");
-      if (res.success) {
-        setAllData(res.data ?? []);
-      } else {
-        toast({
-          variant: "destructive",
-          title: "載入失敗",
-          description: res.message,
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      toast({
-        variant: "destructive",
-        title: "系統錯誤",
-        description: "無法連線至伺服器",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+      if (res.success) return res.data ?? [];
+      throw new Error("載入失敗");
+    },
+  });
 
   /* ---------- 前端依 activeTab 篩選 ---------- */
   const data = useMemo(() => {
@@ -124,10 +108,6 @@ export default function AdminFinancePage() {
     });
   }, [allData, activeTab]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   // ── Actions ────────────────────────
   const handleApprove = async (app: FinanceApplication) => {
     setActionLoading(true);
@@ -135,7 +115,7 @@ export default function AdminFinancePage() {
       const res = await FinanceAdminAPI.approve(app.id);
       if (res.success) {
         toast({ title: "已通過", description: `申請 ${app.id} 已核准。` });
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-finance"] });
       } else {
         toast({
           variant: "destructive",
@@ -169,7 +149,7 @@ export default function AdminFinancePage() {
         });
         setRejectApp(null);
         setRejectReason("");
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-finance"] });
       } else {
         toast({
           variant: "destructive",
@@ -199,7 +179,7 @@ export default function AdminFinancePage() {
           description: `申請 ${disburseApp.id} 已完成撥款。`,
         });
         setDisburseApp(null);
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-finance"] });
       } else {
         toast({
           variant: "destructive",

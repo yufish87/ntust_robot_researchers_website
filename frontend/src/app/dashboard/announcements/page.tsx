@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Megaphone, ExternalLink, Paperclip } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,10 +31,19 @@ const categoryColor: Record<string, string> = {
 };
 
 export default function AnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Announcement | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  /* ---------- 資料載入（useQuery 快取）---------- */
+  const { data: announcements = [], isLoading: loading } = useQuery({
+    queryKey: ["dashboard-announcements"],
+    queryFn: async () => {
+      const res = await fetch("/api/announcements");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) return json.data as Announcement[];
+      throw new Error("載入公告失敗");
+    },
+  });
 
   const availableCategories = [
     ...new Set([
@@ -46,18 +56,6 @@ export default function AnnouncementsPage() {
     selectedCategory === "all"
       ? announcements
       : announcements.filter((a) => a.category === selectedCategory);
-
-  useEffect(() => {
-    fetch("/api/announcements")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data)) {
-          setAnnouncements(json.data);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
 
   return (
     <div className="container p-6 space-y-6 max-w-6xl mx-auto">
