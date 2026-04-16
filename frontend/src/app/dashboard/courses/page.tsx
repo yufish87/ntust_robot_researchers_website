@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api'; // Using default api instance which includes interceptors if any, or standard fetch
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,48 +12,34 @@ import { BookOpen, Video, FileText } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CoursesPage() {
-    const [courses, setCourses] = useState<Course[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [semesters, setSemesters] = useState<string[]>([]);
     const [selectedSemester, setSelectedSemester] = useState<string>('All');
     
     // Modal State
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        fetchCourses();
-    }, []);
-
-    const fetchCourses = async () => {
-        setLoading(true);
-        try {
-            // Use the protected route
+    /* ---------- 資料載入（useQuery 快取）---------- */
+    const { data: courses = [], isLoading: loading } = useQuery({
+        queryKey: ['dashboard-courses'],
+        queryFn: async () => {
             const res = await fetch('/api/courses');
             const json = await res.json();
-
             if (json.success) {
                 const data: Course[] = json.data;
-                // Sort by semester (desc) then upload time (desc)
                 data.sort((a, b) => {
                     if (a.semester !== b.semester) return b.semester.localeCompare(a.semester);
                     return b.uploadTime.localeCompare(a.uploadTime);
                 });
-                
-                setCourses(data);
-                
-                // Extract unique semesters
-                const uniqueSemesters = Array.from(new Set(data.map(c => c.semester))).sort().reverse();
-                setSemesters(['All', ...uniqueSemesters]);
-            } else {
-                console.error("Failed to fetch courses:", json.message);
+                return data;
             }
-        } catch (error) {
-            console.error("Error fetching courses:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+            throw new Error('載入課程失敗');
+        },
+    });
+
+    const semesters = useMemo(() => {
+        const uniqueSemesters = Array.from(new Set(courses.map(c => c.semester))).sort().reverse();
+        return ['All', ...uniqueSemesters];
+    }, [courses]);
 
     const filteredCourses = selectedSemester === 'All' 
         ? courses 

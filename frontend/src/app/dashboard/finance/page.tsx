@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   Plus,
@@ -45,8 +46,7 @@ import type { FinanceApplication } from "@/lib/types/finance";
 
 export default function FinanceDashboardPage() {
   const { toast } = useToast();
-  const [data, setData] = useState<FinanceApplication[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [selectedApp, setSelectedApp] = useState<FinanceApplication | null>(
     null,
@@ -58,26 +58,14 @@ export default function FinanceDashboardPage() {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      // Wait a bit to ensure GAS propagation/lock release if called after action
-      // await new Promise(r => setTimeout(r, 1000));
-
+  /* ---------- 資料載入（useQuery 快取）---------- */
+  const { data = [], isLoading: loading } = useQuery<FinanceApplication[]>({
+    queryKey: ["my-finance-apps"],
+    queryFn: async () => {
       const res = await FinanceAPI.getMyApplications();
-
-      // Force refresh data in case of stale state
-      setData([...res]);
-    } catch (error) {
-      console.error("Failed to fetch applications", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res;
+    },
+  });
 
   const handleViewDetails = (app: FinanceApplication) => {
     setSelectedApp(app);
@@ -106,8 +94,8 @@ export default function FinanceDashboardPage() {
       setIsCancelModalOpen(false);
       setCancelAppId(null);
 
-      // Delay fetch to allow backend propagation
-      setTimeout(() => fetchData(), 500);
+      // invalidate 快取讓資料重新載入
+      queryClient.invalidateQueries({ queryKey: ["my-finance-apps"] });
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -323,7 +311,7 @@ export default function FinanceDashboardPage() {
                                         description:
                                           "已回報發票投遞，請等待管理員確認。",
                                       });
-                                      setTimeout(() => fetchData(), 500);
+                                      queryClient.invalidateQueries({ queryKey: ["my-finance-apps"] });
                                     } catch (err: any) {
                                       toast({
                                         variant: "destructive",

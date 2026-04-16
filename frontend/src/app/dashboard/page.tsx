@@ -44,11 +44,11 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="-m-4 lg:-m-8 min-h-screen bg-[#3a3745] border-l border-white/10 selection:bg-[#ffc000] selection:text-[#34313c] overflow-y-auto scroll-smooth">
+    <div className="-m-4 lg:-m-8 min-h-[100svh] bg-[#3a3745] border-l border-white/10 selection:bg-[#ffc000] selection:text-[#34313c] scroll-smooth">
       {/* 1. Hero Section — 全寬 */}
       <section
         id="hero"
-        className="h-[88vh] flex items-center justify-center relative"
+        className="min-h-[88svh] flex items-center justify-center relative"
       >
         <HomeHero mosaicImages={mosaicImages} />
       </section>

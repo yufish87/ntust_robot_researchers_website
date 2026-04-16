@@ -56,13 +56,7 @@ export function SiteFooter({ className }: { className?: string }) {
         </div>
 
         {/* 聯絡資訊 */}
-        <div className="flex flex-wrap gap-4 sm:gap-8 text-sm text-slate-400 mb-8">
-          <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-[#ffc000]" />
-            <a href="mailto:ntust.robot@gmail.com" className="hover:text-white transition-colors">
-              ntust.robot@gmail.com
-            </a>
-          </div>
+        <div className="flex flex-wrap gap-4 sm:gap-8 text-sm text-slate-400 mb-8 md:ml-1">
           <div className="flex items-center gap-2">
             <Facebook className="w-4 h-4 text-[#ffc000]" />
             <a
@@ -85,6 +79,12 @@ export function SiteFooter({ className }: { className?: string }) {
               @ntust.robot
             </a>
           </div>
+          <div className="flex items-center gap-2">
+            <Mail className="w-4 h-4 text-[#ffc000]" />
+            <a href="mailto:ntust.robot@gmail.com" className="hover:text-white transition-colors">
+              ntust.robot@gmail.com
+            </a>
+          </div>
           <div className="flex items-center gap-2 basis-full sm:basis-auto">
             <MapPin className="w-4 h-4 text-[#ffc000] shrink-0" />
             <a
@@ -100,7 +100,7 @@ export function SiteFooter({ className }: { className?: string }) {
 
         {/* 分隔線 + 版權 */}
         <div className="border-t border-white/5 pt-6 text-center text-xs text-slate-500">
-          Copyright © 國立臺灣科技大學機器人研究社<br />
+          國立臺灣科技大學機器人研究社 2026<br />
           網站設計如有任何建議，請點擊<a href="mailto:yuyongxiang393603@gmail.com" className="hover:text-white transition-colors">這裡</a>聯絡建置者，謝謝指教
         </div>
       </div>

@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   LogOut,
   User,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,12 @@ export const adminNavItems = [
     title: "器材借用審核",
     href: "/admin/equipment",
     icon: Wrench,
+    exact: true,
+  },
+  {
+    title: "器材盤點",
+    href: "/admin/equipment/inventory",
+    icon: ClipboardCheck,
   },
   {
     title: "機器借用審核",
@@ -88,7 +95,7 @@ export function AdminSidebar() {
       </div>
 
       {/* Nav */}
-      <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+      <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1 scrollbar-dark">
         {adminNavItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href

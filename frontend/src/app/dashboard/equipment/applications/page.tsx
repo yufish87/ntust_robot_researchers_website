@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,29 +24,16 @@ interface ApplicationItem {
 }
 
 export default function ApplicationsPage() {
-    const [applications, setApplications] = useState<ApplicationItem[]>([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        fetchApplications();
-    }, []);
-
-    const fetchApplications = async () => {
-        try {
+    const { data: applications = [], isLoading: loading } = useQuery({
+        queryKey: ['my-equipment-apps'],
+        queryFn: async () => {
             const res = await api.get('/equipment/applications');
-            if (res.data.success) {
-                setApplications(res.data.data);
-            } else {
-                setError(res.data.message || 'Failed to fetch applications');
-            }
-        } catch (err) {
-            console.error(err);
-            setError('An error occurred while fetching applications');
-        } finally {
-            setLoading(false);
-        }
-    };
+            if (res.data.success) return res.data.data as ApplicationItem[];
+            throw new Error(res.data.message || 'Failed to fetch applications');
+        },
+    });
 
     const getStatusColor = (status: string) => {
         switch (status) {

@@ -10,7 +10,6 @@ interface HomeHeroProps {
 }
 
 export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
-  // 用循環填滿足夠多的格子
   const tileCount = 40;
   const tiles: string[] = [];
   if (mosaicImages.length > 0) {
@@ -19,13 +18,11 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
     }
   }
 
-  // 隨機動畫順序 — 只在 client 端生成，避免 hydration mismatch
-  const [delays, setDelays] = useState<number[]>(
-    () => Array.from({ length: tileCount }, (_, i) => i * 50) // SSR: 固定順序
-  );
+  // 初始為 null — SSR 時不顯示動畫，避免閃爍
+  const [delays, setDelays] = useState<number[] | null>(null);
 
   useEffect(() => {
-    // Client: 隨機打亂出現順序
+    // Client mount 後才產生隨機動畫順序
     const indices = Array.from({ length: tileCount }, (_, i) => i);
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -35,9 +32,9 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
   }, [tileCount]);
 
   return (
-    <section className="w-full h-full relative flex items-center justify-center overflow-hidden">
-      {/* 拼圖底圖 */}
-      {tiles.length > 0 && (
+    <section className="w-full min-h-[inherit] relative flex items-center justify-center overflow-hidden">
+      {/* 拼圖底圖 — 只在 client mount 後才渲染，避免 SSR 順序閃爍 */}
+      {tiles.length > 0 && delays && (
         <div
           className="absolute top-0 -bottom-4 -left-4 -right-4 grid opacity-[0.2] pointer-events-none"
           style={{
@@ -69,7 +66,8 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse 85% 85% at center, rgba(52,49,60,1) 0%, rgba(52,49,60,0.4) 70%)",
+          background:
+            "radial-gradient(ellipse 85% 85% at center, rgba(52,49,60,1) 0%, rgba(52,49,60,0.4) 70%)",
         }}
       />
 
@@ -82,7 +80,8 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
               alt="NTUST Robot Researchers Club"
               width={650}
               height={150}
-              className="w-[350px] md:w-[500px] lg:w-[650px] h-auto object-contain"
+              className="w-[350px] md:w-[500px] lg:w-[650px] object-contain"
+              style={{ height: 'auto' }}
               priority
             />
           </div>
@@ -137,7 +136,9 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
           </div>
           <div className="w-px h-8 bg-slate-600"></div>
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-[#ffc000]">臺灣科技大學</span>
+            <span className="text-2xl font-bold text-[#ffc000]">
+              臺灣科技大學
+            </span>
             <span>專業技術社團</span>
           </div>
         </div>

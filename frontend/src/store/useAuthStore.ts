@@ -12,18 +12,23 @@ interface User {
 
 interface AuthState {
   user: User | null;
+  authChecked: boolean;
   login: (payload: { studentId: string; password: string }) => Promise<void>;
   register: (payload: Record<string, string>) => Promise<void>;
   logout: () => Promise<void>;
+  syncSession: (force?: boolean) => Promise<void>;
   isAuthenticated: () => boolean;
   updateUser: (partial: Partial<User>) => void;
 }
+
+let syncSessionPromise: Promise<void> | null = null;
 
 // Persist storage wrapper to fix hydration issues in Next.js
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
+      authChecked: false,
 
       login: async (payload) => {
         // payload: { studentId, password }
@@ -34,6 +39,7 @@ export const useAuthStore = create<AuthState>()(
           // client 只收到 user info
           set({
             user: res.data.data.user,
+            authChecked: true,
           });
         } else {
           throw new Error(res.data.message || "Login failed");
@@ -58,11 +64,45 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           // 即使呼叫失敗也清除 client state
         }
-        set({ user: null });
+        set({ user: null, authChecked: true });
+      },
+
+      syncSession: async (force = false) => {
+        if (!force && get().authChecked) return;
+
+        if (syncSessionPromise) {
+          await syncSessionPromise;
+          return;
+        }
+
+        syncSessionPromise = (async () => {
+          try {
+            const res = await api.get("/auth/session", {
+              headers: { "Cache-Control": "no-store" },
+            });
+
+            const authenticated =
+              !!res.data?.success && !!res.data?.data?.authenticated;
+            const nextUser = authenticated
+              ? (res.data?.data?.user as User | null)
+              : null;
+
+            set({
+              user: nextUser,
+              authChecked: true,
+            });
+          } catch {
+            set({ user: null, authChecked: true });
+          } finally {
+            syncSessionPromise = null;
+          }
+        })();
+
+        await syncSessionPromise;
       },
 
       isAuthenticated: () => {
-        return !!get().user;
+        return get().authChecked && !!get().user;
       },
 
       updateUser: (partial) => {
@@ -74,6 +114,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
+      partialize: (state) => ({
+        user: state.user,
+      }),
     },
   ),
 );

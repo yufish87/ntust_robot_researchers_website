@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/useAuthStore";
 import { UserAPI } from "@/lib/api/user";
 import type { UserProfile, UserRole, VerifyCode } from "@/lib/types/user";
@@ -132,17 +133,10 @@ type TabFilter = "all" | "member" | "admin" | "disabled";
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuthStore();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Main tab
   const [mainTab, setMainTab] = useState<"users" | "codes">("users");
-
-  // Data
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Verify codes data
-  const [codes, setCodes] = useState<VerifyCode[]>([]);
-  const [codesLoading, setCodesLoading] = useState(true);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -172,55 +166,26 @@ export default function AdminUsersPage() {
   const [addName, setAddName] = useState("");
   const [addLoading, setAddLoading] = useState(false);
 
-  // Fetch
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
+  /* ---------- 使用者資料（useQuery）---------- */
+  const { data: usersData, isLoading: loading } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
       const result = await UserAPI.listUsers();
-      setUsers(result.users);
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "無法取得使用者列表";
-      toast({
-        variant: "destructive",
-        title: "載入失敗",
-        description: message,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return result.users;
+    },
+  });
+  const users = usersData ?? [];
 
-  useEffect(() => {
-    fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Fetch verify codes
-  const fetchCodes = async () => {
-    setCodesLoading(true);
-    try {
+  /* ---------- 驗證碼資料（useQuery）---------- */
+  const { data: codesData, isLoading: codesLoading } = useQuery({
+    queryKey: ["admin-codes"],
+    queryFn: async () => {
       const result = await UserAPI.listCodes();
-      setCodes(result.codes);
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "無法取得驗證碼列表";
-      toast({
-        variant: "destructive",
-        title: "載入失敗",
-        description: message,
-      });
-    } finally {
-      setCodesLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (mainTab === "codes") {
-      fetchCodes();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mainTab]);
+      return result.codes;
+    },
+    enabled: mainTab === "codes",
+  });
+  const codes = codesData ?? [];
 
   // Filtered list
   const filteredUsers = useMemo(() => {
@@ -266,7 +231,7 @@ export default function AdminUsersPage() {
         description: `${roleTarget.name} 已設為${roleNewRole === "admin" ? "管理員" : "社員"}。`,
       });
       setRoleTarget(null);
-      fetchUsers();
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "變更失敗";
       toast({
@@ -291,7 +256,7 @@ export default function AdminUsersPage() {
         description: `${deleteTarget.name} (${deleteTarget.studentId}) 的帳號已停用。`,
       });
       setDeleteTarget(null);
-      fetchUsers();
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "停用失敗";
       toast({
@@ -347,7 +312,7 @@ export default function AdminUsersPage() {
       setAddUserOpen(false);
       setAddStudentId("");
       setAddName("");
-      fetchUsers();
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "新增失敗";
       toast({
@@ -384,7 +349,7 @@ export default function AdminUsersPage() {
         title: vc.isActive ? "已停用" : "已啟用",
         description: `驗證碼 ${vc.code} 已${vc.isActive ? "停用" : "啟用"}。`,
       });
-      fetchCodes();
+      queryClient.invalidateQueries({ queryKey: ["admin-codes"] });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "操作失敗";
       toast({
@@ -408,7 +373,7 @@ export default function AdminUsersPage() {
         description: `驗證碼 ${editCodeTarget.code} 的使用次數限制已更新。`,
       });
       setEditCodeTarget(null);
-      fetchCodes();
+      queryClient.invalidateQueries({ queryKey: ["admin-codes"] });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "更新失敗";
       toast({
@@ -426,17 +391,17 @@ export default function AdminUsersPage() {
   return (
     <div className="container p-6 space-y-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">人員管理</h1>
           <p className="text-muted-foreground">管理社團成員、權限與驗證碼。</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setCodeDialogOpen(true)}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setCodeDialogOpen(true)}>
             <KeyRound className="h-4 w-4 mr-2" />
             產生註冊碼
           </Button>
-          <Button onClick={() => setAddUserOpen(true)}>
+          <Button className="w-full sm:w-auto" onClick={() => setAddUserOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             新增人員
           </Button>
@@ -470,7 +435,7 @@ export default function AdminUsersPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={mainTab === "users" ? fetchUsers : fetchCodes}
+          onClick={() => queryClient.invalidateQueries({ queryKey: mainTab === "users" ? ["admin-users"] : ["admin-codes"] })}
           disabled={mainTab === "users" ? loading : codesLoading}
         >
           <RefreshCw

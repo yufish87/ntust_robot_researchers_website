@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   Announcement,
   AnnouncementAttachment,
@@ -268,8 +269,7 @@ const emptyForm: FormData = {
 // ---------------------------------------------------------------------------
 
 export default function AdminAnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Modal State
@@ -298,24 +298,16 @@ export default function AdminAnnouncementsPage() {
     if (fileId) pendingDeletionsRef.current.add(fileId);
   }, []);
 
-  useEffect(() => {
-    fetchAnnouncements();
-  }, []);
-
-  const fetchAnnouncements = async () => {
-    setLoading(true);
-    try {
+  /* ---------- 資料載入（useQuery 快取）---------- */
+  const { data: announcements = [], isLoading: loading } = useQuery<Announcement[]>({
+    queryKey: ["admin-announcements"],
+    queryFn: async () => {
       const res = await fetch("/api/admin/announcements");
       const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        setAnnouncements(json.data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (json.success && Array.isArray(json.data)) return json.data as Announcement[];
+      throw new Error("載入公告失敗");
+    },
+  });
 
   const openCreate = () => {
     setEditingId(null);
@@ -418,7 +410,7 @@ export default function AdminAnnouncementsPage() {
       if (json.success) {
         toast({ title: isEdit ? "公告已更新" : "公告已新增" });
         setIsFormOpen(false);
-        fetchAnnouncements();
+        queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
       } else {
         toast({
           title: "操作失敗",
@@ -450,7 +442,7 @@ export default function AdminAnnouncementsPage() {
       if (json.success) {
         toast({ title: "公告已刪除" });
         setDeletingId(null);
-        fetchAnnouncements();
+        queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
       } else {
         toast({
           title: "刪除失敗",

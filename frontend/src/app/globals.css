@@ -137,6 +137,56 @@
   }
 }
 
+/* ===== Custom Scrollbar Styles ===== */
+
+/* 深色底色 (sidebar 等) — 金色滑塊 + 透明底 */
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: #ffc000 transparent;
+}
+.scrollbar-dark::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background-color: #ffc000;
+  border-radius: 9999px;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background-color: #e6ac00;
+}
+.scrollbar-dark::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* 淺色底色 (main content) — 深色滑塊 + 透明底 */
+.scrollbar-light {
+  scrollbar-width: thin;
+  scrollbar-color: #34313c transparent;
+}
+.scrollbar-light::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+.scrollbar-light::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-light::-webkit-scrollbar-thumb {
+  background-color: #34313c;
+  border-radius: 9999px;
+}
+.scrollbar-light::-webkit-scrollbar-thumb:hover {
+  background-color: #4a4655;
+}
+.scrollbar-light::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Hero 拼圖 zoom-in 動畫 */
 @keyframes zoomIn {
   from {

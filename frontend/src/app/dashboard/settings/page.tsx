@@ -30,7 +30,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, User, Lock, AlertTriangle, CheckCircle2 } from "lucide-react";
-import type { UserProfile } from "@/lib/types/user";
 
 // ─── Zod Schemas ───────────────────────────────────────────
 
@@ -82,10 +81,6 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const { user, logout, updateUser } = useAuthStore();
 
-  // 從後端取得完整 profile
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-
   // 各表單 loading 狀態
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -99,29 +94,6 @@ export default function SettingsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
 
-  // ─── 載入個人資料 ───
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    setLoadingProfile(true);
-    try {
-      const data = await UserAPI.getProfile();
-      setProfile(data);
-    } catch (err) {
-      console.error("Failed to fetch profile:", err);
-      toast({
-        title: "載入失敗",
-        description: "無法取得個人資料",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingProfile(false);
-    }
-  };
-
   // ─── Profile Form ───
 
   const profileForm = useForm<ProfileFormValues>({
@@ -129,15 +101,15 @@ export default function SettingsPage() {
     defaultValues: { department: "", grade: "" },
   });
 
-  // 當 profile 載入完成後，設定表單預設值
+  // 使用已同步到 client 的登入者資料初始化表單
   useEffect(() => {
-    if (profile) {
+    if (user) {
       profileForm.reset({
-        department: profile.department || "",
-        grade: String(profile.grade) || "",
+        department: user.department || "",
+        grade: String(user.grade || ""),
       });
     }
-  }, [profile]);
+  }, [user, profileForm]);
 
   const onSubmitProfile = async (values: ProfileFormValues) => {
     setSavingProfile(true);
@@ -146,8 +118,6 @@ export default function SettingsPage() {
       await UserAPI.updateProfile(values);
       // 同步更新 Zustand store
       updateUser({ department: values.department, grade: values.grade });
-      // 同步更新本地 profile
-      setProfile((prev) => (prev ? { ...prev, ...values } : prev));
       setProfileSuccess(true);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "更新失敗";
@@ -226,7 +196,7 @@ export default function SettingsPage() {
 
   // ─── Render ───
 
-  if (loadingProfile) {
+  if (!user) {
     return (
       <div className="container p-6 space-y-6 max-w-6xl mx-auto">
         <div>
@@ -266,14 +236,11 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>學號</Label>
-                <Input
-                  value={profile?.studentId || user?.studentId || ""}
-                  disabled
-                />
+                <Input value={user?.studentId || ""} disabled />
               </div>
               <div className="space-y-2">
                 <Label>姓名</Label>
-                <Input value={profile?.name || user?.name || ""} disabled />
+                <Input value={user?.name || ""} disabled />
               </div>
             </div>
 
@@ -315,7 +282,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>身份</Label>
               <div>
-                {getRoleBadge(profile?.role || user?.role || "visitor")}
+                {getRoleBadge(user?.role || "visitor")}
               </div>
             </div>
 

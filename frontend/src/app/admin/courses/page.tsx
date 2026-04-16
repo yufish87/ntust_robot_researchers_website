@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Course } from '@/lib/types/course';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,8 +13,7 @@ import { CourseForm } from '@/components/admin/courses/CourseForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function AdminCoursesPage() {
-    const [courses, setCourses] = useState<Course[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const { toast } = useToast();
     
     // Modal State
@@ -24,29 +24,22 @@ export default function AdminCoursesPage() {
     // Alert Dialog State
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchCourses();
-    }, []);
-
-    const fetchCourses = async () => {
-        setLoading(true);
-        try {
+    /* ---------- 資料載入（useQuery 快取）---------- */
+    const { data: courses = [], isLoading: loading } = useQuery({
+        queryKey: ['admin-courses'],
+        queryFn: async () => {
             const res = await fetch('/api/courses');
             const json = await res.json();
             if (json.success) {
-                const sorted = [...json.data].sort((a: Course, b: Course) => {
+                return [...json.data].sort((a: Course, b: Course) => {
                     const dateA = a.courseDate || '';
                     const dateB = b.courseDate || '';
                     return dateB.localeCompare(dateA);
                 });
-                setCourses(sorted);
             }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
+            throw new Error('載入課程失敗');
+        },
+    });
 
     const handleSubmit = async (values: any) => {
         setIsSubmitting(true);
@@ -69,7 +62,7 @@ export default function AdminCoursesPage() {
                 });
                 setIsFormOpen(false);
                 setEditingCourse(null);
-                fetchCourses();
+                queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
             } else {
                 toast({
                     variant: "destructive",
@@ -103,7 +96,7 @@ export default function AdminCoursesPage() {
                     title: "刪除成功",
                     description: "課程已永久刪除。"
                 });
-                fetchCourses();
+                queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
             } else {
                 toast({
                     variant: "destructive",
@@ -173,7 +166,7 @@ export default function AdminCoursesPage() {
                                 // 確保流水號為 3 碼，例如 CRS-20260210-1 → CRS-20260210-001
                                 const displayId = course.id.replace(
                                     /(CRS-\d{8}-)(\d+)$/,
-                                    (_, prefix, num) => prefix + num.padStart(3, '0')
+                                    (_: string, prefix: string, num: string) => prefix + num.padStart(3, '0')
                                 );
 
                                 return (

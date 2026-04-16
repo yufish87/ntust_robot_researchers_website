@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, Fragment } from "react";
+import { useMemo, useState, Fragment } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MachineAdminAPI } from "@/lib/api/machine";
 import type {
   MachineApplication,
@@ -404,8 +405,7 @@ export default function AdminMachinePage() {
   // 狀態子 tab
   const [statusTab, setStatusTab] = useState<MachineStatusFilter>("pending");
 
-  const [allData, setAllData] = useState<MachineApplication[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -417,29 +417,15 @@ export default function AdminMachinePage() {
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  /* ---------- 資料載入（一次取全部，前端分類）---------- */
-  const fetchData = useCallback(
-    async (type: MachineType) => {
-      setLoading(true);
-      try {
-        const res = await MachineAdminAPI.list(type, "all");
-        if (res.success) {
-          setAllData(res.data ?? []);
-        } else {
-          toast({ variant: "destructive", title: "取得資料失敗" });
-        }
-      } catch {
-        toast({
-          variant: "destructive",
-          title: "取得資料失敗",
-          description: "請稍後再試",
-        });
-      } finally {
-        setLoading(false);
-      }
+  /* ---------- 資料載入（useQuery 快取）---------- */
+  const { data: allData = [], isLoading: loading } = useQuery({
+    queryKey: ["admin-machine", machineTab],
+    queryFn: async () => {
+      const res = await MachineAdminAPI.list(machineTab, "all");
+      if (res.success) return res.data ?? [];
+      throw new Error("取得資料失敗");
     },
-    [toast],
-  );
+  });
 
   /* ---------- 前端依 statusTab 篩選 ---------- */
   const data = useMemo(() => {
@@ -460,10 +446,6 @@ export default function AdminMachinePage() {
     });
   }, [allData, statusTab]);
 
-  useEffect(() => {
-    fetchData(machineTab);
-  }, [machineTab, fetchData]);
-
   /* ---------- 動作：提出排程建議 ---------- */
   const handleProposeConfirm = async () => {
     if (!proposeTarget || !proposedTime) return;
@@ -477,7 +459,7 @@ export default function AdminMachinePage() {
         });
         setProposeTarget(null);
         setProposedTime("");
-        fetchData(machineTab);
+        queryClient.invalidateQueries({ queryKey: ["admin-machine", machineTab] });
       } else {
         toast({
           variant: "destructive",
@@ -505,7 +487,7 @@ export default function AdminMachinePage() {
         });
         setRejectTarget(null);
         setRejectReason("");
-        fetchData(machineTab);
+        queryClient.invalidateQueries({ queryKey: ["admin-machine", machineTab] });
       } else {
         toast({
           variant: "destructive",
@@ -545,7 +527,7 @@ export default function AdminMachinePage() {
         </div>
         <Button
           variant="outline"
-          onClick={() => fetchData(machineTab)}
+          onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-machine", machineTab] })}
           disabled={loading}
         >
           <RefreshCw
@@ -598,7 +580,7 @@ export default function AdminMachinePage() {
           >
             {/* Data Table */}
             <div className="border rounded-lg overflow-hidden">
-              <Table style={{ tableLayout: "fixed" }}>
+              <Table className={data.length > 0 ? "min-w-[1000px] table-fixed" : "w-full table-fixed"}>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="w-10" />

@@ -84,7 +84,7 @@ export default function CheckoutPage() {
 
         try {
             if (items.length === 0) {
-                throw new Error("購物車是空的");
+                throw new Error("借用清單是空的");
             }
 
             // Construct payload
@@ -130,7 +130,7 @@ export default function CheckoutPage() {
     if (items.length === 0) {
         return (
             <div className="container mx-auto p-10 text-center">
-                <h1 className="text-2xl font-bold mb-4">購物車是空的</h1>
+                <h1 className="text-2xl font-bold mb-4">借用清單是空的</h1>
                 <Button onClick={() => router.push('/dashboard/equipment')}>
                     返回器材目錄
                 </Button>

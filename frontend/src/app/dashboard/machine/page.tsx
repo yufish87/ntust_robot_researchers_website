@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { format } from "date-fns";
 import {
@@ -70,8 +71,7 @@ interface MachineApplication {
 }
 
 export default function MachineReservationPage() {
-  const [data, setData] = useState<MachineApplication[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { toast } = useToast();
@@ -83,21 +83,14 @@ export default function MachineReservationPage() {
     proposedTime?: string;
   } | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  /* ---------- 資料載入（useQuery 快取）---------- */
+  const { data = [], isLoading: loading } = useQuery<MachineApplication[]>({
+    queryKey: ["my-machine-apps"],
+    queryFn: async () => {
       const res = await MachineAPI.getMyApplications();
-      setData(res);
-    } catch (error) {
-      console.error("Failed to fetch machine applications", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res;
+    },
+  });
 
   const activeApplications = data.filter((app) =>
     ["審核中", "待確認", "已預約", "使用中"].includes(app.status),
@@ -126,7 +119,7 @@ export default function MachineReservationPage() {
             : "已拒絕此排程，管理員將重新安排。",
         });
         setConfirmTarget(null);
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["my-machine-apps"] });
       } else {
         toast({
           variant: "destructive",

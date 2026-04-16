@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EquipmentAdminAPI } from "@/lib/api/equipment";
 import type {
   EquipmentApplication,
@@ -67,14 +68,16 @@ function ExpandedRow({ app }: { app: EquipmentApplication }) {
 
   return (
     <TableRow className="bg-slate-50/60">
-      <TableCell colSpan={7} className="p-4">
-        <div className="grid gap-4 sm:grid-cols-2">
+      <TableCell colSpan={7} className="p-4 whitespace-normal align-top">
+        <div className="grid gap-4 sm:grid-cols-2 [&>div]:min-w-0">
           {/* 借用原因 */}
           <div>
             <p className="text-sm font-semibold text-slate-600 mb-1">
               借用原因
             </p>
-            <p className="text-sm text-slate-700">{app.reason || "—"}</p>
+            <p className="text-sm text-slate-700 whitespace-pre-wrap break-words">
+              {app.reason || "—"}
+            </p>
           </div>
 
           {/* 借用器材清單 */}
@@ -82,7 +85,7 @@ function ExpandedRow({ app }: { app: EquipmentApplication }) {
             <p className="text-sm font-semibold text-slate-600 mb-1">
               借用器材清單
             </p>
-            <ul className="list-disc list-inside text-sm text-slate-700 space-y-0.5">
+            <ul className="list-disc list-inside text-sm text-slate-700 space-y-0.5 whitespace-normal break-words">
               {items.map((it, i) => (
                 <li key={i}>
                   {it.name}{" "}
@@ -99,10 +102,20 @@ function ExpandedRow({ app }: { app: EquipmentApplication }) {
               <p className="text-sm font-semibold text-slate-600 mb-1">
                 分配器材編號
               </p>
-              <ul className="list-disc list-inside text-sm text-slate-700 space-y-0.5">
+              <ul className="list-disc list-inside text-sm text-slate-700 space-y-0.5 whitespace-normal break-keep">
                 {allocated.map((a, i) => (
-                  <li key={i}>
-                    {a.code}: {a.items.join(", ")}
+                  <li key={i} className="break-normal">
+                    <span className="inline-block whitespace-nowrap">
+                      {a.code}:
+                    </span>{" "}
+                    {a.items.map((id, idx) => (
+                      <Fragment key={`${a.code}-${id}-${idx}`}>
+                        <span className="inline-block whitespace-nowrap">
+                          {id}
+                        </span>
+                        {idx < a.items.length - 1 ? ", " : ""}
+                      </Fragment>
+                    ))}
                   </li>
                 ))}
               </ul>
@@ -115,7 +128,7 @@ function ExpandedRow({ app }: { app: EquipmentApplication }) {
               <p className="text-sm font-semibold text-red-600 mb-1">
                 拒絕理由
               </p>
-              <p className="text-sm text-red-700 bg-red-50 p-2 rounded">
+              <p className="text-sm text-red-700 bg-red-50 p-2 rounded whitespace-pre-wrap break-words">
                 {app.rejectReason}
               </p>
             </div>
@@ -146,9 +159,8 @@ function ExpandedRow({ app }: { app: EquipmentApplication }) {
 /* ================================================================== */
 export default function AdminEquipmentPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<EquipmentStatusFilter>("pending");
-  const [allData, setAllData] = useState<EquipmentApplication[]>([]);
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -159,26 +171,15 @@ export default function AdminEquipmentPage() {
   // 歸還確認 Dialog
   const [returnTarget, setReturnTarget] = useState<string | null>(null);
 
-  /* ---------- 資料載入（一次取全部，前端分類）---------- */
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  /* ---------- 資料載入（useQuery 快取）---------- */
+  const { data: allData = [], isLoading: loading } = useQuery({
+    queryKey: ["admin-equipment"],
+    queryFn: async () => {
       const res = await EquipmentAdminAPI.list("all");
-      if (res.success) {
-        setAllData(res.data ?? []);
-      } else {
-        toast({ variant: "destructive", title: "取得資料失敗" });
-      }
-    } catch {
-      toast({
-        variant: "destructive",
-        title: "取得資料失敗",
-        description: "請稍後再試",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+      if (res.success) return res.data ?? [];
+      throw new Error("取得資料失敗");
+    },
+  });
 
   /* ---------- 前端依 tab 篩選 ---------- */
   const data = useMemo(() => {
@@ -197,10 +198,6 @@ export default function AdminEquipmentPage() {
     });
   }, [allData, tab]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   /* ---------- 動作 ---------- */
   const handleApprove = async (id: string) => {
     setActionLoading(id);
@@ -208,7 +205,7 @@ export default function AdminEquipmentPage() {
       const res = await EquipmentAdminAPI.approve(id);
       if (res.success) {
         toast({ title: "已核准", description: `申請 ${id} 已通過` });
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-equipment"] });
       } else {
         toast({
           variant: "destructive",
@@ -235,7 +232,7 @@ export default function AdminEquipmentPage() {
         });
         setRejectTarget(null);
         setRejectReason("");
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-equipment"] });
       } else {
         toast({
           variant: "destructive",
@@ -261,7 +258,7 @@ export default function AdminEquipmentPage() {
           description: `申請 ${returnTarget} 器材已歸還`,
         });
         setReturnTarget(null);
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["admin-equipment"] });
       } else {
         toast({
           variant: "destructive",
@@ -289,7 +286,7 @@ export default function AdminEquipmentPage() {
         </div>
         <Button
           variant="outline"
-          onClick={() => fetchData()}
+          onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-equipment"] })}
           disabled={loading}
         >
           <RefreshCw
@@ -320,16 +317,16 @@ export default function AdminEquipmentPage() {
         ).map((t) => (
           <TabsContent key={t} value={t} className="mt-4">
             <div className="border rounded-lg overflow-hidden">
-              <Table style={{ tableLayout: "fixed" }}>
+              <Table className={data.length > 0 ? "min-w-[1000px] table-fixed" : "w-full table-fixed"}>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="w-10" />
-                    <TableHead className="w-[160px]">申請單號</TableHead>
-                    <TableHead className="w-[120px]">申請者</TableHead>
-                    <TableHead>器材摘要</TableHead>
-                    <TableHead className="w-[120px]">預計歸還</TableHead>
-                    <TableHead className="w-[90px]">狀態</TableHead>
-                    <TableHead className="w-[80px] text-right">操作</TableHead>
+                    <TableHead className="w-[120px]">申請單號</TableHead>
+                    <TableHead className="w-[80px]">申請者</TableHead>
+                    <TableHead className="w-[250px]">器材摘要</TableHead>
+                    <TableHead className="w-[80px]">預計歸還</TableHead>
+                    <TableHead className="w-[50px]">狀態</TableHead>
+                    <TableHead className="w-[150px] text-right">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -388,7 +385,7 @@ export default function AdminEquipmentPage() {
                                 {app.studentId}
                               </div>
                             </TableCell>
-                            <TableCell className="max-w-[200px] truncate">
+                            <TableCell className="w-[420px] whitespace-pre-line break-words leading-relaxed">
                               {app.summary}
                             </TableCell>
                             <TableCell>

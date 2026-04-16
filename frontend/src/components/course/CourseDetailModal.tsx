@@ -63,6 +63,7 @@ export function CourseDetailModal({
       }
 
       // 2. 使用 fetch + Blob 下載檔案
+      //    避免 window.location.href 被 Next.js App Router RSC 管線干擾
       const token = tokenJson.data.token;
       const downloadRes = await fetch(`/api/storage/download?token=${token}`);
 
@@ -71,59 +72,36 @@ export function CourseDetailModal({
         throw new Error(errorData?.error || "下載失敗");
       }
 
-      // 3. 驗證回應確實是二進位檔案 (非 JSON 錯誤回應)
-      const contentType = downloadRes.headers.get("Content-Type") || "";
-      if (contentType.includes("application/json")) {
-        const errorJson = await downloadRes.json().catch(() => null);
-        throw new Error(errorJson?.error || "伺服器回傳非預期格式");
-      }
-
       const blob = await downloadRes.blob();
 
-      if (!blob || blob.size === 0) {
-        throw new Error("下載的檔案為空");
-      }
-
-      // 4. 從 Content-Disposition header 解析原始檔名 (多重 fallback)
+      // 3. 從 Content-Disposition header 解析原始檔名
       let filename = resource.title || "download";
       const contentDisposition = downloadRes.headers.get("Content-Disposition");
       if (contentDisposition) {
-        // 優先解析 RFC 5987 filename* (支援非 ASCII 字元)
         const utf8Match = contentDisposition.match(
-          /filename\*\s*=\s*UTF-8'[^']*'(.+?)(?:\s*;|$)/i,
+          /filename\*=UTF-8''(.+?)(?:;|$)/,
         );
-        if (utf8Match?.[1]) {
-          try {
-            filename = decodeURIComponent(utf8Match[1].trim());
-          } catch {
-            // URI 解碼失敗，使用 fallback
-          }
-        }
-        // fallback: 解析標準 filename="..."
-        if (!utf8Match?.[1]) {
+        if (utf8Match) {
+          filename = decodeURIComponent(utf8Match[1]);
+        } else {
           const basicMatch = contentDisposition.match(
-            /filename\s*=\s*"?([^";]+)"?/i,
+            /filename="?(.+?)"?(?:;|$)/,
           );
-          if (basicMatch?.[1]) {
-            filename = basicMatch[1].trim();
+          if (basicMatch) {
+            filename = basicMatch[1];
           }
         }
       }
 
-      // 5. 程式化觸發瀏覽器下載
-      const blobUrl = window.URL.createObjectURL(blob);
+      // 4. 程式化觸發瀏覽器下載
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.style.display = "none";
-      a.href = blobUrl;
+      a.href = url;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-
-      // 延遲釋放 blob URL，確保瀏覽器已完成讀取
-      setTimeout(() => {
-        a.remove();
-        window.URL.revokeObjectURL(blobUrl);
-      }, 1000);
+      a.remove();
+      window.URL.revokeObjectURL(url);
 
       toast({
         title: "下載完成",

@@ -1,7 +1,7 @@
 'use client';
 
-
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
 import api from '@/lib/api';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,9 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getGoogleDriveImageUrl } from '@/lib/utils';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EquipmentDetailModal } from '@/components/equipment/EquipmentDetailModal';
-// import Image from 'next/image'; // GAS images might be external URLs, need config or standard img tag
-
 interface EquipmentIndex {
     code: string;
     name: string;
@@ -21,60 +20,44 @@ interface EquipmentIndex {
     available: number;
     borrowed: number;
     image: string;
+    items?: any[];
 }
 
 export default function EquipmentCatalogPage() {
     const { isAuthenticated } = useAuthStore();
-    // const router = useRouter(); // No longer needed for details, maybe for other things? kept just in case or remove. Remove for clean up.
-    const [catalog, setCatalog] = useState<EquipmentIndex[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [categories, setCategories] = useState<string[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
     
     // Modal State
-    const [selectedCode, setSelectedCode] = useState<string | null>(null);
+    const [selectedItem, setSelectedItem] = useState<EquipmentIndex | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        fetchCatalog();
-    }, []);
-
-    const fetchCatalog = async () => {
-        setLoading(true);
-        let retries = 3;
-        while (retries > 0) {
-            try {
+    /* ---------- 資料載入（useQuery 快取）---------- */
+    const { data: catalog = [], isLoading: loading } = useQuery({
+        queryKey: ['equipment-catalog'],
+        queryFn: async () => {
+            let retries = 3;
+            while (retries > 0) {
                 const res = await api.get('/equipment/catalog');
                 if (res.data.success) {
-                    const data: EquipmentIndex[] = res.data.data;
-                    setCatalog(data);
-                    
-                    // Extract unique categories and sort "其它" to the end
-                    const uniqueCats = Array.from(new Set(data.map(item => item.category))).filter(Boolean);
-                    const sortedCats = uniqueCats.filter(c => c !== '其它');
-                    if (uniqueCats.includes('其它')) {
-                        sortedCats.push('其它');
-                    }
-                    setCategories(['All', ...sortedCats]);
-                    setLoading(false);
-                    return;
-                } else {
-                    console.error("Failed to fetch catalog:", res.data.message);
-                    if (res.data.message && typeof res.data.message === 'string' && res.data.message.includes('Server is busy')) {
-                         await new Promise(r => setTimeout(r, 1500));
-                         retries--;
-                         continue;
-                    }
-                    break; // Other error, don't retry
+                    return res.data.data as EquipmentIndex[];
                 }
-            } catch (error) {
-                console.error("Error fetching catalog:", error);
-                await new Promise(r => setTimeout(r, 1500));
-                retries--;
+                if (res.data.message?.includes('Server is busy')) {
+                    await new Promise(r => setTimeout(r, 1500));
+                    retries--;
+                    continue;
+                }
+                throw new Error(res.data.message || 'Failed to fetch catalog');
             }
-        }
-        setLoading(false);
-    };
+            throw new Error('Server is busy');
+        },
+    });
+
+    const categories = useMemo(() => {
+        const uniqueCats = Array.from(new Set(catalog.map(item => item.category))).filter(Boolean);
+        const sortedCats = uniqueCats.filter(c => c !== '其它');
+        if (uniqueCats.includes('其它')) sortedCats.push('其它');
+        return ['All', ...sortedCats];
+    }, [catalog]);
 
     const filteredCatalog = selectedCategory === 'All' 
         ? catalog 
@@ -89,23 +72,41 @@ export default function EquipmentCatalogPage() {
                         瀏覽可用器材並送出借用申請。
                     </p>
                 </div>
-                <Link href="/dashboard/equipment/applications">
-                    <Button variant="outline">我的申請紀錄</Button>
-                </Link>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Link href="/dashboard/equipment/applications" className="w-full sm:w-auto">
+                        <Button variant="outline" className="w-full sm:w-auto">我的申請紀錄</Button>
+                    </Link>
+                </div>
             </div>
             
             {/* Category Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-4 mb-4">
-                {categories.map(cat => (
-                    <Button 
-                        key={cat} 
-                        variant={selectedCategory === cat ? "default" : "outline"}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`whitespace-nowrap ${selectedCategory === cat ? 'border border-primary' : ''}`}
-                    >
-                        {cat}
-                    </Button>
-                ))}
+            <div className="mb-4 space-y-4">
+                {/* Mobile Dropdown */}
+                <div className="block md:hidden">
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="選擇分類..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {categories.map(cat => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                {/* Desktop Buttons */}
+                <div className="hidden md:flex gap-2 overflow-x-auto pb-2">
+                    {categories.map(cat => (
+                        <Button 
+                            key={cat} 
+                            variant={selectedCategory === cat ? "default" : "outline"}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`whitespace-nowrap ${selectedCategory === cat ? 'border border-primary' : ''}`}
+                        >
+                            {cat}
+                        </Button>
+                    ))}
+                </div>
             </div>
 
             {loading ? (
@@ -117,7 +118,7 @@ export default function EquipmentCatalogPage() {
                             key={item.code} 
                             className="flex flex-col h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden p-0 gap-0"
                             onClick={() => {
-                                setSelectedCode(item.code);
+                                setSelectedItem(item);
                                 setIsModalOpen(true);
                             }}
                         >
@@ -131,7 +132,7 @@ export default function EquipmentCatalogPage() {
                                             referrerPolicy="no-referrer"
                                             loading="lazy"
                                             onError={(e) => {
-                                                (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=No+Image'; // Fallback
+                                                (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=No+Image';
                                             }}
                                         />
                                     ) : (
@@ -152,10 +153,13 @@ export default function EquipmentCatalogPage() {
                                     <div className="text-xs text-gray-400 font-mono">{item.code}</div>
                                 </div>
                                 <CardTitle className="text-lg mb-2">{item.name}</CardTitle>
-                                {/* <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p> */}
                             </CardContent>
                             <CardFooter className="p-4 pt-0">
-                                <Button className="w-full" disabled={item.available <= 0} variant={item.available > 0 ? "default" : "secondary"}>
+                                <Button 
+                                    className="w-full" 
+                                    disabled={item.available <= 0} 
+                                    variant={item.available > 0 ? "default" : "secondary"}
+                                >
                                     檢視詳情
                                 </Button>
                             </CardFooter>
@@ -165,7 +169,7 @@ export default function EquipmentCatalogPage() {
             )}
             
             <EquipmentDetailModal 
-                code={selectedCode}
+                data={selectedItem ? { info: selectedItem, items: selectedItem.items || [] } : null}
                 open={isModalOpen} 
                 onOpenChange={setIsModalOpen} 
             />

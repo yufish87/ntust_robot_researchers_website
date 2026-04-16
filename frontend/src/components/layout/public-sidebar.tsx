@@ -31,11 +31,17 @@ export const publicNavItems = [
 ];
 
 export function PublicSidebar() {
-  const { user, logout } = useAuthStore();
-  const isAuthenticated = !!user;
+  const { user, logout, authChecked, syncSession } = useAuthStore();
+  const isAuthenticated = authChecked && !!user;
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (mounted && !authChecked) {
+      void syncSession();
+    }
+  }, [mounted, authChecked, syncSession]);
 
   return (
     <div className="hidden lg:flex bg-slate-50 border-r border-slate-200 h-screen w-64 flex-col fixed left-0 top-0 z-50">
@@ -57,7 +63,7 @@ export function PublicSidebar() {
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+      <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1 scrollbar-light">
         {publicNavItems.map((item) => (
           <div key={item.href} className="block">
             <Button
@@ -79,7 +85,15 @@ export function PublicSidebar() {
       {/* Footer / Auth */}
       <div className="p-4 border-t border-slate-200 bg-white space-y-2">
         {mounted &&
-          (isAuthenticated ? (
+          (!authChecked ? (
+            <Button
+              disabled
+              variant="outline"
+              className="w-full border-slate-300 text-slate-500 justify-start"
+            >
+              請稍後...
+            </Button>
+          ) : isAuthenticated ? (
             <>
               <Button
                 onClick={() => router.push("/dashboard")}
