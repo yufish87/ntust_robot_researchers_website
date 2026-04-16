@@ -18,8 +18,6 @@ ntust_rrc_website/
 └── README.md
 ```
 
-> **注意**：`gas-backend/`、`.clasp.json` 已列入 `.gitignore`，不會推送至 GitHub。
-
 詳細的前端開發說明與安裝步驟，請參閱 [前端目錄說明](frontend/README.md)。
 
 ## 技術架構
@@ -81,7 +79,6 @@ gas-backend/
 
 - 社員註冊（驗證碼機制）和登入
 - 登入記錄追蹤
-- 角色權限管理 (visitor / member / admin / owner)
 
 ### 課程管理
 
