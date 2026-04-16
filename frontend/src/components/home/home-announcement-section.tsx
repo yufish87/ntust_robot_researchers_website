@@ -162,7 +162,7 @@ export function AnnouncementSection({
         open={!!selected}
         onOpenChange={(open) => !open && setSelected(null)}
       >
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-[#2d2a33] border-white/10 text-white p-0">
+        <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[85vh] overflow-y-auto bg-[#2d2a33] border-white/10 text-white p-0">
           {selected && (
             <>
               {/* Header */}

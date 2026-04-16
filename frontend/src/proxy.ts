@@ -1,23 +1,18 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
-  const token = request.cookies.get('auth_session')?.value;
   const { pathname } = request.nextUrl;
+  const isDashboardRoute = pathname.startsWith("/dashboard");
+  const isAdminRoute = pathname.startsWith("/admin");
 
-  // Protected Routes
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
-    if (!token) {
-      // Redirect to Login if no token
-      return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
+  if (!isDashboardRoute && !isAdminRoute) {
+    return NextResponse.next();
   }
 
-  // Auth Routes (Redirect to Dashboard if already logged in)
-  if (pathname === '/auth/login') {
-    if (token) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
+  const hasSessionCookie = !!request.cookies.get("auth_session")?.value;
+  if (!hasSessionCookie) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
@@ -25,8 +20,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/admin/:path*',
-    '/auth/login'
+    "/dashboard/:path*",
+    "/admin/:path*",
   ],
 };

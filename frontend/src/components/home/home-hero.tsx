@@ -80,7 +80,8 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
               alt="NTUST Robot Researchers Club"
               width={650}
               height={150}
-              className="w-[350px] md:w-[500px] lg:w-[650px] h-auto object-contain"
+              className="w-[350px] md:w-[500px] lg:w-[650px] object-contain"
+              style={{ height: 'auto' }}
               priority
             />
           </div>

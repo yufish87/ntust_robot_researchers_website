@@ -267,7 +267,7 @@ export default function AdminFinancePage() {
 
       {/* Table */}
       <div className="border rounded-lg overflow-hidden">
-        <Table style={{ tableLayout: "fixed" }}>
+        <Table className={data.length > 0 ? "min-w-[1000px] table-fixed" : "w-full table-fixed"}>
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="w-[160px]">單號</TableHead>

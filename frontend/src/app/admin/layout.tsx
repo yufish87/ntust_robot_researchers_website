@@ -14,7 +14,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, authChecked, syncSession } = useAuthStore();
   const { toast } = useToast();
   const [hasHydrated, setHasHydrated] = useState(false);
 
@@ -37,6 +37,12 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (!hasHydrated) return;
+
+    if (!authChecked) {
+      void syncSession();
+      return;
+    }
+
     if (!user) {
       router.replace("/");
       return;
@@ -49,10 +55,10 @@ export default function AdminLayout({
       });
       router.replace("/dashboard");
     }
-  }, [hasHydrated, user, isAdmin, router, toast]);
+  }, [hasHydrated, authChecked, syncSession, user, isAdmin, router, toast]);
 
   // 尚未 hydrated 或未登入 — 顯示 Loading
-  if (!hasHydrated || !user || !isAdmin) {
+  if (!hasHydrated || !authChecked || !user || !isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
         <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -64,7 +70,7 @@ export default function AdminLayout({
     <div className="flex h-full overflow-hidden bg-white">
       <AdminSidebar />
       <MobileNav variant="admin" />
-      <main className="flex-1 lg:ml-64 overflow-y-scroll h-full p-4 pt-14 lg:p-8">
+      <main className="flex-1 lg:ml-64 overflow-y-scroll h-full p-4 pt-14 lg:p-8 scrollbar-light">
         {children}
       </main>
     </div>

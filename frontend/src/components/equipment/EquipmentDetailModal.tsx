@@ -45,67 +45,24 @@ interface EquipmentDetail {
 }
 
 interface EquipmentDetailModalProps {
-  code: string | null;
+  data: EquipmentDetail | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function EquipmentDetailModal({
-  code,
+  data,
   open,
   onOpenChange,
 }: EquipmentDetailModalProps) {
   const { addItem } = useCartStore();
-  const [data, setData] = useState<EquipmentDetail | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let active = true;
-
-    const fetchDetails = async (code: string) => {
-      try {
-        if (active) {
-          setLoading(true);
-          setError(null);
-        }
-
-        const res = await api.post("/equipment/item", { code });
-
-        if (active) {
-          if (res.data.success) {
-            setData(res.data.data);
-          } else {
-            setError(res.data.message);
-          }
-        }
-      } catch (err: any) {
-        if (active) {
-          setError(err.message || "載入失敗");
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    };
-
-    if (open && code) {
-      setData(null); // Clear previous data immediately
-      setError(null);
+    if (open) {
       setQuantity(1);
-      fetchDetails(code);
-    } else {
-      // Reset state when closed
-      setData(null);
-      setError(null);
     }
-
-    return () => {
-      active = false;
-    };
-  }, [open, code]);
+  }, [open, data]);
 
   if (!open) return null;
 
@@ -125,10 +82,8 @@ export function EquipmentDetailModal({
           </div>
         </DialogHeader>
 
-        {loading || !data ? ( // Show loading if loading OR data is null
+        {!data ? ( 
           <div className="py-20 text-center text-gray-500">載入中...</div>
-        ) : error ? (
-          <div className="py-20 text-center text-red-500">錯誤: {error}</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-[400px_1fr] gap-8">
             {/* 左側：圖片與數據 */}

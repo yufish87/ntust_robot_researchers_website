@@ -145,7 +145,7 @@ export default function AnnouncementsPage() {
 
       {/* 公告詳情 Dialog */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="text-xl">{selected?.title}</DialogTitle>
             <div className="flex items-center gap-2 pt-1">

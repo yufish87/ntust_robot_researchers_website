@@ -1,6 +1,5 @@
 'use client';
 
-
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -10,9 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getGoogleDriveImageUrl } from '@/lib/utils';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EquipmentDetailModal } from '@/components/equipment/EquipmentDetailModal';
-// import Image from 'next/image'; // GAS images might be external URLs, need config or standard img tag
-
 interface EquipmentIndex {
     code: string;
     name: string;
@@ -22,6 +20,7 @@ interface EquipmentIndex {
     available: number;
     borrowed: number;
     image: string;
+    items?: any[];
 }
 
 export default function EquipmentCatalogPage() {
@@ -29,7 +28,7 @@ export default function EquipmentCatalogPage() {
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
     
     // Modal State
-    const [selectedCode, setSelectedCode] = useState<string | null>(null);
+    const [selectedItem, setSelectedItem] = useState<EquipmentIndex | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     /* ---------- 資料載入（useQuery 快取）---------- */
@@ -73,23 +72,41 @@ export default function EquipmentCatalogPage() {
                         瀏覽可用器材並送出借用申請。
                     </p>
                 </div>
-                <Link href="/dashboard/equipment/applications">
-                    <Button variant="outline">我的申請紀錄</Button>
-                </Link>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Link href="/dashboard/equipment/applications" className="w-full sm:w-auto">
+                        <Button variant="outline" className="w-full sm:w-auto">我的申請紀錄</Button>
+                    </Link>
+                </div>
             </div>
             
             {/* Category Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-4 mb-4">
-                {categories.map(cat => (
-                    <Button 
-                        key={cat} 
-                        variant={selectedCategory === cat ? "default" : "outline"}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`whitespace-nowrap ${selectedCategory === cat ? 'border border-primary' : ''}`}
-                    >
-                        {cat}
-                    </Button>
-                ))}
+            <div className="mb-4 space-y-4">
+                {/* Mobile Dropdown */}
+                <div className="block md:hidden">
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="選擇分類..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {categories.map(cat => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                {/* Desktop Buttons */}
+                <div className="hidden md:flex gap-2 overflow-x-auto pb-2">
+                    {categories.map(cat => (
+                        <Button 
+                            key={cat} 
+                            variant={selectedCategory === cat ? "default" : "outline"}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`whitespace-nowrap ${selectedCategory === cat ? 'border border-primary' : ''}`}
+                        >
+                            {cat}
+                        </Button>
+                    ))}
+                </div>
             </div>
 
             {loading ? (
@@ -101,7 +118,7 @@ export default function EquipmentCatalogPage() {
                             key={item.code} 
                             className="flex flex-col h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden p-0 gap-0"
                             onClick={() => {
-                                setSelectedCode(item.code);
+                                setSelectedItem(item);
                                 setIsModalOpen(true);
                             }}
                         >
@@ -115,7 +132,7 @@ export default function EquipmentCatalogPage() {
                                             referrerPolicy="no-referrer"
                                             loading="lazy"
                                             onError={(e) => {
-                                                (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=No+Image'; // Fallback
+                                                (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=No+Image';
                                             }}
                                         />
                                     ) : (
@@ -136,10 +153,13 @@ export default function EquipmentCatalogPage() {
                                     <div className="text-xs text-gray-400 font-mono">{item.code}</div>
                                 </div>
                                 <CardTitle className="text-lg mb-2">{item.name}</CardTitle>
-                                {/* <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p> */}
                             </CardContent>
                             <CardFooter className="p-4 pt-0">
-                                <Button className="w-full" disabled={item.available <= 0} variant={item.available > 0 ? "default" : "secondary"}>
+                                <Button 
+                                    className="w-full" 
+                                    disabled={item.available <= 0} 
+                                    variant={item.available > 0 ? "default" : "secondary"}
+                                >
                                     檢視詳情
                                 </Button>
                             </CardFooter>
@@ -149,7 +169,7 @@ export default function EquipmentCatalogPage() {
             )}
             
             <EquipmentDetailModal 
-                code={selectedCode}
+                data={selectedItem ? { info: selectedItem, items: selectedItem.items || [] } : null}
                 open={isModalOpen} 
                 onOpenChange={setIsModalOpen} 
             />

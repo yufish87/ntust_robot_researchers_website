@@ -13,7 +13,8 @@ interface FileUploadProps {
   accept?: string;
   maxSizeMB?: number; // default 10MB
   className?: string;
-  folderType?: "finance" | "machine_3dp" | "machine_lsc"; // Default: finance
+  folderType?: "finance" | "machine_3dp" | "machine_lsc" | "equipment"; // Default: finance
+  folderId?: string;
   formatHint?: string;
 }
 
@@ -30,6 +31,7 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
   maxSizeMB = 10,
   className,
   folderType = "finance",
+  folderId,
   formatHint
 }, ref) => {
   const [file, setFile] = useState<File | null>(null);
@@ -75,7 +77,8 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
           fileName: uploadName,
           mimeType: contentType,
           fileSize: file.size,
-          type: folderType 
+         type: folderType,
+         folderId,
         });
         const { sessionUri, fileId: initFileId } = initResponse.data;
         if (!sessionUri) throw new Error("無法取得上傳連結");

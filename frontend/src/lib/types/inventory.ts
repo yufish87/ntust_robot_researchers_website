@@ -21,6 +21,25 @@ export interface InventoryItem {
   inventoryTime: string; // 盤點時間
 }
 
+/** 器材分類（對應 EquipmentIndex） */
+export type InventoryCategory =
+  | "單晶片"
+  | "資訊元件"
+  | "傳感器"
+  | "電子零件"
+  | "馬達"
+  | "氣壓元件"
+  | "傳輸線"
+  | "其它";
+
+/** 新增器材時，用於相似推薦的索引選項 */
+export interface InventoryIndexOption {
+  code: string;
+  name: string;
+  category: string;
+  image?: string;
+}
+
 /** 盤點結果類型 */
 export type InventoryResult =
   | "good" // 良好
@@ -41,6 +60,29 @@ export interface InventoryResolvePayload {
   equipmentId: string;
   newUsage?: string;
   newCondition?: string;
+}
+
+/** 新增器材 Payload */
+export interface InventoryAddPayload {
+  name: string;
+  category: InventoryCategory;
+  status: string;
+  accessories: string;
+  purchaseDate: string; // YYYY/MM/DD
+  imageFileId: string;
+}
+
+/** 新增器材回傳 */
+export interface InventoryAddResult {
+  detailId: string;
+  equipmentCode: string;
+  name: string;
+  category: string;
+  status: string;
+  accessories: string;
+  purchaseDate: string;
+  image: string;
+  matchedExisting: boolean;
 }
 
 /** 盤點 Tab 篩選 */

@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
       return proxyToGas(newRequest, "admin/inventory/reset");
     case "resolve":
       return proxyToGas(newRequest, "admin/inventory/resolve");
+    case "add":
+      return proxyToGas(newRequest, "admin/inventory/add");
     default:
       return new Response(
         JSON.stringify({ success: false, message: "Unknown action" }),

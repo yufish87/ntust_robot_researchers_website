@@ -391,17 +391,17 @@ export default function AdminUsersPage() {
   return (
     <div className="container p-6 space-y-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">人員管理</h1>
           <p className="text-muted-foreground">管理社團成員、權限與驗證碼。</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setCodeDialogOpen(true)}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setCodeDialogOpen(true)}>
             <KeyRound className="h-4 w-4 mr-2" />
             產生註冊碼
           </Button>
-          <Button onClick={() => setAddUserOpen(true)}>
+          <Button className="w-full sm:w-auto" onClick={() => setAddUserOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             新增人員
           </Button>

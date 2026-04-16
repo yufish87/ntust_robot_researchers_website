@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Sans_TC } from "next/font/google";
 import { Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { AuthSessionProvider } from "@/components/providers/auth-session-provider";
 import "./globals.css";
 
 const notoSansTC = Noto_Sans_TC({
@@ -28,11 +29,13 @@ export default function RootLayout({
   return (
     <html lang="zh-TW">
       <body
-        className={`${notoSansTC.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${notoSansTC.variable} ${geistMono.variable} font-sans antialiased overscroll-none`}
         style={{ fontFamily: "var(--font-noto-sans-tc), sans-serif" }}
         suppressHydrationWarning
       >
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <AuthSessionProvider>{children}</AuthSessionProvider>
+        </QueryProvider>
       </body>
     </html>
   );

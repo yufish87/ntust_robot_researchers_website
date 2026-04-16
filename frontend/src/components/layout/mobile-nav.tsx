@@ -66,7 +66,7 @@ export function MobileNav({ variant }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, authChecked, syncSession } = useAuthStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -76,10 +76,16 @@ export function MobileNav({ variant }: MobileNavProps) {
     setOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    if (variant === "public" && mounted && !authChecked) {
+      void syncSession();
+    }
+  }, [variant, mounted, authChecked, syncSession]);
+
   const cfg = variantConfig[variant];
   const isDarkSidebar = cfg.dark;
   const isAdmin = user?.role === "admin" || user?.role === "owner";
-  const isAuthenticated = !!user;
+  const isAuthenticated = authChecked && !!user;
 
   const navItems =
     variant === "admin"
@@ -158,11 +164,12 @@ export function MobileNav({ variant }: MobileNavProps) {
         <SheetContent
           side="left"
           className={cn(
-            "p-0 gap-0 border-0",
+            "p-0 gap-0 border-0 w-64 max-w-[16rem] !w-[256px]",
             isDarkSidebar ? "text-white" : "text-slate-900",
           )}
           style={{ backgroundColor: cfg.bg }}
           showCloseButton={false}
+          aria-describedby={undefined}
         >
           {/* --- Header --- */}
           <SheetHeader
@@ -194,7 +201,7 @@ export function MobileNav({ variant }: MobileNavProps) {
           </SheetHeader>
 
           {/* --- Nav --- */}
-          <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+          <div className={cn("flex-1 overflow-y-auto py-6 px-3 space-y-1", isDarkSidebar ? "scrollbar-dark" : "scrollbar-light")}>
             {navItems.map((item) => {
               if (variant === "public") {
                 return (
@@ -321,7 +328,15 @@ export function MobileNav({ variant }: MobileNavProps) {
             {/* Public footer */}
             {variant === "public" && mounted && (
               <div className="space-y-2">
-                {isAuthenticated ? (
+                {!authChecked ? (
+                  <Button
+                    disabled
+                    variant="outline"
+                    className="w-full border-slate-300 text-slate-500 justify-start"
+                  >
+                    正在確認登入狀態...
+                  </Button>
+                ) : isAuthenticated ? (
                   <>
                     <Button
                       onClick={() => {
