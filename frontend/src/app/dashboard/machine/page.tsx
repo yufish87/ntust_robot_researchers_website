@@ -315,7 +315,7 @@ export default function MachineReservationPage() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <p className="min-w-[200px] sm:min-w-[220px] text-center font-semibold text-xs sm:text-sm whitespace-nowrap">
+              <p className="min-w-[168px] sm:min-w-[220px] text-center font-semibold text-xs sm:text-sm whitespace-nowrap">
                 {format(weekStart, "yyyy/MM/dd", { locale: zhTW })} -{" "}
                 {format(addDays(weekStart, 6), "yyyy/MM/dd", {
                   locale: zhTW,
@@ -352,7 +352,7 @@ export default function MachineReservationPage() {
           {calendarLoading ? (
             <div className="py-8 text-center text-muted-foreground flex justify-center items-center">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              載入行事曆中...
+              載入中...
             </div>
           ) : (
             <div className="h-[560px] border rounded-lg overflow-auto">
@@ -360,7 +360,7 @@ export default function MachineReservationPage() {
                 <div
                   className="grid"
                   style={{
-                    gridTemplateColumns: "60px repeat(7, minmax(94px, 1fr))",
+                    gridTemplateColumns: "60px repeat(7, minmax(110px, 1fr))",
                   }}
                 >
                   <div className="sticky top-0 left-0 z-30 bg-white border-b border-r p-2 text-xs font-semibold text-slate-500">
