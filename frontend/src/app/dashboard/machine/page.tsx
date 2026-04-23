@@ -360,99 +360,97 @@ export default function MachineReservationPage() {
                 <div
                   className="grid"
                   style={{
-                    gridTemplateColumns: "56px repeat(7, minmax(94px, 1fr))",
+                    gridTemplateColumns: "60px repeat(7, minmax(94px, 1fr))",
                   }}
                 >
-                    <div className="sticky top-0 left-0 z-30 bg-white border-b border-r p-2 text-xs font-semibold text-slate-500">
-                      時間
-                    </div>
+                  <div className="sticky top-0 left-0 z-30 bg-white border-b border-r p-2 text-xs font-semibold text-slate-500">
+                    時間
+                  </div>
 
-                    {weekDays.map((day) => {
-                      const dayKey = format(day, "yyyy-MM-dd");
-                      return (
-                        <div
-                          key={dayKey}
-                          className="sticky top-0 z-20 bg-white border-b border-r last:border-r-0 p-2"
-                        >
-                          <p className="text-xs text-slate-500">
-                            {format(day, "MM/dd (EEE)", { locale: zhTW })}
-                          </p>
-                          {isToday(day) && (
-                            <span className="inline-flex mt-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-black text-white">
-                              TODAY
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-
-                    <div
-                      className="relative sticky left-0 z-20 border-r bg-slate-50"
-                      style={{ height: timelineHeight }}
-                    >
-                      {HOURS.map((hour) => (
-                        <div
-                          key={`hour-${hour}`}
-                          className="absolute left-0 right-0 border-t first:border-t-0"
-                          style={{
-                            top: hour * HOUR_HEIGHT,
-                            height: HOUR_HEIGHT,
-                          }}
-                        >
-                          <span className="absolute -top-2.5 right-2 text-[10px] text-slate-500 bg-slate-50 px-1">
-                            {String(hour).padStart(2, "0")}:00
+                  {weekDays.map((day) => {
+                    const dayKey = format(day, "yyyy-MM-dd");
+                    return (
+                      <div
+                        key={dayKey}
+                        className="sticky top-0 z-20 bg-white border-b border-r last:border-r-0 p-2"
+                      >
+                        <p className="text-xs text-slate-500">
+                          {format(day, "MM/dd (EEE)", { locale: zhTW })}
+                        </p>
+                        {isToday(day) && (
+                          <span className="inline-flex mt-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-black text-white">
+                            TODAY
                           </span>
-                        </div>
-                      ))}
-                    </div>
+                        )}
+                      </div>
+                    );
+                  })}
 
-                    {weekDays.map((day) => {
-                      const dayKey = format(day, "yyyy-MM-dd");
-                      const events = timelineByDay.get(dayKey) || [];
+                  <div
+                    className="relative sticky left-0 z-20 border-r bg-slate-50"
+                    style={{ height: timelineHeight }}
+                  >
+                    {HOURS.map((hour) => (
+                      <div
+                        key={`hour-${hour}`}
+                        className="absolute left-0 right-0 border-t first:border-t-0"
+                        style={{
+                          top: hour * HOUR_HEIGHT,
+                          height: HOUR_HEIGHT,
+                        }}
+                      >
+                        <span className="absolute -top-2.5 right-2 text-[10px] text-slate-500 bg-slate-50 px-1">
+                          {String(hour).padStart(2, "0")}:00
+                        </span>
+                      </div>
+                    ))}
+                  </div>
 
-                      return (
-                        <div
-                          key={`${dayKey}-timeline`}
-                          className="relative border-r last:border-r-0"
-                          style={{ height: timelineHeight }}
-                        >
-                          {HOURS.map((hour) => (
-                            <div
-                              key={`${dayKey}-line-${hour}`}
-                              className="absolute left-0 right-0 border-t first:border-t-0 border-slate-100"
-                              style={{
-                                top: hour * HOUR_HEIGHT,
-                                height: HOUR_HEIGHT,
-                              }}
-                            />
-                          ))}
+                  {weekDays.map((day) => {
+                    const dayKey = format(day, "yyyy-MM-dd");
+                    const events = timelineByDay.get(dayKey) || [];
 
-                          {events.map((event, idx) => (
-                            <div
-                              key={`${dayKey}-${event.id}-${idx}-${event.top}`}
-                              className={cn(
-                                "absolute left-1 right-1 rounded-md px-1.5 py-1 text-[10px] leading-tight shadow-sm",
-                                getCalendarTagClass(event.status),
-                              )}
-                              style={{
-                                top: event.top,
-                                minHeight: 20,
-                                height: event.height,
-                              }}
-                              title={`${event.id} ${event.status} ${event.displayStart} - ${event.displayEnd}`}
-                            >
-                              <p className="font-semibold truncate">
-                                {event.id}
-                              </p>
-                              <p className="truncate">
-                                {format(event.start, "HH:mm")} -{" "}
-                                {format(event.end, "HH:mm")}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })}
+                    return (
+                      <div
+                        key={`${dayKey}-timeline`}
+                        className="relative border-r last:border-r-0"
+                        style={{ height: timelineHeight }}
+                      >
+                        {HOURS.map((hour) => (
+                          <div
+                            key={`${dayKey}-line-${hour}`}
+                            className="absolute left-0 right-0 border-t first:border-t-0 border-slate-100"
+                            style={{
+                              top: hour * HOUR_HEIGHT,
+                              height: HOUR_HEIGHT,
+                            }}
+                          />
+                        ))}
+
+                        {events.map((event, idx) => (
+                          <div
+                            key={`${dayKey}-${event.id}-${idx}-${event.top}`}
+                            className={cn(
+                              "absolute left-1 right-1 rounded-md px-1.5 py-1 text-[10px] leading-tight shadow-sm",
+                              getCalendarTagClass(event.status),
+                            )}
+                            style={{
+                              top: event.top,
+                              minHeight: 20,
+                              height: event.height,
+                            }}
+                            title={`${event.id} ${event.status} ${event.displayStart} - ${event.displayEnd}`}
+                          >
+                            <p className="font-semibold truncate">{event.id}</p>
+                            <p className="truncate">
+                              {format(event.start, "HH:mm")} -{" "}
+                              {format(event.end, "HH:mm")}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
