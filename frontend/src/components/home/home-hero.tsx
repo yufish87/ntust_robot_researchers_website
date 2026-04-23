@@ -88,7 +88,7 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
           <p className="text-slate-300 text-base md:text-lg leading-relaxed">
             探索科技極限，實踐創客精神。
             <br />
-            從基礎到國際競賽，我們提供最完整的資源與舞台，
+            從基礎到國際競賽，我們提供最完整的資源，
             <br />
             讓你的機器人夢想不再只是夢想。
           </p>
