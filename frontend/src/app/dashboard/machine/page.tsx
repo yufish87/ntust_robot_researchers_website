@@ -315,7 +315,7 @@ export default function MachineReservationPage() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <p className="min-w-[168px] sm:min-w-[220px] text-center font-semibold text-xs sm:text-sm whitespace-nowrap">
+              <p className="min-w-[200px] sm:min-w-[220px] text-center font-semibold text-xs sm:text-sm whitespace-nowrap">
                 {format(weekStart, "yyyy/MM/dd", { locale: zhTW })} -{" "}
                 {format(addDays(weekStart, 6), "yyyy/MM/dd", {
                   locale: zhTW,
