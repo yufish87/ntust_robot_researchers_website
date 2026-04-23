@@ -360,7 +360,7 @@ export default function MachineReservationPage() {
                 <div
                   className="grid"
                   style={{
-                    gridTemplateColumns: "60px repeat(7, minmax(110px, 1fr))",
+                    gridTemplateColumns: "60px repeat(7, minmax(115px, 1fr))",
                   }}
                 >
                   <div className="sticky top-0 left-0 z-30 bg-white border-b border-r p-2 text-xs font-semibold text-slate-500">
