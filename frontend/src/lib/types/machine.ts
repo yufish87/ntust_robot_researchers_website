@@ -9,7 +9,7 @@ export type MachineType = "3d-printer" | "laser-cutter";
 /** 機器借用申請狀態（6 種） */
 export type MachineApplicationStatus =
   | "審核中"
-  | "待確認"
+  | "待確認" // 舊流程保留相容
   | "已預約"
   | "使用中"
   | "已完成"
@@ -18,7 +18,7 @@ export type MachineApplicationStatus =
 /** 管理員列表 API statusFilter 參數 */
 export type MachineStatusFilter =
   | "pending"
-  | "scheduling"
+  | "scheduling" // 前端顯示為已預約
   | "active"
   | "history"
   | "all";
@@ -44,7 +44,7 @@ export interface Machine3DPApplication {
   rejectReason: string; // 拒絕理由
   createdAt: string; // 申請時間
   reviewedAt: string; // 審核時間
-  proposedTime: string; // 管理員建議開始時間
+  expectedEndTime: string; // 預計結束時間
 }
 
 /** 雷射切割機申請（對應 Sheet 9 一行記錄） */
@@ -68,7 +68,7 @@ export interface MachineLSCApplication {
   rejectReason: string;
   createdAt: string;
   reviewedAt: string;
-  proposedTime: string;
+  expectedEndTime: string;
 }
 
 /** 聯合型別 */
