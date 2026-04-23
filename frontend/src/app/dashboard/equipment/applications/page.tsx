@@ -15,6 +15,7 @@ interface ApplicationItem {
     name: string;
     reason: string;
     items: Array<{code: string, name: string, qty: number} | string>; // Handle legacy or string
+    allocated?: Array<{ code: string; items: string[] }>;
     summary: string;
     pickupDate: string;
     returnDate: string;
@@ -25,6 +26,12 @@ interface ApplicationItem {
 
 export default function ApplicationsPage() {
     const [error, setError] = useState('');
+
+    const getAllocatedIdsByCode = (app: ApplicationItem, code?: string) => {
+        if (!code || !Array.isArray(app.allocated)) return [] as string[];
+        const matched = app.allocated.find((a) => a.code === code);
+        return Array.isArray(matched?.items) ? matched.items : [];
+    };
 
     const { data: applications = [], isLoading: loading } = useQuery({
         queryKey: ['my-equipment-apps'],
@@ -115,9 +122,14 @@ export default function ApplicationsPage() {
                                     <ul className="list-disc list-inside mt-1 text-gray-600 bg-gray-50 p-3 rounded-md">
                                         {Array.isArray(app.items) ? app.items.map((item, idx) => {
                                             if (typeof item === 'string') return <li key={idx}>{item}</li>;
+                                            const allocatedIds = getAllocatedIdsByCode(app, item.code);
+                                            const idText = allocatedIds.length > 0
+                                                ? allocatedIds.join(', ')
+                                                : item.code;
                                             return (
                                                 <li key={idx}>
-                                                    {item.name} <span className="text-gray-400 text-xs">({item.code})</span> x{item.qty}
+                                                    {item.name} x{item.qty}{' '}
+                                                    <span className="text-gray-400 text-xs">({idText})</span>
                                                 </li>
                                             );
                                         }) : <li>{app.summary}</li>}
