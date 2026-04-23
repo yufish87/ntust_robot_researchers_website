@@ -81,14 +81,14 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
               width={650}
               height={150}
               className="w-[350px] md:w-[500px] lg:w-[650px] object-contain"
-              style={{ height: 'auto' }}
+              style={{ height: "auto" }}
               priority
             />
           </div>
           <p className="text-slate-300 text-base md:text-lg leading-relaxed">
             探索科技極限，實踐創客精神。
             <br />
-            從基礎教學到國際競賽，我們提供最完整的資源與舞台，
+            從基礎到國際競賽，我們提供最完整的資源與舞台，
             <br />
             讓你的機器人夢想不再只是夢想。
           </p>
@@ -124,7 +124,7 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
         </div>
 
         {/* Stats */}
-        <div className="pt-4 flex items-center justify-center gap-8 text-slate-400 text-sm font-medium">
+        <div className="pt-4 flex items-center justify-center gap-4 text-slate-400 text-sm font-medium">
           <div className="flex flex-col items-center">
             <span className="text-2xl font-bold text-[#ffc000]">10+</span>
             <span>年度競賽獎項</span>
@@ -136,9 +136,7 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
           </div>
           <div className="w-px h-8 bg-slate-600"></div>
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-[#ffc000]">
-              臺灣科技大學
-            </span>
+            <span className="text-2xl font-bold text-[#ffc000]">臺科大</span>
             <span>專業技術社團</span>
           </div>
         </div>

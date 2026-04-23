@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionToken, setSessionCookie } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 const GAS_API_URL = process.env.NEXT_PUBLIC_GAS_API_URL;
 
 if (!GAS_API_URL) {
@@ -62,6 +64,7 @@ async function handler(
       headers: { "Content-Type": "application/json" },
       body: body,
       redirect: "follow",
+      cache: "no-store",
     });
 
     if (!response.ok) {

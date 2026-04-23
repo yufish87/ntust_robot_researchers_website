@@ -1,9 +1,10 @@
 .agent/
 docs/
 
-# Exclude GAS backend code from GitHub (Managed by Clasp)
 gas-backend/
 .clasp.json
+.clasp.dev.json
+.clasp.prod.json
 .claspignore
 gas-backend-public/
 .vscode/
