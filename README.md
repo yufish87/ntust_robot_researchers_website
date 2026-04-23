@@ -24,29 +24,29 @@ ntust_rrc_website/
 
 ### 前端技術棧
 
-| 分類       | 技術                                 |
-| ---------- | ------------------------------------ |
-| 框架       | Next.js 16.1.6 (App Router)         |
-| 語言       | TypeScript                           |
-| 打包器     | Turbopack                            |
-| 樣式       | Tailwind CSS 4 + PostCSS             |
-| UI 元件庫  | Shadcn/UI (Radix UI)                 |
-| 狀態管理   | Zustand                              |
-| 表單       | React Hook Form + Zod                |
-| API 請求   | TanStack Query + Axios               |
-| 通知       | Sonner                               |
-| 日期處理   | date-fns                             |
-| 輪播       | Embla Carousel                       |
+| 分類      | 技術                        |
+| --------- | --------------------------- |
+| 框架      | Next.js 16.1.6 (App Router) |
+| 語言      | TypeScript                  |
+| 打包器    | Turbopack                   |
+| 樣式      | Tailwind CSS 4 + PostCSS    |
+| UI 元件庫 | Shadcn/UI (Radix UI)        |
+| 狀態管理  | Zustand                     |
+| 表單      | React Hook Form + Zod       |
+| API 請求  | TanStack Query + Axios      |
+| 通知      | Sonner                      |
+| 日期處理  | date-fns                    |
+| 輪播      | Embla Carousel              |
 
 ### 後端技術棧
 
-| 分類       | 技術                                 |
-| ---------- | ------------------------------------ |
-| 平台       | Google Apps Script                   |
-| 語言       | JavaScript                           |
-| 架構       | Controller-Service-Repository        |
-| 資料庫     | Google Sheets                        |
-| 部署工具   | clasp                                |
+| 分類     | 技術                          |
+| -------- | ----------------------------- |
+| 平台     | Google Apps Script            |
+| 語言     | JavaScript                    |
+| 架構     | Controller-Service-Repository |
+| 資料庫   | Google Sheets                 |
+| 部署工具 | clasp                         |
 
 ### 後端模組
 

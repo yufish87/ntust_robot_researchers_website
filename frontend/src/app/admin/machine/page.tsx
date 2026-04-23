@@ -10,11 +10,9 @@ import type {
 } from "@/lib/types/machine";
 import { useToast } from "@/hooks/use-toast";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +32,7 @@ import {
 } from "@/components/ui/table";
 import {
   Loader2,
-  CalendarClock,
+  Check,
   X,
   ChevronDown,
   ChevronUp,
@@ -49,7 +47,6 @@ import {
 function StatusBadge({ status }: { status: string }) {
   const colorMap: Record<string, string> = {
     審核中: "bg-yellow-500 hover:bg-yellow-600",
-    待確認: "bg-blue-500 hover:bg-blue-600",
     已預約: "bg-indigo-500 hover:bg-indigo-600",
     使用中: "bg-emerald-500 hover:bg-emerald-600",
     已完成: "bg-slate-500 hover:bg-slate-600",
@@ -77,6 +74,12 @@ function formatDateTime(raw?: string) {
   } catch {
     return raw;
   }
+}
+
+function getMachineIdSortKey(id: string) {
+  const match = id.match(/^[A-Z]+-(\d{8})-(\d+)$/);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  return Number.parseInt(`${match[1]}${match[2].padStart(4, "0")}`, 10);
 }
 
 /* ------------------------------------------------------------------ */
@@ -240,14 +243,14 @@ function ExpandedRow({ app }: { app: MachineApplication }) {
               </p>
             </div>
 
-            {/* 建議開始時間 (by admin) */}
-            {app.proposedTime && (
+            {/* 預計結束時間 */}
+            {app.expectedEndTime && (
               <div>
                 <p className="text-sm font-semibold text-blue-600 mb-1">
-                  管理員建議時間
+                  預計結束時間
                 </p>
                 <p className="text-sm text-blue-700">
-                  {formatDateTime(app.proposedTime)}
+                  {formatDateTime(app.expectedEndTime)}
                 </p>
               </div>
             )}
@@ -388,7 +391,7 @@ function ExpandedRow({ app }: { app: MachineApplication }) {
 /* ================================================================== */
 const SUB_TABS: { value: MachineStatusFilter; label: string }[] = [
   { value: "pending", label: "待處理" },
-  { value: "scheduling", label: "排程中" },
+  { value: "scheduling", label: "已預約" },
   { value: "active", label: "進行中" },
   { value: "history", label: "歷史" },
   { value: "all", label: "全部" },
@@ -409,10 +412,6 @@ export default function AdminMachinePage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // 排程建議 Dialog
-  const [proposeTarget, setProposeTarget] = useState<string | null>(null);
-  const [proposedTime, setProposedTime] = useState("");
-
   // 拒絕 Dialog
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -429,37 +428,53 @@ export default function AdminMachinePage() {
 
   /* ---------- 前端依 statusTab 篩選 ---------- */
   const data = useMemo(() => {
-    if (statusTab === "all") return allData;
-    return allData.filter((app) => {
-      switch (statusTab) {
-        case "pending":
-          return app.status === "審核中";
-        case "scheduling":
-          return app.status === "待確認" || app.status === "已預約";
-        case "active":
-          return app.status === "使用中";
-        case "history":
-          return app.status === "已完成" || app.status === "不予通過";
-        default:
-          return true;
-      }
+    const filtered =
+      statusTab === "all"
+        ? allData
+        : allData.filter((app) => {
+            switch (statusTab) {
+              case "pending":
+                return app.status === "審核中";
+              case "scheduling":
+                return app.status === "已預約";
+              case "active":
+                return app.status === "使用中";
+              case "history":
+                return app.status === "已完成" || app.status === "不予通過";
+              default:
+                return true;
+            }
+          });
+
+    return [...filtered].sort((a, b) => {
+      const byId = getMachineIdSortKey(a.id) - getMachineIdSortKey(b.id);
+      if (byId !== 0) return byId;
+
+      const aCreated =
+        a.createdAt && !Number.isNaN(new Date(a.createdAt).getTime())
+          ? new Date(a.createdAt).getTime()
+          : Number.MAX_SAFE_INTEGER;
+      const bCreated =
+        b.createdAt && !Number.isNaN(new Date(b.createdAt).getTime())
+          ? new Date(b.createdAt).getTime()
+          : Number.MAX_SAFE_INTEGER;
+      return aCreated - bCreated;
     });
   }, [allData, statusTab]);
 
-  /* ---------- 動作：提出排程建議 ---------- */
-  const handleProposeConfirm = async () => {
-    if (!proposeTarget || !proposedTime) return;
-    setActionLoading(proposeTarget);
+  /* ---------- 動作：核准 ---------- */
+  const handleApprove = async (applicationId: string) => {
+    setActionLoading(applicationId);
     try {
-      const res = await MachineAdminAPI.propose(proposeTarget, proposedTime);
+      const res = await MachineAdminAPI.approve(applicationId);
       if (res.success) {
         toast({
-          title: "已提出排程建議",
-          description: `已向申請者提出建議時間`,
+          title: "已核准",
+          description: `申請 ${applicationId} 已核准`,
         });
-        setProposeTarget(null);
-        setProposedTime("");
-        queryClient.invalidateQueries({ queryKey: ["admin-machine", machineTab] });
+        queryClient.invalidateQueries({
+          queryKey: ["admin-machine", machineTab],
+        });
       } else {
         toast({
           variant: "destructive",
@@ -487,7 +502,9 @@ export default function AdminMachinePage() {
         });
         setRejectTarget(null);
         setRejectReason("");
-        queryClient.invalidateQueries({ queryKey: ["admin-machine", machineTab] });
+        queryClient.invalidateQueries({
+          queryKey: ["admin-machine", machineTab],
+        });
       } else {
         toast({
           variant: "destructive",
@@ -506,7 +523,7 @@ export default function AdminMachinePage() {
   const getEmptyText = (filter: MachineStatusFilter) => {
     const map: Record<MachineStatusFilter, string> = {
       pending: "待處理",
-      scheduling: "排程中",
+      scheduling: "已預約",
       active: "進行中",
       history: "歷史",
       all: "",
@@ -522,12 +539,16 @@ export default function AdminMachinePage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">機器借用審核</h1>
           <p className="text-muted-foreground">
-            管理 3D 列印機與雷射切割機借用申請、排程協商與狀態追蹤。
+            管理 3D 列印機與雷射切割機借用申請、核准與狀態追蹤。
           </p>
         </div>
         <Button
           variant="outline"
-          onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-machine", machineTab] })}
+          onClick={() =>
+            queryClient.invalidateQueries({
+              queryKey: ["admin-machine", machineTab],
+            })
+          }
           disabled={loading}
         >
           <RefreshCw
@@ -580,7 +601,13 @@ export default function AdminMachinePage() {
           >
             {/* Data Table */}
             <div className="border rounded-lg overflow-hidden">
-              <Table className={data.length > 0 ? "min-w-[1000px] table-fixed" : "w-full table-fixed"}>
+              <Table
+                className={
+                  data.length > 0
+                    ? "min-w-[1000px] table-fixed"
+                    : "w-full table-fixed"
+                }
+              >
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="w-10" />
@@ -655,25 +682,22 @@ export default function AdminMachinePage() {
                                 className="flex justify-end gap-1.5"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                {/* 審核中 → 排程 / 拒絕 */}
+                                {/* 審核中 → 核准 / 拒絕 */}
                                 {app.status === "審核中" && (
                                   <>
                                     <Button
                                       size="sm"
                                       variant="default"
-                                      className="bg-blue-600 hover:bg-blue-700"
+                                      className="bg-emerald-600 hover:bg-emerald-700"
                                       disabled={isActioning}
-                                      onClick={() => {
-                                        setProposeTarget(app.id);
-                                        setProposedTime("");
-                                      }}
+                                      onClick={() => handleApprove(app.id)}
                                     >
                                       {isActioning ? (
                                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                       ) : (
-                                        <CalendarClock className="h-3.5 w-3.5 mr-1" />
+                                        <Check className="h-3.5 w-3.5 mr-1" />
                                       )}
-                                      排程
+                                      核准
                                     </Button>
                                     <Button
                                       size="sm"
@@ -689,21 +713,6 @@ export default function AdminMachinePage() {
                                     </Button>
                                   </>
                                 )}
-                                {/* 待確認 → 也可以拒絕 */}
-                                {app.status === "待確認" && (
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    disabled={isActioning}
-                                    onClick={() => {
-                                      setRejectTarget(app.id);
-                                      setRejectReason("");
-                                    }}
-                                  >
-                                    <X className="h-3.5 w-3.5 mr-1" />
-                                    拒絕
-                                  </Button>
-                                )}
                               </div>
                             </TableCell>
                           </TableRow>
@@ -718,57 +727,6 @@ export default function AdminMachinePage() {
           </div>
         ))}
       </Tabs>
-
-      {/* ---- 排程建議 Dialog ---- */}
-      <Dialog
-        open={proposeTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setProposeTarget(null);
-            setProposedTime("");
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>提出排程建議</DialogTitle>
-            <DialogDescription>
-              請選擇建議的使用開始時間，申請者將收到通知並決定是否接受。
-              （申請單：{proposeTarget}）
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="proposed-time">建議開始時間</Label>
-            <Input
-              id="proposed-time"
-              type="datetime-local"
-              value={proposedTime}
-              onChange={(e) => setProposedTime(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setProposeTarget(null);
-                setProposedTime("");
-              }}
-            >
-              取消
-            </Button>
-            <Button
-              className="bg-blue-600 hover:bg-blue-700"
-              disabled={!proposedTime || actionLoading !== null}
-              onClick={handleProposeConfirm}
-            >
-              {actionLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : null}
-              確認送出
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* ---- 拒絕理由 Dialog ---- */}
       <Dialog
