@@ -15,7 +15,7 @@ interface ApplicationItem {
     name: string;
     reason: string;
     items: Array<{code: string, name: string, qty: number} | string>; // Handle legacy or string
-    allocated?: Array<{ code: string; items: string[] }>;
+    allocated?: Array<{code: string; items: string[]}>;
     summary: string;
     pickupDate: string;
     returnDate: string;
@@ -26,12 +26,6 @@ interface ApplicationItem {
 
 export default function ApplicationsPage() {
     const [error, setError] = useState('');
-
-    const getAllocatedIdsByCode = (app: ApplicationItem, code?: string) => {
-        if (!code || !Array.isArray(app.allocated)) return [] as string[];
-        const matched = app.allocated.find((a) => a.code === code);
-        return Array.isArray(matched?.items) ? matched.items : [];
-    };
 
     const { data: applications = [], isLoading: loading } = useQuery({
         queryKey: ['my-equipment-apps'],
@@ -51,6 +45,13 @@ export default function ApplicationsPage() {
             case '不予通過': return 'bg-red-500';
             default: return 'bg-gray-400';
         }
+    };
+
+    const getAllocatedIdText = (app: ApplicationItem, code?: string) => {
+        if (!code || !Array.isArray(app.allocated)) return "";
+        const matched = app.allocated.find((alloc) => alloc.code === code);
+        if (!matched || !Array.isArray(matched.items) || matched.items.length === 0) return "";
+        return matched.items.join(", ");
     };
 
     return (
@@ -122,14 +123,15 @@ export default function ApplicationsPage() {
                                     <ul className="list-disc list-inside mt-1 text-gray-600 bg-gray-50 p-3 rounded-md">
                                         {Array.isArray(app.items) ? app.items.map((item, idx) => {
                                             if (typeof item === 'string') return <li key={idx}>{item}</li>;
-                                            const allocatedIds = getAllocatedIdsByCode(app, item.code);
-                                            const idText = allocatedIds.length > 0
-                                                ? allocatedIds.join(', ')
-                                                : item.code;
+                                            const allocatedIds = getAllocatedIdText(app, item.code);
                                             return (
                                                 <li key={idx}>
-                                                    {item.name} x{item.qty}{' '}
-                                                    <span className="text-gray-400 text-xs">({idText})</span>
+                                                    {item.name} x{item.qty}
+                                                    {allocatedIds ? (
+                                                        <span className="text-gray-500 text-xs"> ({allocatedIds})</span>
+                                                    ) : (
+                                                        <span className="text-gray-400 text-xs"> ({item.code})</span>
+                                                    )}
                                                 </li>
                                             );
                                         }) : <li>{app.summary}</li>}

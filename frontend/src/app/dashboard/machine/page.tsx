@@ -304,18 +304,18 @@ export default function MachineReservationPage() {
         <CardHeader className="space-y-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle>機台使用情形</CardTitle>
-            <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 type="button"
                 size="icon"
                 variant="outline"
-                className="h-8 w-8 sm:h-9 sm:w-9"
+                className="h-8 w-8 sm:h-10 sm:w-10"
                 disabled={weekOffset === 0}
                 onClick={() => setWeekOffset((prev) => Math.max(0, prev - 1))}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <p className="min-w-0 sm:min-w-[220px] text-center font-semibold text-xs sm:text-sm px-1 truncate">
+              <p className="min-w-[168px] sm:min-w-[220px] text-center font-semibold text-xs sm:text-sm whitespace-nowrap">
                 {format(weekStart, "yyyy/MM/dd", { locale: zhTW })} -{" "}
                 {format(addDays(weekStart, 6), "yyyy/MM/dd", {
                   locale: zhTW,
@@ -325,7 +325,7 @@ export default function MachineReservationPage() {
                 type="button"
                 size="icon"
                 variant="outline"
-                className="h-8 w-8 sm:h-9 sm:w-9"
+                className="h-8 w-8 sm:h-10 sm:w-10"
                 onClick={() => setWeekOffset((prev) => prev + 1)}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -355,15 +355,14 @@ export default function MachineReservationPage() {
               載入行事曆中...
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <div className="w-full min-w-[920px]">
-                <div className="h-[560px] border rounded-lg overflow-y-auto overflow-x-hidden">
-                  <div
-                    className="grid"
-                    style={{
-                      gridTemplateColumns: "60px repeat(7, minmax(122px, 1fr))",
-                    }}
-                  >
+            <div className="h-[560px] border rounded-lg overflow-auto">
+              <div className="w-full min-w-[720px]">
+                <div
+                  className="grid"
+                  style={{
+                    gridTemplateColumns: "56px repeat(7, minmax(94px, 1fr))",
+                  }}
+                >
                     <div className="sticky top-0 left-0 z-30 bg-white border-b border-r p-2 text-xs font-semibold text-slate-500">
                       時間
                     </div>
@@ -454,7 +453,6 @@ export default function MachineReservationPage() {
                         </div>
                       );
                     })}
-                  </div>
                 </div>
               </div>
             </div>
