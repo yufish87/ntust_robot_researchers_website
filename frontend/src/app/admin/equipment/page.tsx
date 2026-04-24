@@ -286,7 +286,9 @@ export default function AdminEquipmentPage() {
         </div>
         <Button
           variant="outline"
-          onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-equipment"] })}
+          onClick={() =>
+            queryClient.invalidateQueries({ queryKey: ["admin-equipment"] })
+          }
           disabled={loading}
         >
           <RefreshCw
@@ -317,7 +319,13 @@ export default function AdminEquipmentPage() {
         ).map((t) => (
           <TabsContent key={t} value={t} className="mt-4">
             <div className="border rounded-lg overflow-hidden">
-              <Table className={data.length > 0 ? "min-w-[1000px] table-fixed" : "w-full table-fixed"}>
+              <Table
+                className={
+                  data.length > 0
+                    ? "min-w-[1000px] table-fixed"
+                    : "w-full table-fixed"
+                }
+              >
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="w-10" />

@@ -81,6 +81,13 @@ export const useAuthStore = create<AuthState>()(
               headers: { "Cache-Control": "no-store" },
             });
 
+            const hasSessionResult =
+              !!res.data?.success &&
+              typeof res.data?.data?.authenticated === "boolean";
+            if (!hasSessionResult) {
+              throw new Error("Session check unavailable");
+            }
+
             const authenticated =
               !!res.data?.success && !!res.data?.data?.authenticated;
             const nextUser = authenticated
@@ -92,7 +99,7 @@ export const useAuthStore = create<AuthState>()(
               authChecked: true,
             });
           } catch {
-            set({ user: null, authChecked: true });
+            set((state) => ({ user: state.user, authChecked: true }));
           } finally {
             syncSessionPromise = null;
           }
@@ -120,4 +127,3 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
-

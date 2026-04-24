@@ -65,6 +65,7 @@ const CATEGORY_OPTIONS: InventoryCategory[] = [
   "馬達",
   "氣壓元件",
   "傳輸線",
+  "耗材",
   "其它",
 ];
 
