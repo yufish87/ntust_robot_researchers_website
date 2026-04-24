@@ -298,10 +298,6 @@ export default function AdminEquipmentPage() {
         </Button>
       </div>
 
-      <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-        提醒：分類為「耗材」的項目為直接取用，不需進入借用審核流程。
-      </div>
-
       {/* Tabs */}
       <Tabs
         value={tab}
