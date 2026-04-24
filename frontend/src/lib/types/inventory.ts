@@ -30,6 +30,7 @@ export type InventoryCategory =
   | "馬達"
   | "氣壓元件"
   | "傳輸線"
+  | "耗材"
   | "其它";
 
 /** 新增器材時，用於相似推薦的索引選項 */
@@ -86,8 +87,4 @@ export interface InventoryAddResult {
 }
 
 /** 盤點 Tab 篩選 */
-export type InventoryTabFilter =
-  | "all"
-  | "unchecked"
-  | "checked"
-  | "abnormal";
+export type InventoryTabFilter = "all" | "unchecked" | "checked" | "abnormal";

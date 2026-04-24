@@ -286,7 +286,9 @@ export default function AdminEquipmentPage() {
         </div>
         <Button
           variant="outline"
-          onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-equipment"] })}
+          onClick={() =>
+            queryClient.invalidateQueries({ queryKey: ["admin-equipment"] })
+          }
           disabled={loading}
         >
           <RefreshCw
@@ -294,6 +296,10 @@ export default function AdminEquipmentPage() {
           />
           重新整理
         </Button>
+      </div>
+
+      <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        提醒：分類為「耗材」的項目為直接取用，不需進入借用審核流程。
       </div>
 
       {/* Tabs */}
@@ -317,7 +323,13 @@ export default function AdminEquipmentPage() {
         ).map((t) => (
           <TabsContent key={t} value={t} className="mt-4">
             <div className="border rounded-lg overflow-hidden">
-              <Table className={data.length > 0 ? "min-w-[1000px] table-fixed" : "w-full table-fixed"}>
+              <Table
+                className={
+                  data.length > 0
+                    ? "min-w-[1000px] table-fixed"
+                    : "w-full table-fixed"
+                }
+              >
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="w-10" />

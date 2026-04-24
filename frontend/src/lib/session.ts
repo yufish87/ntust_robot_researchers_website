@@ -6,7 +6,7 @@ const COOKIE_NAME = "auth_session";
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12; // GCM 標準 IV 長度
 const AUTH_TAG_LENGTH = 16;
-const COOKIE_MAX_AGE = 86400; // 1 天 (秒)
+const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 1 週 (秒)
 
 /**
  * 從 SESSION_SECRET 環境變數取得 32-byte 加密金鑰

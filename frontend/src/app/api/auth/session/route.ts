@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { clearSessionCookie, getSessionToken } from "@/lib/session";
+import {
+  clearSessionCookie,
+  getSessionToken,
+  setSessionCookie,
+} from "@/lib/session";
 
 const GAS_API_URL = process.env.NEXT_PUBLIC_GAS_API_URL;
 
@@ -34,17 +38,39 @@ function sanitizeUser(raw: unknown): SessionUser | null {
   };
 }
 
+function createUnauthenticatedResponse(clearCookie = false) {
+  const res = NextResponse.json({
+    success: true,
+    data: {
+      authenticated: false,
+      user: null,
+    },
+  });
+
+  if (clearCookie) {
+    clearSessionCookie(res);
+  }
+
+  return res;
+}
+
+function shouldClearSessionCookie(message: string): boolean {
+  const msg = message.toLowerCase();
+  return (
+    msg.includes("invalid") ||
+    msg.includes("expired") ||
+    msg.includes("no token") ||
+    msg.includes("unauthorized") ||
+    msg.includes("inactive") ||
+    msg.includes("user not found")
+  );
+}
+
 export async function GET(req: NextRequest) {
   const token = getSessionToken(req);
 
   if (!token) {
-    return NextResponse.json({
-      success: true,
-      data: {
-        authenticated: false,
-        user: null,
-      },
-    });
+    return createUnauthenticatedResponse(false);
   }
 
   try {
@@ -63,6 +89,7 @@ export async function GET(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
       redirect: "follow",
+      signal: AbortSignal.timeout(4500),
     });
 
     const upstreamText = await upstream.text();
@@ -71,59 +98,43 @@ export async function GET(req: NextRequest) {
     try {
       data = JSON.parse(upstreamText);
     } catch {
-      const res = NextResponse.json({
-        success: true,
-        data: {
-          authenticated: false,
-          user: null,
-        },
-      });
-      clearSessionCookie(res);
-      return res;
+      return NextResponse.json(
+        { success: false, message: "SESSION_VERIFY_UNAVAILABLE" },
+        { status: 503 },
+      );
     }
 
+    const upstreamMessage = String(data?.message || "");
     if (!upstream.ok || !data?.success) {
-      const res = NextResponse.json({
-        success: true,
-        data: {
-          authenticated: false,
-          user: null,
-        },
-      });
-      clearSessionCookie(res);
-      return res;
+      if (shouldClearSessionCookie(upstreamMessage)) {
+        return createUnauthenticatedResponse(true);
+      }
+
+      return NextResponse.json(
+        { success: false, message: "SESSION_VERIFY_UNAVAILABLE" },
+        { status: 503 },
+      );
     }
 
     const user = sanitizeUser(data.data);
 
     if (!user) {
-      const res = NextResponse.json({
-        success: true,
-        data: {
-          authenticated: false,
-          user: null,
-        },
-      });
-      clearSessionCookie(res);
-      return res;
+      return createUnauthenticatedResponse(true);
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       data: {
         authenticated: true,
         user,
       },
     });
-  } catch {
-    const res = NextResponse.json({
-      success: true,
-      data: {
-        authenticated: false,
-        user: null,
-      },
-    });
-    clearSessionCookie(res);
+    setSessionCookie(res, token);
     return res;
+  } catch {
+    return NextResponse.json(
+      { success: false, message: "SESSION_VERIFY_UNAVAILABLE" },
+      { status: 503 },
+    );
   }
 }

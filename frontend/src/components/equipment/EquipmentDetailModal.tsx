@@ -57,6 +57,7 @@ export function EquipmentDetailModal({
 }: EquipmentDetailModalProps) {
   const { addItem } = useCartStore();
   const [quantity, setQuantity] = useState(1);
+  const isConsumable = data?.info?.category === "耗材";
 
   useEffect(() => {
     if (open) {
@@ -82,7 +83,7 @@ export function EquipmentDetailModal({
           </div>
         </DialogHeader>
 
-        {!data ? ( 
+        {!data ? (
           <div className="py-20 text-center text-gray-500">載入中...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-[400px_1fr] gap-8">
@@ -143,55 +144,68 @@ export function EquipmentDetailModal({
             <div className="flex flex-col h-full space-y-6">
               {/* 購物車操作 */}
               <div className="bg-white border rounded-xl p-4 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-700">借用數量</span>
-                  <div className="flex items-center border rounded-lg overflow-hidden">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-12 rounded-none hover:bg-slate-100"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      disabled={data.info.available <= 0}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <div className="w-12 text-center font-bold text-lg">
-                      {quantity}
+                {isConsumable ? (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    此分類為耗材，可直接向社團取用，不需加入借用清單與送出審核。
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-slate-700">
+                        借用數量
+                      </span>
+                      <div className="flex items-center border rounded-lg overflow-hidden">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-12 rounded-none hover:bg-slate-100"
+                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                          disabled={data.info.available <= 0}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <div className="w-12 text-center font-bold text-lg">
+                          {quantity}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-12 rounded-none hover:bg-slate-100"
+                          onClick={() =>
+                            setQuantity(
+                              Math.min(data.info.available, quantity + 1),
+                            )
+                          }
+                          disabled={
+                            data.info.available <= 0 ||
+                            quantity >= data.info.available
+                          }
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-12 rounded-none hover:bg-slate-100"
-                      onClick={() =>
-                        setQuantity(Math.min(data.info.available, quantity + 1))
-                      }
-                      disabled={
-                        data.info.available <= 0 ||
-                        quantity >= data.info.available
-                      }
+                      className="w-full text-lg h-12 shadow-md transition-all hover:scale-[1.01]"
+                      size="lg"
+                      disabled={data.info.available <= 0}
+                      onClick={() => {
+                        addItem({
+                          code: data.info.code,
+                          name: data.info.name,
+                          image: data.info.image,
+                          quantity: quantity,
+                          maxQuantity: data.info.available,
+                          category: data.info.category,
+                        });
+                        onOpenChange(false);
+                      }}
                     >
-                      <Plus className="h-4 w-4" />
+                      <ShoppingCart className="mr-2 h-5 w-5" />
+                      加入借用清單
                     </Button>
-                  </div>
-                </div>
-                <Button
-                  className="w-full text-lg h-12 shadow-md transition-all hover:scale-[1.01]"
-                  size="lg"
-                  disabled={data.info.available <= 0}
-                  onClick={() => {
-                    addItem({
-                      code: data.info.code,
-                      name: data.info.name,
-                      image: data.info.image,
-                      quantity: quantity,
-                      maxQuantity: data.info.available,
-                    });
-                    onOpenChange(false);
-                  }}
-                >
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  加入借用清單
-                </Button>
+                  </>
+                )}
               </div>
 
               {/* 庫存明細列表 */}
