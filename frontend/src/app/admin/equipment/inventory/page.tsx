@@ -175,7 +175,12 @@ export default function InventoryPage() {
 
   /* ---------- 資料載入 ---------- */
   const queryClient = useQueryClient();
-  const { data: allData = [], isLoading: loading } = useQuery({
+  const {
+    data: allData = [],
+    isLoading: loading,
+    isFetching: refreshing,
+    refetch,
+  } = useQuery({
     queryKey: ["admin-inventory"],
     queryFn: async () => {
       const res = await InventoryAPI.list();
@@ -512,15 +517,14 @@ export default function InventoryPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() =>
-              queryClient.invalidateQueries({ queryKey: ["admin-inventory"] })
-            }
-            disabled={loading}
+            onClick={() => void refetch()}
+            disabled={loading || refreshing}
+            aria-busy={refreshing}
           >
             <RefreshCw
-              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
             />
-            重新整理
+            {refreshing ? "重新整理" : "重新整理"}
           </Button>
         </div>
       </div>
@@ -574,7 +578,13 @@ export default function InventoryPage() {
         ).map((t) => (
           <TabsContent key={t} value={t} className="mt-4">
             <div className="border rounded-lg overflow-hidden">
-              <Table className={data.length > 0 ? "min-w-[1000px] table-fixed" : "w-full table-fixed"}>
+              <Table
+                className={
+                  data.length > 0
+                    ? "min-w-[1000px] table-fixed"
+                    : "w-full table-fixed"
+                }
+              >
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="w-[90px]">器材編號</TableHead>

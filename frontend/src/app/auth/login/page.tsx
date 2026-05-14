@@ -25,8 +25,14 @@ import { toast } from "@/hooks/use-toast";
 
 // Define schema validation
 const formSchema = z.object({
-  studentId: z.string().min(1, "請輸入學號"),
-  password: z.string().min(1, "請輸入密碼"),
+  studentId: z
+    .string()
+    .min(1, "請輸入學號")
+    .regex(/^([A-Za-z]+)(\d{3})(\d{2})(\d+)$/, "請輸入有效學號"),
+  password: z
+    .string()
+    .min(6, "密碼至少需要 6 個字元")
+    .regex(/^(?=.*[a-zA-Z])(?=.*\d).{6,}$/, "請輸入英數字混合密碼"),
 });
 
 export default function LoginPage() {
@@ -129,6 +135,7 @@ export default function LoginPage() {
                     </div>
                     <FormControl>
                       <Input
+                        id="studentId"
                         placeholder="請輸入學號"
                         {...field}
                         autoComplete="username"
@@ -152,6 +159,7 @@ export default function LoginPage() {
                     </div>
                     <FormControl>
                       <Input
+                        id="password"
                         type="password"
                         placeholder="請輸入密碼"
                         {...field}

@@ -22,11 +22,15 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { toast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  studentId: z.string().min(1, "請輸入學號"),
-  password: z.string().min(6, "密碼至少需要 6 個字元"),
+  studentId: z
+    .string()
+    .min(1, "請輸入學號")
+    .regex(/^([A-Za-z]+)(\d{3})(\d{2})(\d+)$/, "請輸入有效學號"),
+  password: z
+    .string()
+    .min(6, "密碼至少需要 6 個字元")
+    .regex(/^(?=.*[a-zA-Z])(?=.*\d).{6,}$/, "請輸入英數字混合密碼"),
   name: z.string().min(1, "請輸入姓名"),
-  dept: z.string().min(1, "請輸入系所"),
-  grade: z.string().min(1, "請輸入年級"),
   verifyCode: z.string().min(1, "請輸入驗證碼"),
 });
 
@@ -41,8 +45,6 @@ export default function RegisterPage() {
       studentId: "",
       password: "",
       name: "",
-      dept: "",
-      grade: "",
       verifyCode: "",
     },
   });
@@ -123,6 +125,7 @@ export default function RegisterPage() {
                     </div>
                     <FormControl>
                       <Input
+                        id="studentId"
                         placeholder="請輸入學號"
                         {...field}
                         autoComplete="username"
@@ -146,6 +149,7 @@ export default function RegisterPage() {
                     </div>
                     <FormControl>
                       <Input
+                        id="name"
                         placeholder="請輸入姓名"
                         {...field}
                         autoComplete="name"
@@ -154,55 +158,6 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              <div className="flex gap-4">
-                <FormField
-                  control={form.control}
-                  name="dept"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <div className="flex justify-between items-center h-5">
-                        <FormLabel>系所</FormLabel>
-                        {form.formState.errors.dept && (
-                          <span className="text-destructive text-xs leading-none">
-                            {form.formState.errors.dept.message}
-                          </span>
-                        )}
-                      </div>
-                      <FormControl>
-                        <Input
-                          placeholder="例如: 資工系"
-                          {...field}
-                          autoComplete="organization"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="grade"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <div className="flex justify-between items-center h-5">
-                        <FormLabel>年級</FormLabel>
-                        {form.formState.errors.grade && (
-                          <span className="text-destructive text-xs leading-none">
-                            {form.formState.errors.grade.message}
-                          </span>
-                        )}
-                      </div>
-                      <FormControl>
-                        <Input
-                          placeholder="例如: 大一"
-                          {...field}
-                          autoComplete="off"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               <FormField
                 control={form.control}
                 name="password"
@@ -218,6 +173,7 @@ export default function RegisterPage() {
                     </div>
                     <FormControl>
                       <Input
+                        id="password"
                         type="password"
                         placeholder="請設定密碼"
                         {...field}
@@ -242,7 +198,11 @@ export default function RegisterPage() {
                       )}
                     </div>
                     <FormControl>
-                      <Input placeholder="請輸入社團驗證碼" {...field} />
+                      <Input
+                        id="verifyCode"
+                        placeholder="請輸入社團驗證碼"
+                        {...field}
+                      />
                     </FormControl>
                   </FormItem>
                 )}

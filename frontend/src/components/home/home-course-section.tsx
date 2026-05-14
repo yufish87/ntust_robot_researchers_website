@@ -34,6 +34,14 @@ export function CourseSection({
         // P0: 首頁一律使用公開端點，避免 Zustand rehydrate 造成 user 變化時 double fetch
         const endpoint = memberView ? "/api/courses" : "/api/courses/public";
         const res = await fetch(endpoint);
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(
+            `Server returned ${res.status}: ${text.slice(0, 100)}`,
+          );
+        }
+
         const json = await res.json();
         if (json.success) {
           let data = json.data as Course[];

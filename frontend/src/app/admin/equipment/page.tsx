@@ -172,7 +172,12 @@ export default function AdminEquipmentPage() {
   const [returnTarget, setReturnTarget] = useState<string | null>(null);
 
   /* ---------- 資料載入（useQuery 快取）---------- */
-  const { data: allData = [], isLoading: loading } = useQuery({
+  const {
+    data: allData = [],
+    isLoading: loading,
+    isFetching: refreshing,
+    refetch,
+  } = useQuery({
     queryKey: ["admin-equipment"],
     queryFn: async () => {
       const res = await EquipmentAdminAPI.list("all");
@@ -286,15 +291,14 @@ export default function AdminEquipmentPage() {
         </div>
         <Button
           variant="outline"
-          onClick={() =>
-            queryClient.invalidateQueries({ queryKey: ["admin-equipment"] })
-          }
-          disabled={loading}
+          onClick={() => void refetch()}
+          disabled={loading || refreshing}
+          aria-busy={refreshing}
         >
           <RefreshCw
-            className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+            className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
           />
-          重新整理
+          {refreshing ? "重新整理" : "重新整理"}
         </Button>
       </div>
 

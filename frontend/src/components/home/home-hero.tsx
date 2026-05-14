@@ -18,11 +18,11 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
     }
   }
 
-  // 初始為 null — SSR 時不顯示動畫，避免閃爍
+  // Avoid animation during SSR; only run after client mount.
   const [delays, setDelays] = useState<number[] | null>(null);
 
   useEffect(() => {
-    // Client mount 後才產生隨機動畫順序
+    // Client mount 後啟動馬賽克動畫順序。
     const indices = Array.from({ length: tileCount }, (_, i) => i);
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -33,7 +33,7 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
 
   return (
     <section className="w-full min-h-[inherit] relative flex items-center justify-center overflow-hidden">
-      {/* 拼圖底圖 — 只在 client mount 後才渲染，避免 SSR 順序閃爍 */}
+      {/* 背景圖層在 client mount 後才渲染，避免 SSR mismatch */}
       {tiles.length > 0 && delays && (
         <div
           className="absolute top-0 -bottom-4 -left-4 -right-4 grid opacity-[0.2] pointer-events-none"
@@ -62,7 +62,7 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
         </div>
       )}
 
-      {/* 上層遮罩 — 中間加重、外圍保持透明 */}
+      {/* 上層遮罩，提供中心聚焦的漸層 */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -81,16 +81,16 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
               width={650}
               height={150}
               className="w-[350px] md:w-[500px] lg:w-[650px] object-contain"
-              style={{ height: "auto" }}
+              style={{ width: "100%", height: "auto" }}
               priority
             />
           </div>
           <p className="text-slate-300 text-base md:text-lg leading-relaxed">
-            探索科技極限，實踐創客精神。
+            探索科技與創新，實踐創客精神。
             <br />
-            從基礎到國際競賽，我們提供最完整的資源，
+            從基礎到競賽，提供完整的學習與實作資源。
             <br />
-            讓你的機器人夢想不再只是夢想。
+            讓更多人的夢想不再只是夢想。
           </p>
         </div>
 
@@ -127,17 +127,17 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
         <div className="pt-4 flex items-center justify-center gap-4 text-slate-400 text-sm font-medium">
           <div className="flex flex-col items-center">
             <span className="text-2xl font-bold text-[#ffc000]">10+</span>
-            <span>年度競賽獎項</span>
+            <span>年度競賽經驗</span>
           </div>
           <div className="w-px h-8 bg-slate-600"></div>
           <div className="flex flex-col items-center">
             <span className="text-2xl font-bold text-[#ffc000]">50+</span>
-            <span>專業社課時數</span>
+            <span>專業社課堂數</span>
           </div>
           <div className="w-px h-8 bg-slate-600"></div>
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-[#ffc000]">臺科大</span>
-            <span>專業技術社團</span>
+            <span className="text-2xl font-bold text-[#ffc000]">100+</span>
+            <span>社團成員</span>
           </div>
         </div>
       </div>

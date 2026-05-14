@@ -56,7 +56,17 @@ export function CourseDetailModal({
         }),
       });
 
-      const tokenJson = await tokenRes.json();
+      if (!tokenRes.ok) {
+        throw new Error("授權失敗");
+      }
+
+      const tokenText = await tokenRes.text();
+      let tokenJson;
+      try {
+        tokenJson = JSON.parse(tokenText);
+      } catch (e) {
+        throw new Error("伺服器回應無效的格式");
+      }
 
       if (!tokenJson.success || !tokenJson.data?.token) {
         throw new Error(tokenJson.message || "Failed to get access token");
@@ -125,6 +135,22 @@ export function CourseDetailModal({
     variant: "outline" | "ghost" | "secondary" = "outline",
     className?: string,
   ) => {
+    // If the backend stripped the fileId and link (for visitors), make it view-only
+    if (!item.fileId && !item.link) {
+      return (
+        <Button
+          key={item.title}
+          variant="secondary"
+          size="sm"
+          className={`justify-start opacity-70 cursor-not-allowed ${className || ""}`}
+          title="請登入後下載或瀏覽附件"
+        >
+          {icon}
+          <span className="truncate flex-1 text-left">{item.title}</span>
+        </Button>
+      );
+    }
+
     const isDownloading = downloadingId === item.fileId;
     const Icon = item.fileId ? Download : ExternalLink;
 

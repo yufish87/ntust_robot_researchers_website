@@ -30,6 +30,38 @@ const categoryColor: Record<string, string> = {
   設備與系統: "bg-purple-500/20 text-purple-400 hover:bg-purple-500/30",
 };
 
+const imageAttachmentPattern =
+  /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|heif)(?:$|[?#])/i;
+
+function isImageAttachment(att: {
+  title?: string;
+  link?: string;
+  fileId?: string;
+}) {
+  const title = att.title || "";
+  const link = att.link || "";
+
+  if (imageAttachmentPattern.test(title) || imageAttachmentPattern.test(link)) {
+    return true;
+  }
+
+  return Boolean(att.fileId && !att.link);
+}
+
+function getAttachmentImageSrc(att: { link?: string; fileId?: string }) {
+  if (att.fileId) {
+    return `https://lh3.googleusercontent.com/d/${att.fileId}=w1200`;
+  }
+
+  return att.link || "";
+}
+
+function getAttachmentLink(att: { link?: string; fileId?: string }) {
+  if (att.link) return att.link;
+  if (att.fileId) return `https://drive.google.com/file/d/${att.fileId}/view`;
+  return "";
+}
+
 export default function AnnouncementsPage() {
   const [selected, setSelected] = useState<Announcement | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -40,7 +72,8 @@ export default function AnnouncementsPage() {
     queryFn: async () => {
       const res = await fetch("/api/announcements");
       const json = await res.json();
-      if (json.success && Array.isArray(json.data)) return json.data as Announcement[];
+      if (json.success && Array.isArray(json.data))
+        return json.data as Announcement[];
       throw new Error("載入公告失敗");
     },
   });
@@ -145,7 +178,10 @@ export default function AnnouncementsPage() {
 
       {/* 公告詳情 Dialog */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
-        <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[80vh]">
+        <DialogContent
+          aria-describedby={undefined}
+          className="max-w-2xl max-h-[80vh]"
+        >
           <DialogHeader>
             <DialogTitle className="text-xl">{selected?.title}</DialogTitle>
             <div className="flex items-center gap-2 pt-1">
@@ -183,27 +219,22 @@ export default function AnnouncementsPage() {
 
                   {/* 圖片附件：直接顯示 */}
                   {selected.attachments
-                    .filter((att) => att.fileId)
+                    .filter((att) => isImageAttachment(att))
                     .map((att, i) => {
-                      const imgSrc = `https://lh3.googleusercontent.com/d/${att.fileId}=w800`;
-                      const driveLink = `https://drive.google.com/file/d/${att.fileId}/view`;
+                      const imgSrc = getAttachmentImageSrc(att);
+                      if (!imgSrc) return null;
+
                       return (
                         <div
                           key={`img-${i}`}
                           className="rounded-lg overflow-hidden border"
                         >
-                          <a
-                            href={driveLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={imgSrc}
-                              alt={att.title || "附件圖片"}
-                              className="w-full h-auto object-cover hover:opacity-95 transition-opacity"
-                            />
-                          </a>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={imgSrc}
+                            alt={att.title || "附件圖片"}
+                            className="w-full h-auto object-cover"
+                          />
                           {att.title && (
                             <p className="p-3 text-xs text-muted-foreground">
                               {att.title}
@@ -216,19 +247,24 @@ export default function AnnouncementsPage() {
                   {/* 非圖片附件（有 link 但沒 fileId） */}
                   <div className="space-y-1.5">
                     {selected.attachments
-                      .filter((att) => !att.fileId && att.link)
-                      .map((att, i) => (
-                        <a
-                          key={`file-${i}`}
-                          href={att.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-sm text-blue-500 hover:underline"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                          {att.title || att.link}
-                        </a>
-                      ))}
+                      .filter((att) => !isImageAttachment(att))
+                      .map((att, i) => {
+                        const link = getAttachmentLink(att);
+                        if (!link) return null;
+
+                        return (
+                          <a
+                            key={`file-${i}`}
+                            href={link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm text-blue-500 hover:underline"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                            {att.title || link}
+                          </a>
+                        );
+                      })}
                   </div>
                 </div>
               )}
