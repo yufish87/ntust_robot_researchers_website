@@ -41,8 +41,11 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 const passwordSchema = z
   .object({
-    oldPassword: z.string().min(6, "密碼至少 6 個字元"),
-    newPassword: z.string().min(6, "新密碼至少 6 個字元"),
+    oldPassword: z.string().min(1, "請輸入目前的密碼"),
+    newPassword: z
+      .string()
+      .min(6, "新密碼至少需要 6 個字元")
+      .regex(/^(?=.*[a-zA-Z])(?=.*\d).{6,}$/, "請輸入英數字混合密碼"),
     confirmPassword: z.string().min(1, "請確認新密碼"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -235,12 +238,22 @@ export default function SettingsPage() {
             {/* 唯讀欄位 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>學號</Label>
-                <Input value={user?.studentId || ""} disabled />
+                <Label htmlFor="studentId-display">學號</Label>
+                <Input
+                  id="studentId-display"
+                  value={user?.studentId || ""}
+                  disabled
+                  autoComplete="off"
+                />
               </div>
               <div className="space-y-2">
-                <Label>姓名</Label>
-                <Input value={user?.name || ""} disabled />
+                <Label htmlFor="name-display">姓名</Label>
+                <Input
+                  id="name-display"
+                  value={user?.name || ""}
+                  disabled
+                  autoComplete="off"
+                />
               </div>
             </div>
 
@@ -281,9 +294,7 @@ export default function SettingsPage() {
             {/* 身份 Badge */}
             <div className="space-y-2">
               <Label>身份</Label>
-              <div>
-                {getRoleBadge(user?.role || "visitor")}
-              </div>
+              <div>{getRoleBadge(user?.role || "visitor")}</div>
             </div>
 
             <Separator />

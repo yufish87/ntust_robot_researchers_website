@@ -64,7 +64,7 @@ export default async function DashboardPage() {
 
         {/* 3. 最新消息 */}
         <section id="news" className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20">
-          <AnnouncementSection memberView />
+          <AnnouncementSection />
         </section>
 
         {/* 4. 課程資訊 (社員版) */}

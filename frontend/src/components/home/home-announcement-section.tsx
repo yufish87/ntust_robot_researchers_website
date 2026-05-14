@@ -28,14 +28,41 @@ const categoryColor: Record<string, string> = {
 
 interface AnnouncementSectionProps {
   className?: string;
-  /** 若為 true 使用 /api/announcements (member)，否則 /api/announcements/public */
-  memberView?: boolean;
 }
 
-export function AnnouncementSection({
-  className,
-  memberView = false,
-}: AnnouncementSectionProps) {
+const imageAttachmentPattern =
+  /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|heif)(?:$|[?#])/i;
+
+function isImageAttachment(att: {
+  title?: string;
+  link?: string;
+  fileId?: string;
+}) {
+  const title = att.title || "";
+  const link = att.link || "";
+
+  if (imageAttachmentPattern.test(title) || imageAttachmentPattern.test(link)) {
+    return true;
+  }
+
+  return Boolean(att.fileId && !att.link);
+}
+
+function getAttachmentImageSrc(att: { link?: string; fileId?: string }) {
+  if (att.fileId) {
+    return `https://lh3.googleusercontent.com/d/${att.fileId}=w1200`;
+  }
+
+  return att.link || "";
+}
+
+function getAttachmentLink(att: { link?: string; fileId?: string }) {
+  if (att.link) return att.link;
+  if (att.fileId) return `https://drive.google.com/file/d/${att.fileId}/view`;
+  return "";
+}
+
+export function AnnouncementSection({ className }: AnnouncementSectionProps) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Announcement | null>(null);
@@ -54,11 +81,7 @@ export function AnnouncementSection({
       : announcements.filter((a) => a.category === selectedCategory);
 
   useEffect(() => {
-    const endpoint = memberView
-      ? "/api/announcements"
-      : "/api/announcements/public";
-
-    fetch(endpoint)
+    fetch("/api/announcements")
       .then((res) => res.json())
       .then((json) => {
         if (json.success && Array.isArray(json.data)) {
@@ -67,7 +90,7 @@ export function AnnouncementSection({
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [memberView]);
+  }, []);
 
   return (
     <div className={cn("w-full py-8 md:py-12", className)}>
@@ -210,27 +233,22 @@ export function AnnouncementSection({
 
                     {/* 圖片附件：直接顯示 */}
                     {selected.attachments
-                      .filter((att) => att.fileId)
+                      .filter((att) => isImageAttachment(att))
                       .map((att, i) => {
-                        const imgSrc = `https://lh3.googleusercontent.com/d/${att.fileId}=w800`;
-                        const driveLink = `https://drive.google.com/file/d/${att.fileId}/view`;
+                        const imgSrc = getAttachmentImageSrc(att);
+                        if (!imgSrc) return null;
+
                         return (
                           <div
                             key={`img-${i}`}
                             className="rounded-lg overflow-hidden border border-white/10"
                           >
-                            <a
-                              href={driveLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={imgSrc}
-                                alt={att.title || "附件圖片"}
-                                className="w-full h-auto object-cover hover:opacity-90 transition-opacity"
-                              />
-                            </a>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imgSrc}
+                              alt={att.title || "附件圖片"}
+                              className="w-full h-auto object-cover"
+                            />
                             {att.title && (
                               <p className="p-3 text-xs text-slate-400">
                                 {att.title}
@@ -242,21 +260,26 @@ export function AnnouncementSection({
 
                     {/* 非圖片附件（有 link 但沒 fileId） */}
                     {selected.attachments
-                      .filter((att) => !att.fileId && att.link)
-                      .map((att, i) => (
-                        <a
-                          key={`file-${i}`}
-                          href={att.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-lg p-3 transition-colors text-sm text-slate-300 hover:text-white"
-                        >
-                          <Paperclip className="w-4 h-4 text-[#ffc000] shrink-0" />
-                          <span className="truncate">
-                            {att.title || "附件"}
-                          </span>
-                        </a>
-                      ))}
+                      .filter((att) => !isImageAttachment(att))
+                      .map((att, i) => {
+                        const link = getAttachmentLink(att);
+                        if (!link) return null;
+
+                        return (
+                          <a
+                            key={`file-${i}`}
+                            href={link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-lg p-3 transition-colors text-sm text-slate-300 hover:text-white"
+                          >
+                            <Paperclip className="w-4 h-4 text-[#ffc000] shrink-0" />
+                            <span className="truncate">
+                              {att.title || link}
+                            </span>
+                          </a>
+                        );
+                      })}
                   </div>
                 )}
               </div>

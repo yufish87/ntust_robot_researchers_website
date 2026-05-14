@@ -40,6 +40,8 @@ export default function AdminLayout({
 
     if (!authChecked) {
       void syncSession();
+      // If persisted admin user exists, render immediately and verify in background.
+      if (user && isAdmin) return;
       return;
     }
 
@@ -58,7 +60,8 @@ export default function AdminLayout({
   }, [hasHydrated, authChecked, syncSession, user, isAdmin, router, toast]);
 
   // 尚未 hydrated 或未登入 — 顯示 Loading
-  if (!hasHydrated || !authChecked || !user || !isAdmin) {
+  // Speed up refresh: allow optimistic render when persisted admin user exists.
+  if (!hasHydrated || (!authChecked && !user) || !user || !isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
         <Loader2 className="h-8 w-8 animate-spin text-slate-400" />

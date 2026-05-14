@@ -32,16 +32,26 @@ import { toast } from "@/hooks/use-toast";
 
 // Schema Definitions
 const loginSchema = z.object({
-  studentId: z.string().min(1, "請輸入學號"),
-  password: z.string().min(1, "請輸入密碼"),
+  studentId: z
+    .string()
+    .min(1, "請輸入學號")
+    .regex(/^([A-Za-z]+)(\d{3})(\d{2})(\d+)$/, "請輸入有效學號"),
+  password: z
+    .string()
+    .min(6, "密碼至少需要 6 個字元")
+    .regex(/^(?=.*[a-zA-Z])(?=.*\d).{6,}$/, "請輸入英數字混合密碼"),
 });
 
 const registerSchema = z.object({
-  studentId: z.string().min(1, "請輸入學號"),
-  password: z.string().min(6, "密碼至少需要 6 個字元"),
+  studentId: z
+    .string()
+    .min(1, "請輸入學號")
+    .regex(/^([A-Za-z]+)(\d{3})(\d{2})(\d+)$/, "請輸入有效學號"),
+  password: z
+    .string()
+    .min(6, "密碼至少需要 6 個字元")
+    .regex(/^(?=.*[a-zA-Z])(?=.*\d).{6,}$/, "請輸入英數字混合密碼"),
   name: z.string().min(1, "請輸入姓名"),
-  dept: z.string().min(1, "請輸入系所"),
-  grade: z.string().min(1, "請輸入年級"),
   verifyCode: z.string().min(1, "請輸入驗證碼"),
 });
 
@@ -168,6 +178,7 @@ function LoginForm({ onSuccess, onSwitch }: FormProps) {
               </div>
               <FormControl>
                 <Input
+                  id="login-studentId"
                   placeholder="請輸入學號"
                   {...field}
                   autoComplete="username"
@@ -191,6 +202,7 @@ function LoginForm({ onSuccess, onSwitch }: FormProps) {
               </div>
               <FormControl>
                 <Input
+                  id="login-password"
                   type="password"
                   placeholder="請輸入密碼"
                   {...field}
@@ -237,8 +249,6 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
       studentId: "",
       password: "",
       name: "",
-      dept: "",
-      grade: "",
       verifyCode: "",
     },
   });
@@ -291,6 +301,7 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
               </div>
               <FormControl>
                 <Input
+                  id="register-studentId"
                   placeholder="請輸入學號"
                   {...field}
                   autoComplete="username"
@@ -314,6 +325,7 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
               </div>
               <FormControl>
                 <Input
+                  id="register-name"
                   placeholder="請輸入姓名"
                   {...field}
                   autoComplete="name"
@@ -322,54 +334,6 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
             </FormItem>
           )}
         />
-        <div className="flex gap-2">
-          <FormField
-            control={form.control}
-            name="dept"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <div className="flex justify-between items-center h-5">
-                  <FormLabel>系所</FormLabel>
-                  {form.formState.errors.dept && (
-                    <span className="text-destructive text-xs leading-none">
-                      {form.formState.errors.dept.message}
-                    </span>
-                  )}
-                </div>
-                <FormControl>
-                  <Input
-                    placeholder="例如: 資工系"
-                    {...field}
-                    autoComplete="organization"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="grade"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <div className="flex justify-between items-center h-5">
-                  <FormLabel>年級</FormLabel>
-                  {form.formState.errors.grade && (
-                    <span className="text-destructive text-xs leading-none">
-                      {form.formState.errors.grade.message}
-                    </span>
-                  )}
-                </div>
-                <FormControl>
-                  <Input
-                    placeholder="例如: 大一"
-                    {...field}
-                    autoComplete="off"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
 
         <FormField
           control={form.control}
@@ -386,6 +350,7 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
               </div>
               <FormControl>
                 <Input
+                  id="register-password"
                   type="password"
                   placeholder="請設定密碼"
                   {...field}
@@ -410,7 +375,11 @@ function RegisterForm({ onSuccess, onSwitch }: FormProps) {
                 )}
               </div>
               <FormControl>
-                <Input placeholder="請輸入社團驗證碼" {...field} />
+                <Input
+                  id="register-verifyCode"
+                  placeholder="請輸入社團驗證碼"
+                  {...field}
+                />
               </FormControl>
             </FormItem>
           )}

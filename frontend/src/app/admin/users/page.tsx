@@ -167,7 +167,12 @@ export default function AdminUsersPage() {
   const [addLoading, setAddLoading] = useState(false);
 
   /* ---------- 使用者資料（useQuery）---------- */
-  const { data: usersData, isLoading: loading } = useQuery({
+  const {
+    data: usersData,
+    isLoading: loading,
+    isFetching: usersRefreshing,
+    refetch: refetchUsers,
+  } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
       const result = await UserAPI.listUsers();
@@ -177,7 +182,12 @@ export default function AdminUsersPage() {
   const users = usersData ?? [];
 
   /* ---------- 驗證碼資料（useQuery）---------- */
-  const { data: codesData, isLoading: codesLoading } = useQuery({
+  const {
+    data: codesData,
+    isLoading: codesLoading,
+    isFetching: codesRefreshing,
+    refetch: refetchCodes,
+  } = useQuery({
     queryKey: ["admin-codes"],
     queryFn: async () => {
       const result = await UserAPI.listCodes();
@@ -397,11 +407,18 @@ export default function AdminUsersPage() {
           <p className="text-muted-foreground">管理社團成員、權限與驗證碼。</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setCodeDialogOpen(true)}>
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => setCodeDialogOpen(true)}
+          >
             <KeyRound className="h-4 w-4 mr-2" />
             產生註冊碼
           </Button>
-          <Button className="w-full sm:w-auto" onClick={() => setAddUserOpen(true)}>
+          <Button
+            className="w-full sm:w-auto"
+            onClick={() => setAddUserOpen(true)}
+          >
             <Plus className="h-4 w-4 mr-2" />
             新增人員
           </Button>
@@ -435,17 +452,26 @@ export default function AdminUsersPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: mainTab === "users" ? ["admin-users"] : ["admin-codes"] })}
-          disabled={mainTab === "users" ? loading : codesLoading}
+          onClick={() =>
+            void (mainTab === "users" ? refetchUsers() : refetchCodes())
+          }
+          disabled={
+            mainTab === "users"
+              ? loading || usersRefreshing
+              : codesLoading || codesRefreshing
+          }
+          aria-busy={mainTab === "users" ? usersRefreshing : codesRefreshing}
         >
           <RefreshCw
             className={`mr-2 h-4 w-4 ${
-              (mainTab === "users" ? loading : codesLoading)
+              (mainTab === "users" ? usersRefreshing : codesRefreshing)
                 ? "animate-spin"
                 : ""
             }`}
           />
-          重新整理
+          {(mainTab === "users" ? usersRefreshing : codesRefreshing)
+            ? "重新整理"
+            : "重新整理"}
         </Button>
       </div>
 
