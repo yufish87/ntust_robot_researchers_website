@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InventoryAPI } from "@/lib/api/inventory";
 import type {
@@ -56,6 +56,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { getGoogleDriveImageUrl } from "@/lib/utils";
 
 const CATEGORY_OPTIONS: InventoryCategory[] = [
   "單晶片",
@@ -119,7 +120,6 @@ function UsageBadge({ usage }: { usage: string }) {
 function InventoryBadge({ checked }: { checked: boolean }) {
   return checked ? (
     <Badge className="bg-green-600 hover:bg-green-700">
-      <Check className="h-3 w-3 mr-1" />
       已盤點
     </Badge>
   ) : (
@@ -172,6 +172,10 @@ export default function InventoryPage() {
 
   // 重置確認 Dialog
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // 圖片預覽 Dialog
+  const [imageTarget, setImageTarget] = useState<InventoryItem | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   /* ---------- 資料載入 ---------- */
   const queryClient = useQueryClient();
@@ -581,20 +585,20 @@ export default function InventoryPage() {
               <Table
                 className={
                   data.length > 0
-                    ? "min-w-[1000px] table-fixed"
+                    ? "min-w-[62.5rem] table-fixed"
                     : "w-full table-fixed"
                 }
               >
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="w-[90px]">器材編號</TableHead>
-                    <TableHead className="w-[80px]">器材代碼</TableHead>
+                    <TableHead className="w-[5.5rem]">操作</TableHead>
+                    <TableHead className="w-[5.5rem]">編號</TableHead>
                     <TableHead>器材名稱</TableHead>
-                    <TableHead>器材狀態</TableHead>
-                    <TableHead className="w-[80px]">使用情形</TableHead>
-                    <TableHead className="w-[80px]">盤點</TableHead>
-                    <TableHead className="w-[130px]">盤點時間</TableHead>
-                    <TableHead className="w-[80px] text-right">操作</TableHead>
+                    <TableHead className="w-[5rem]">分類</TableHead>
+                    <TableHead className="w-[12rem]">狀態</TableHead>
+                    <TableHead className="w-[4.5rem]">使用情形</TableHead>
+                    <TableHead className="w-[5rem]">盤點</TableHead>
+                    <TableHead className="w-[8.5rem]">盤點時間</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -633,39 +637,7 @@ export default function InventoryPage() {
                                 : ""
                           }
                         >
-                          <TableCell
-                            className="font-mono text-xs truncate"
-                            title={item.id}
-                          >
-                            {item.id}
-                          </TableCell>
-                          <TableCell
-                            className="text-xs text-muted-foreground truncate"
-                            title={item.code}
-                          >
-                            {item.code}
-                          </TableCell>
-                          <TableCell
-                            className="font-medium text-sm truncate"
-                            title={item.name}
-                          >
-                            {item.name}
-                          </TableCell>
-                          <TableCell
-                            className="text-sm truncate"
-                            title={item.status || "—"}
-                          >
-                            {item.status || "—"}
-                          </TableCell>
-                          <TableCell>
-                            <UsageBadge usage={item.usage} />
-                          </TableCell>
-                          <TableCell>
-                            <InventoryBadge checked={isChecked} />
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {item.inventoryTime || "—"}
-                          </TableCell>
+                          {/* 操作欄（移到最前） */}
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1.5">
                               {/* 盤點按鈕 */}
@@ -705,6 +677,55 @@ export default function InventoryPage() {
                               )}
                             </div>
                           </TableCell>
+                          <TableCell
+                            className="font-mono text-xs truncate"
+                            title={item.id}
+                          >
+                            {item.id}
+                          </TableCell>
+                          <TableCell
+                            className={`font-medium text-sm truncate ${
+                              item.image
+                                ? "cursor-pointer hover:text-blue-600 hover:underline"
+                                : ""
+                            }`}
+                            title={
+                              item.image
+                                ? `${item.name}（點擊查看圖片）`
+                                : item.name
+                            }
+                            onClick={() => {
+                              if (item.image) {
+                                setImageLoaded(false);
+                                setImageTarget(item);
+                              }
+                            }}
+                          >
+                            <span className="flex items-center gap-1">
+                              {item.name}
+                            </span>
+                          </TableCell>
+                          <TableCell
+                            className="text-xs text-muted-foreground truncate"
+                            title={item.category || "—"}
+                          >
+                            {item.category || "—"}
+                          </TableCell>
+                          <TableCell
+                            className="text-xs truncate max-w-[90px]"
+                            title={item.status || "—"}
+                          >
+                            <span className="block truncate">{item.status || "—"}</span>
+                          </TableCell>
+                          <TableCell>
+                            <UsageBadge usage={item.usage} />
+                          </TableCell>
+                          <TableCell>
+                            <InventoryBadge checked={isChecked} />
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {item.inventoryTime || "—"}
+                          </TableCell>
                         </TableRow>
                       );
                     })
@@ -741,31 +762,31 @@ export default function InventoryPage() {
               {[
                 {
                   value: "good" as InventoryResult,
-                  label: "✅ 良好",
+                  label: "良好",
                   desc: "狀態良好，可正常使用",
                   icon: Check,
                 },
                 {
                   value: "usable" as InventoryResult,
-                  label: "⚠️ 不佳但可用",
+                  label: "不佳但可用",
                   desc: "有瑕疵但仍可使用",
                   icon: AlertTriangle,
                 },
                 {
                   value: "repair" as InventoryResult,
-                  label: "🔧 需維修",
+                  label: "需維修",
                   desc: "無法使用，需送修",
                   icon: WrenchIcon,
                 },
                 {
                   value: "scrap" as InventoryResult,
-                  label: "🗑️ 報廢",
+                  label: "報廢",
                   desc: "無法修復，標記報廢",
                   icon: Trash2,
                 },
                 {
                   value: "lost" as InventoryResult,
-                  label: "❌ 遺失",
+                  label: "遺失",
                   desc: "找不到器材",
                   icon: HelpCircle,
                 },
@@ -1252,6 +1273,53 @@ export default function InventoryPage() {
               確認重置
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- 圖片預覽 Dialog ---- */}
+      <Dialog
+        open={imageTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setImageTarget(null);
+            setImageLoaded(false);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{imageTarget?.name || "器材圖片"}</DialogTitle>
+            <DialogDescription>
+              {imageTarget?.id} · {imageTarget?.code}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="aspect-[4/3] w-full bg-gray-100 rounded-xl overflow-hidden border relative">
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground z-10">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                載入中...
+              </div>
+            )}
+            {imageTarget?.image ? (
+              <img
+                src={getGoogleDriveImageUrl(imageTarget.image)}
+                alt={imageTarget.name}
+                className={`w-full h-full object-contain bg-white transition-opacity duration-300 ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+                onLoad={() => setImageLoaded(true)}
+                onError={(e) => {
+                  setImageLoaded(true);
+                  (e.target as HTMLImageElement).src =
+                    "https://placehold.co/600x400?text=No+Image";
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                No Image
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
