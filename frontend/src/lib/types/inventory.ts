@@ -15,7 +15,7 @@ export interface InventoryItem {
   borrower: string; // 借用人
   applicationId: string; // 申請單號
   returnDate: string; // 借用期限
-  note: string; // 備註
+  category: string; // 分類（K欄）
   image: string; // 照片
   inventoryStatus: number | string; // 盤點（1 或空白）
   inventoryTime: string; // 盤點時間
