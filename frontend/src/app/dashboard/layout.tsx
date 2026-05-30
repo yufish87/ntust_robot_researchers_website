@@ -70,7 +70,9 @@ export default function DashboardLayout({
   const isDashboardHome = pathname === "/dashboard";
 
   return (
-    <div className="flex h-full overflow-hidden bg-white">
+    <div
+      className={`flex h-full overflow-hidden ${isDashboardHome ? "bg-[#34313c]" : "bg-white"}`}
+    >
       <AppSidebar />
       <MobileNav variant="dashboard" />
       <main

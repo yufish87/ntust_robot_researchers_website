@@ -54,7 +54,6 @@ ntust_rrc_website/
 gas-backend/
 ├── Config.js          # 環境設定 (Sheet ID 等)
 ├── Main.js            # 進入點 & 路由分發
-├── Setup.js           # 資料庫初始化腳本
 ├── database/
 │   └── SheetDB.js     # Sheet 資料存取基底
 ├── lib/
@@ -91,6 +90,7 @@ gas-backend/
 - 器材庫存瀏覽與分類
 - 線上借用申請
 - 申請審核、器材簽出 / 歸還追蹤
+- 器材盤點與狀態管理
 - 借用歷史記錄
 
 ### 機器使用申請
@@ -106,20 +106,26 @@ gas-backend/
 - 申請狀態追蹤與審核流程
 - 發票簽收與撥款管理
 
-### 公告與競賽(尚未開發完成)
+### 公告系統
 
 - 社團公告發布與分類
+- 支援附件下載與圖文內容
+
+### 競賽意願 (尚未開發完成)
+
 - 競賽意願調查
 
-### 許願池(尚未開發完成)
+### 許願池 (尚未開發完成)
 
 - 匿名意見提交
 
 ### 後台管理
 
 - 管理員儀表板
-- 用戶管理、申請審核
-- 系統設定
+- 用戶與權限管理
+- 各項申請審核 (器材/財務/機器)
+- 器材盤點作業
+- 系統與公告設定
 
 ## 快速開始
 
@@ -132,9 +138,8 @@ Google Apps Script 後端使用 clasp 進行版本管理：
 1. 安裝 clasp：`npm install -g @google/clasp`
 2. 登入 Google 帳號：`clasp login`
 3. 在 `Config.js` 中設定 Google Sheet ID
-4. 執行 `Setup.js` 初始化資料庫結構
-5. 推送程式碼：`clasp push`
-6. 部署為 Web App
+4. 推送程式碼：`clasp push`
+5. 部署為 Web App
 
 ## 授權
 

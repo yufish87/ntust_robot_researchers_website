@@ -8,3 +8,4 @@ gas-backend/
 .claspignore
 gas-backend-public/
 .vscode/
+.clasprc*.json
