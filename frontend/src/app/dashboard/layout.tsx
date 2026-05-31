@@ -60,7 +60,7 @@ export default function DashboardLayout({
   // Speed up refresh: allow optimistic render when persisted user exists.
   if (!hasHydrated || (!authChecked && !user) || !user) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
+      <div className="flex h-dvh items-center justify-center bg-slate-50">
         <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
       </div>
     );
@@ -71,13 +71,14 @@ export default function DashboardLayout({
 
   return (
     <div
-      className={`flex h-full overflow-hidden ${isDashboardHome ? "bg-[#34313c]" : "bg-white"}`}
+      className={`flex h-dvh overflow-hidden ${isDashboardHome ? "bg-[#34313c]" : "bg-white"}`}
     >
       <AppSidebar />
       <MobileNav variant="dashboard" />
       <main
         ref={mainRef}
-        className={`flex-1 lg:ml-64 overflow-y-scroll h-full p-4 pt-14 lg:p-8 pb-[env(safe-area-inset-bottom)] scroll-smooth ${isDashboardHome ? "scrollbar-dark" : "scrollbar-light"}`}
+        className={`flex-1 lg:ml-64 overflow-y-auto h-full p-4 pt-14 lg:p-8 scroll-smooth ${isDashboardHome ? "scrollbar-dark" : "scrollbar-light"}`}
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
       >
         {children}
       </main>

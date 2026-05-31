@@ -83,7 +83,7 @@ export function AppSidebar() {
 
   return (
     <div
-      className="hidden lg:flex h-screen w-64 flex-col fixed left-0 top-0"
+      className="hidden lg:flex h-dvh w-64 flex-col fixed left-0 top-0"
       style={{ backgroundColor: "#34313d" }}
     >
       {/* Header */}
@@ -145,7 +145,10 @@ export function AppSidebar() {
       </div>
 
       {/* Footer / User */}
-      <div className="p-4 border-t border-white/10">
+      <div
+        className="p-4 border-t border-white/10"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+      >
         <div className="flex items-center gap-3 mb-3 px-2">
           <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
             <User className="w-4 h-4 text-white/60" />

@@ -267,17 +267,17 @@ export default function AdminFinancePage() {
 
       {/* Table */}
       <div className="border rounded-lg overflow-hidden">
-        <Table className={data.length > 0 ? "min-w-[1000px] table-fixed" : "w-full table-fixed"}>
+        <Table className={data.length > 0 ? "min-w-[62.5rem] table-fixed" : "w-full table-fixed"}>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="w-[160px]">單號</TableHead>
-              <TableHead className="w-[90px]">申請人</TableHead>
-              <TableHead className="w-[90px]">類別</TableHead>
+              <TableHead className="w-[10rem]">單號</TableHead>
+              <TableHead className="w-[5.625rem]">申請人</TableHead>
+              <TableHead className="w-[5.625rem]">類別</TableHead>
               <TableHead>說明</TableHead>
-              <TableHead className="w-[110px]">金額</TableHead>
-              <TableHead className="w-[100px]">申請日期</TableHead>
-              <TableHead className="w-[110px]">狀態</TableHead>
-              <TableHead className="w-[140px] text-center">操作</TableHead>
+              <TableHead className="w-[6.875rem]">金額</TableHead>
+              <TableHead className="w-[6.25rem]">申請日期</TableHead>
+              <TableHead className="w-[6.875rem]">狀態</TableHead>
+              <TableHead className="w-[8.75rem] text-center">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

@@ -606,20 +606,20 @@ export default function AdminMachinePage() {
               <Table
                 className={
                   data.length > 0
-                    ? "min-w-[1000px] table-fixed"
+                    ? "min-w-[62.5rem] table-fixed"
                     : "w-full table-fixed"
                 }
               >
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="w-10" />
-                    <TableHead className="w-[160px]">申請單號</TableHead>
-                    <TableHead className="w-[120px]">申請者</TableHead>
+                    <TableHead className="w-[2.5rem]" />
+                    <TableHead className="w-[10rem]">申請單號</TableHead>
+                    <TableHead className="w-[7.5rem]">申請者</TableHead>
                     <TableHead>用途</TableHead>
-                    <TableHead className="w-[100px]">預估時間</TableHead>
-                    <TableHead className="w-[160px]">申請日期</TableHead>
-                    <TableHead className="w-[90px]">狀態</TableHead>
-                    <TableHead className="w-[80px] text-right">操作</TableHead>
+                    <TableHead className="w-[6.25rem]">預估時間</TableHead>
+                    <TableHead className="w-[10rem]">申請日期</TableHead>
+                    <TableHead className="w-[5.625rem]">狀態</TableHead>
+                    <TableHead className="w-[5rem] text-right">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -135,7 +135,10 @@ export function AdminSidebar() {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-white/10">
+      <div
+        className="p-4 border-t border-white/10"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+      >
         {/* 使用者資訊 */}
         <div className="flex items-center gap-3 mb-3 px-2">
           <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">

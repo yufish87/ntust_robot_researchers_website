@@ -63,17 +63,20 @@ export default function AdminLayout({
   // Speed up refresh: allow optimistic render when persisted admin user exists.
   if (!hasHydrated || (!authChecked && !user) || !user || !isAdmin) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
+      <div className="flex h-dvh items-center justify-center bg-slate-50">
         <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-full overflow-hidden bg-white">
+    <div className="flex h-dvh overflow-hidden bg-white">
       <AdminSidebar />
       <MobileNav variant="admin" />
-      <main className="flex-1 lg:ml-64 overflow-y-scroll h-full p-4 pt-14 lg:p-8 scrollbar-light">
+      <main
+        className="flex-1 lg:ml-64 overflow-y-auto h-full p-4 pt-14 lg:p-8 scrollbar-light"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+      >
         {children}
       </main>
     </div>
