@@ -194,8 +194,8 @@ export function FinanceDetailModal({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50">
-                    <TableHead>項目名稱</TableHead>
-                    <TableHead>規格/說明</TableHead>
+                    <TableHead className="min-w-[180px]">項目名稱</TableHead>
+                    <TableHead className="min-w-[120px]">規格/說明</TableHead>
                     <TableHead>數量</TableHead>
                     <TableHead>小計</TableHead>
                   </TableRow>
@@ -203,13 +203,13 @@ export function FinanceDetailModal({
                 <TableBody>
                   {application.items?.map((item, idx) => (
                     <TableRow key={idx}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium whitespace-normal break-all max-w-[300px] min-w-[180px]">
                         <div>{item.itemName}</div>
                         <div className="text-xs text-muted-foreground">
                           {item.expenseType}
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
+                      <TableCell className="text-muted-foreground text-sm whitespace-normal break-all max-w-[250px] min-w-[120px]">
                         {item.itemSpec}
                       </TableCell>
                       <TableCell>{item.quantity}</TableCell>

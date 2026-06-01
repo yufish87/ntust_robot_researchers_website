@@ -44,7 +44,7 @@ export function PublicSidebar() {
   }, [mounted, authChecked, syncSession]);
 
   return (
-    <div className="hidden lg:flex bg-slate-50 border-r border-slate-200 h-screen w-64 flex-col fixed left-0 top-0 z-50">
+    <div className="hidden lg:flex bg-slate-50 border-r border-slate-200 h-dvh w-64 flex-col fixed left-0 top-0 z-50">
       {/* Header */}
       <div className="p-6 flex flex-col items-center gap-2 border-b border-slate-100">
         <div className="relative w-full h-12">
@@ -83,7 +83,10 @@ export function PublicSidebar() {
       </div>
 
       {/* Footer / Auth */}
-      <div className="p-4 border-t border-slate-200 bg-white space-y-2">
+      <div
+        className="p-4 border-t border-slate-200 bg-white space-y-2"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+      >
         {mounted &&
           (!authChecked ? (
             <Button

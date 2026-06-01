@@ -122,7 +122,7 @@
     @apply border-border outline-ring/50;
   }
   html, body {
-    @apply h-full overflow-hidden bg-background text-foreground;
+    @apply h-dvh overflow-hidden bg-background text-foreground;
   }
   
   /* Fix Autofill Styles */

@@ -173,7 +173,7 @@ export function CourseDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="outline">{course.semester}</Badge>
@@ -192,7 +192,7 @@ export function CourseDetailModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
+        <ScrollArea className="flex-1 min-h-0 pr-4">
           <div className="space-y-6 py-4">
             {/* Handouts */}
             {course.handouts && course.handouts.length > 0 && (

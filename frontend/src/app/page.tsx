@@ -54,17 +54,17 @@ export default async function Home() {
       <MobileNav variant="public" />
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 w-full h-[100svh] overflow-y-auto scroll-smooth pt-14 lg:pt-0 pb-[env(safe-area-inset-bottom)] scrollbar-dark">
-        {/* 1. Hero Section — 全寬，不受 max-w-7xl 限制 */}
+      <main className="flex-1 lg:ml-64 w-full h-dvh overflow-y-auto scroll-smooth pt-14 lg:pt-0 pb-[env(safe-area-inset-bottom)] scrollbar-dark">
+        {/* 1. Hero Section */}
         <section
           id="hero"
-          className="min-h-[88svh] flex items-center justify-center relative"
+          className="min-h-dvh flex items-center justify-center relative"
         >
           <HomeHero mosaicImages={mosaicImages} />
         </section>
 
         <div className="max-w-7xl mx-auto flex flex-col">
-          {/* 2. About Section - Alt Background (Deep) */}
+          {/* 2. About Section */}
           <section
             id="about"
             className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
@@ -72,7 +72,7 @@ export default async function Home() {
             <AboutSection awardImages={awardImages} />
           </section>
 
-          {/* 3. News Section (Base/Light) */}
+          {/* 3. News Section */}
           <section
             id="news"
             className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20"
@@ -80,7 +80,7 @@ export default async function Home() {
             <AnnouncementSection />
           </section>
 
-          {/* 4. Course Section - Alt Background (Deep) */}
+          {/* 4. Course Section */}
           <section
             id="courses"
             className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
@@ -88,7 +88,7 @@ export default async function Home() {
             <CourseSection />
           </section>
 
-          {/* Footer (含聯絡資訊) */}
+          {/* Footer */}
           <SiteFooter />
 
           <ScrollIndicator />

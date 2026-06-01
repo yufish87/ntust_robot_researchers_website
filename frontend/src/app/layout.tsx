@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   description: "國立臺灣科技大學 機器人研究社 社團網站",
 };
 
+export const viewport = {
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

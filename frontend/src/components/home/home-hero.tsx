@@ -55,7 +55,7 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
                 fill
                 sizes="200px"
                 className="object-cover"
-                loading="lazy"
+                loading="eager"
               />
             </div>
           ))}
@@ -132,12 +132,12 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
           <div className="w-px h-8 bg-slate-600"></div>
           <div className="flex flex-col items-center">
             <span className="text-2xl font-bold text-[#ffc000]">50+</span>
-            <span>專業社課堂數</span>
+            <span>專業社課時數</span>
           </div>
           <div className="w-px h-8 bg-slate-600"></div>
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-[#ffc000]">100+</span>
-            <span>社團成員</span>
+            <span className="text-2xl font-bold text-[#ffc000]">臺科大</span>
+            <span>專業技術社團</span>
           </div>
         </div>
       </div>
