@@ -104,7 +104,7 @@ export default function CoursesPage() {
                                         <Badge variant="outline" className="text-xs">公開</Badge>
                                     )}
                                 </div>
-                                <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">
+                                <CardTitle className="line-clamp-2 leading-snug pb-0.5 group-hover:text-primary transition-colors">
                                     {course.title}
                                 </CardTitle>
                                 {course.courseDate && (
