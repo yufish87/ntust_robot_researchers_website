@@ -8,6 +8,8 @@ interface User {
   role: string;
   department: string;
   grade?: string;
+  positions?: string;    // 逗號分隔職位，如 "副社長,教學"
+  lastPaidYear?: string; // 最後繳費學年，如 "114"
 }
 
 interface AuthState {

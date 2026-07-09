@@ -19,6 +19,8 @@ export interface UserProfile {
   registrationTime: string;
   loginCount: number;
   lastLoginTime: string;
+  positions: string;     // 逗號分隔職位，如 "副社長,教學"
+  lastPaidYear: string;  // 最後繳費學年，如 "114"
 }
 
 /** 更新個人資料 Request */
@@ -38,6 +40,11 @@ export interface DeleteAccountRequest {
   password: string;
 }
 
+/** 社員自助更新社費學年 Request */
+export interface ExtendMembershipRequest {
+  code: string;
+}
+
 /** 管理員用 — 使用者列表回應 */
 export interface AdminListUsersResponse {
   users: UserProfile[];
@@ -55,6 +62,18 @@ export interface AdminDeleteUserRequest {
   targetStudentId: string;
 }
 
+/** 管理員用 — 設定職位 Request */
+export interface AdminUpdatePositionsRequest {
+  targetStudentId: string;
+  positions: string[];  // 前端以陣列傳入，後端轉為逗號字串
+}
+
+/** 管理員用 — 手動設定社費學年 Request */
+export interface AdminSetMemberYearRequest {
+  targetStudentId: string;
+  lastPaidYear: string;  // 3 位學年如 "114"，空字串代表清除
+}
+
 /** 驗證碼物件 */
 export interface VerifyCode {
   code: string;
@@ -66,6 +85,7 @@ export interface VerifyCode {
   usageLimit: number;
   createdBy: string;
   createdAt: string;
+  targetYear: string;  // 目標學年，如 "114"，空字串代表無特定學年
 }
 
 /** 管理員用 — 產生驗證碼 Request */
@@ -75,6 +95,7 @@ export interface AdminGenerateCodeRequest {
   validFrom: string;
   validUntil: string;
   usageLimit: number;
+  targetYear?: string;  // 選填：目標學年
 }
 
 /** 管理員用 — 產生驗證碼 Response */

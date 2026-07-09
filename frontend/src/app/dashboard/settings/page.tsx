@@ -29,7 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, User, Lock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, User, Lock, AlertTriangle, CheckCircle2, CreditCard } from "lucide-react";
 
 // ─── Zod Schemas ───────────────────────────────────────────
 
@@ -92,6 +92,21 @@ export default function SettingsPage() {
   // 修改成功提示
   const [profileSuccess, setProfileSuccess] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  // 重新加入社團
+  const [membershipCode, setMembershipCode] = useState("");
+  const [extendingMembership, setExtendingMembership] = useState(false);
+  const [membershipSuccess, setMembershipSuccess] = useState(false);
+
+  // 判斷社費有效狀態
+  function getMembershipStatus(lastPaidYear: string): "valid" | "expired" | "none" {
+    if (!lastPaidYear) return "none";
+    const now = new Date();
+    const yr = now.getFullYear() - 1911;
+    const month = now.getMonth() + 1;
+    const currentAcademicYear = month >= 9 ? yr : yr - 1;
+    return Number(lastPaidYear) >= currentAcademicYear ? "valid" : "expired";
+  }
 
   // 刪除帳號 Dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -168,6 +183,31 @@ export default function SettingsPage() {
       }
     } finally {
       setSavingPassword(false);
+    }
+  };
+
+  // 重新加入社團
+  const onExtendMembership = async () => {
+    if (!membershipCode.trim()) {
+      toast({ title: "請輸入驗證碼", variant: "destructive" });
+      return;
+    }
+    setExtendingMembership(true);
+    setMembershipSuccess(false);
+    try {
+      const res = await UserAPI.extendMembership({ code: membershipCode.trim() });
+      // 同步更新 Zustand store 中的 lastPaidYear
+      const newYear = res.data?.lastPaidYear ||
+        (res.message?.match(/(\d{3})/) ? res.message.match(/(\d{3})/)[1] : undefined);
+      if (newYear) updateUser({ lastPaidYear: newYear });
+      setMembershipCode("");
+      setMembershipSuccess(true);
+      toast({ title: "重新加入社團成功", description: res.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "重新加入社團失敗";
+      toast({ title: "重新加入社團失敗", description: message, variant: "destructive" });
+    } finally {
+      setExtendingMembership(false);
     }
   };
 
@@ -291,6 +331,18 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* 職位 Badge */}
+            {user?.positions && (
+              <div className="space-y-2">
+                <Label>職位</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {user.positions.split(",").filter(Boolean).map((p) => (
+                    <Badge key={p} variant="outline" className="text-xs">{p}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* 身份 Badge */}
             <div className="space-y-2">
               <Label>身份</Label>
@@ -319,6 +371,68 @@ export default function SettingsPage() {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* ─── 重新加入社團 Card ─── */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            <CardTitle>重新加入社團</CardTitle>
+          </div>
+          <CardDescription>輸入財務發放的驗證碼，重新啟用社團網站的功能。</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* 社費狀態顯示 */}
+          <div className="space-y-1">
+            <Label>目前的社籍有效學年</Label>
+            {(() => {
+              const status = getMembershipStatus(user?.lastPaidYear || "");
+              if (status === "valid") return (
+                <div className="flex items-center gap-1.5 text-sm text-emerald-600">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {user?.lastPaidYear} 學年度（有效）
+                </div>
+              );
+              if (status === "expired") return (
+                <div className="flex items-center gap-1.5 text-sm text-amber-600">
+                  <AlertTriangle className="h-4 w-4" />
+                  {user?.lastPaidYear} 學年度（已到期）
+                </div>
+              );
+              return <p className="text-sm text-muted-foreground">尚未登記社團記錄</p>;
+            })()}
+          </div>
+          <Separator />
+          {/* 重新啟用填寫 */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center h-5">
+              <Label htmlFor="membership-code">重新啟用驗證碼</Label>
+              {membershipSuccess && (
+                <span className="flex items-center gap-1 text-sm text-green-600">
+                  <CheckCircle2 className="h-4 w-4" />重新加入成功
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                id="membership-code"
+                placeholder="請輸入財務發放的驗證碼"
+                value={membershipCode}
+                onChange={(e) => setMembershipCode(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") onExtendMembership(); }}
+                autoComplete="off"
+              />
+              <Button
+                onClick={onExtendMembership}
+                disabled={extendingMembership || !membershipCode.trim()}
+                className="shrink-0"
+              >
+                {extendingMembership ? <Loader2 className="h-4 w-4 animate-spin" /> : "重新加入社團"}
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

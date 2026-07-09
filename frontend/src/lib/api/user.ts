@@ -12,6 +12,9 @@ import type {
   AdminAddUserRequest,
   AdminListCodesResponse,
   AdminUpdateCodeRequest,
+  ExtendMembershipRequest,
+  AdminUpdatePositionsRequest,
+  AdminSetMemberYearRequest,
 } from "@/lib/types/user";
 
 /**
@@ -100,6 +103,27 @@ export const UserAPI = {
     const res = await api.post("/admin/users/update-code", data);
     if (!res.data.success)
       throw new Error(res.data.message || "更新驗證碼失敗");
+    return res.data;
+  },
+
+  /** 社員 — 使用驗證碼更新社費學年 */
+  extendMembership: async (data: ExtendMembershipRequest) => {
+    const res = await api.post("/user/extend-membership", data);
+    if (!res.data.success) throw new Error(res.data.message || "社費續約失敗");
+    return res.data;
+  },
+
+  /** 管理員 — 設定社員職位 */
+  updatePositions: async (data: AdminUpdatePositionsRequest) => {
+    const res = await api.post("/admin/users/update-positions", data);
+    if (!res.data.success) throw new Error(res.data.message || "職位更新失敗");
+    return res.data;
+  },
+
+  /** 管理員 — 手動設定社費學年 */
+  adminSetMemberYear: async (data: AdminSetMemberYearRequest) => {
+    const res = await api.post("/admin/users/set-member-year", data);
+    if (!res.data.success) throw new Error(res.data.message || "社費學年更新失敗");
     return res.data;
   },
 };

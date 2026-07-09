@@ -158,6 +158,7 @@ export default function AdminUsersPage() {
   const [codeValidFrom, setCodeValidFrom] = useState("");
   const [codeValidUntil, setCodeValidUntil] = useState("");
   const [codeUsageLimit, setCodeUsageLimit] = useState(0);
+  const [codeTargetYear, setCodeTargetYear] = useState("");
   const [codeLoading, setCodeLoading] = useState(false);
 
   // Add User Dialog
@@ -165,6 +166,18 @@ export default function AdminUsersPage() {
   const [addStudentId, setAddStudentId] = useState("");
   const [addName, setAddName] = useState("");
   const [addLoading, setAddLoading] = useState(false);
+
+  // Positions Dialog
+  const PRESET_POSITIONS = ["社長", "副社長", "財務", "教學", "活動", "美宣"];
+  const [posTarget, setPosTarget] = useState<UserProfile | null>(null);
+  const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
+  const [customPosition, setCustomPosition] = useState("");
+  const [posLoading, setPosLoading] = useState(false);
+
+  // Member Year Dialog
+  const [yearTarget, setYearTarget] = useState<UserProfile | null>(null);
+  const [yearInput, setYearInput] = useState("");
+  const [yearLoading, setYearLoading] = useState(false);
 
   /* ---------- 使用者資料（useQuery）---------- */
   const {
@@ -288,6 +301,7 @@ export default function AdminUsersPage() {
         validFrom: codeValidFrom,
         validUntil: codeValidUntil,
         usageLimit: codeUsageLimit,
+        targetYear: codeTargetYear.trim(),
       });
       setCodeDialogOpen(false);
       setCodeValue("");
@@ -295,6 +309,7 @@ export default function AdminUsersPage() {
       setCodeValidFrom("");
       setCodeValidUntil("");
       setCodeUsageLimit(0);
+      setCodeTargetYear("");
       toast({ title: "驗證碼已產生", description: `驗證碼: ${result.code}` });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "產生失敗";
@@ -397,6 +412,49 @@ export default function AdminUsersPage() {
   };
 
   const isSelf = (u: UserProfile) => currentUser?.studentId === u.studentId;
+
+  const handleUpdatePositions = async () => {
+    if (!posTarget) return;
+    setPosLoading(true);
+    try {
+      // 合並預設和自訂職位
+      const customArr = customPosition.split(",").map(s => s.trim()).filter(Boolean);
+      const allPositions = [...selectedPositions, ...customArr];
+      await UserAPI.updatePositions({
+        targetStudentId: posTarget.studentId,
+        positions: allPositions,
+      });
+      toast({ title: "職位已更新", description: `${posTarget.name} 的職位已更新。` });
+      setPosTarget(null);
+      setCustomPosition("");
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "更新失敗";
+      toast({ variant: "destructive", title: "職位更新失敗", description: message });
+    } finally {
+      setPosLoading(false);
+    }
+  };
+
+  const handleSetMemberYear = async () => {
+    if (!yearTarget) return;
+    setYearLoading(true);
+    try {
+      await UserAPI.adminSetMemberYear({
+        targetStudentId: yearTarget.studentId,
+        lastPaidYear: yearInput.trim(),
+      });
+      const msg = yearInput.trim() ? `已設定為 ${yearInput.trim()} 學年度` : "已清除社費記錄";
+      toast({ title: "社費學年已更新", description: `${yearTarget.name} ${msg}。` });
+      setYearTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "更新失敗";
+      toast({ variant: "destructive", title: "社費學年更新失敗", description: message });
+    } finally {
+      setYearLoading(false);
+    }
+  };
 
   return (
     <div className="container p-6 space-y-6 max-w-6xl mx-auto">
@@ -520,6 +578,8 @@ export default function AdminUsersPage() {
                   <TableHead className="w-[120px]">系所</TableHead>
                   <TableHead className="w-[80px]">年級</TableHead>
                   <TableHead className="w-[90px]">身份</TableHead>
+                  <TableHead className="w-[120px]">職位</TableHead>
+                  <TableHead className="w-[80px]">社費</TableHead>
                   <TableHead className="w-[80px]">狀態</TableHead>
                   <TableHead className="w-[140px]">最近登入</TableHead>
                   <TableHead className="w-[60px] text-center">操作</TableHead>
@@ -528,7 +588,7 @@ export default function AdminUsersPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center h-32">
+                    <TableCell colSpan={10} className="text-center h-32">
                       <div className="flex items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         載入中...
@@ -538,7 +598,7 @@ export default function AdminUsersPage() {
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={10}
                       className="text-center h-32 text-muted-foreground"
                     >
                       {users.length === 0
@@ -560,6 +620,17 @@ export default function AdminUsersPage() {
                         {u.grade || "—"}
                       </TableCell>
                       <TableCell>{roleBadge(u.role)}</TableCell>
+                      <TableCell className="text-xs">
+                        {u.positions
+                          ? u.positions.split(",").filter(Boolean).map(p => (
+                            <Badge key={p} variant="outline" className="text-xs mr-0.5">{p}</Badge>
+                          ))
+                          : <span className="text-muted-foreground">—</span>
+                        }
+                      </TableCell>
+                      <TableCell className="text-xs text-center">
+                        {u.lastPaidYear || <span className="text-muted-foreground">—</span>}
+                      </TableCell>
                       <TableCell>{statusBadge(u.status)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {formatLoginTime(u.lastLoginTime)}
@@ -581,26 +652,24 @@ export default function AdminUsersPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {u.role === "member" && (
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setRoleTarget(u);
-                                    setRoleNewRole("admin");
-                                  }}
-                                >
-                                  設為管理員
-                                </DropdownMenuItem>
-                              )}
-                              {u.role === "admin" && !isSelf(u) && (
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setRoleTarget(u);
-                                    setRoleNewRole("member");
-                                  }}
-                                >
-                                  設為社員
-                                </DropdownMenuItem>
-                              )}
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  const existing = u.positions ? u.positions.split(",").filter(Boolean) : [];
+                                  setSelectedPositions(existing.filter(p => PRESET_POSITIONS.includes(p)));
+                                  setCustomPosition(existing.filter(p => !PRESET_POSITIONS.includes(p)).join(","));
+                                  setPosTarget(u);
+                                }}
+                              >
+                                設定職位
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setYearTarget(u);
+                                  setYearInput(u.lastPaidYear || "");
+                                }}
+                              >
+                                設定社費學年
+                              </DropdownMenuItem>
                               {!isSelf(u) && u.status === "active" && (
                                 <DropdownMenuItem
                                   className="text-red-600 focus:text-red-600"
@@ -647,6 +716,7 @@ export default function AdminUsersPage() {
                 <TableRow className="bg-muted/50">
                   <TableHead className="w-[120px]">驗證碼</TableHead>
                   <TableHead className="w-[140px]">說明</TableHead>
+                  <TableHead className="w-[60px] text-center">目標學年</TableHead>
                   <TableHead className="w-[140px]">生效時間</TableHead>
                   <TableHead className="w-[140px]">失效時間</TableHead>
                   <TableHead className="w-[80px] text-center">狀態</TableHead>
@@ -686,6 +756,9 @@ export default function AdminUsersPage() {
                       </TableCell>
                       <TableCell className="text-sm">
                         {vc.description || "—"}
+                      </TableCell>
+                      <TableCell className="text-center text-sm font-mono">
+                        {vc.targetYear || <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {formatLoginTime(vc.validFrom)}
@@ -930,6 +1003,19 @@ export default function AdminUsersPage() {
                 設為 0 表示不限制使用次數。
               </p>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="code-target-year">目標學年（選填）</Label>
+              <Input
+                id="code-target-year"
+                placeholder="例：114"
+                maxLength={3}
+                value={codeTargetYear}
+                onChange={(e) => setCodeTargetYear(e.target.value.replace(/\D/g, ""))}
+              />
+              <p className="text-xs text-muted-foreground">
+                填入後，持此碼註冊或續約的社員，lastPaidYear 將設為此學年。
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCodeDialogOpen(false)}>
@@ -1052,6 +1138,94 @@ export default function AdminUsersPage() {
               ) : (
                 "儲存"
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Positions Dialog */}
+      <Dialog open={!!posTarget} onOpenChange={(open) => !open && setPosTarget(null)}>
+        <DialogContent className="sm:max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle>設定職位</DialogTitle>
+            <DialogDescription>
+              設定 <span className="font-semibold">{posTarget?.name}</span> 的幹部職位。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2 w-full overflow-hidden">
+            {PRESET_POSITIONS.map((pos) => (
+              <div key={pos} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id={`pos-${pos}`}
+                  className="h-4 w-4 rounded border-gray-300 cursor-pointer"
+                  checked={selectedPositions.includes(pos)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSelectedPositions(prev =>
+                      checked ? [...prev, pos] : prev.filter(p => p !== pos)
+                    );
+                  }}
+                />
+                <Label htmlFor={`pos-${pos}`} className="cursor-pointer">{pos}</Label>
+              </div>
+            ))}
+            {/* 其他—自訂輸入 */}
+            <div className="flex items-center gap-2 w-full min-w-0">
+              <input
+                type="checkbox"
+                id="pos-custom"
+                className="h-4 w-4 rounded border-gray-300 cursor-pointer shrink-0"
+                checked={customPosition.trim().length > 0}
+                onChange={(e) => { if (!e.target.checked) setCustomPosition(""); }}
+                readOnly
+              />
+              <Label htmlFor="pos-custom-input" className="cursor-pointer shrink-0">其他</Label>
+              <input
+                id="pos-custom-input"
+                type="text"
+                placeholder="自訂職位，多個用逗號分隔"
+                value={customPosition}
+                onChange={(e) => setCustomPosition(e.target.value)}
+                className="flex-1 min-w-0 h-5 text-sm border-0 border-b border-gray-300 focus:border-gray-600 outline-none bg-transparent px-0 placeholder:text-muted-foreground"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPosTarget(null)}>取消</Button>
+            <Button onClick={handleUpdatePositions} disabled={posLoading} className="min-w-[100px]">
+              {posLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "儲存"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Member Year Dialog */}
+      <Dialog open={!!yearTarget} onOpenChange={(open) => !open && setYearTarget(null)}>
+        <DialogContent className="sm:max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle>設定社費學年</DialogTitle>
+            <DialogDescription>
+              手動設定 <span className="font-semibold">{yearTarget?.name}</span> 的社費有效學年。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="year-input">學年度</Label>
+              <Input
+                id="year-input"
+                placeholder="例：114（留空代表清除）"
+                maxLength={3}
+                value={yearInput}
+                onChange={(e) => setYearInput(e.target.value.replace(/\D/g, ""))}
+              />
+              <p className="text-xs text-muted-foreground">輸入 3 位民國年，留空代表清除社費記錄。</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setYearTarget(null)}>取消</Button>
+            <Button onClick={handleSetMemberYear} disabled={yearLoading} className="min-w-[100px]">
+              {yearLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "儲存"}
             </Button>
           </DialogFooter>
         </DialogContent>
