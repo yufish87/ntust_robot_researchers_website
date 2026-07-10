@@ -26,46 +26,55 @@ export const dashboardNavItems = [
     title: "首頁",
     href: "/dashboard",
     icon: Home,
+    expiredAllowed: true,
   },
   {
     title: "公告",
     href: "/dashboard/announcements",
     icon: Megaphone,
+    expiredAllowed: true,
   },
   {
     title: "課程",
     href: "/dashboard/courses",
     icon: BookOpen,
-  },
-  {
-    title: "器材借用",
-    href: "/dashboard/equipment",
-    icon: Wrench,
-  },
-  {
-    title: "機器借用",
-    href: "/dashboard/machine",
-    icon: Printer,
-  },
-  {
-    title: "財務報帳",
-    href: "/dashboard/finance",
-    icon: CreditCard,
+    expiredAllowed: true,
   },
   {
     title: "競賽意願",
     href: "/dashboard/competitions",
     icon: Trophy,
+    expiredAllowed: true,
+  },
+  {
+    title: "器材借用",
+    href: "/dashboard/equipment",
+    icon: Wrench,
+    expiredAllowed: false,
+  },
+  {
+    title: "機器借用",
+    href: "/dashboard/machine",
+    icon: Printer,
+    expiredAllowed: false,
+  },
+  {
+    title: "財務報帳",
+    href: "/dashboard/finance",
+    icon: CreditCard,
+    expiredAllowed: false,
   },
   {
     title: "許願池",
     href: "/dashboard/wishlist",
     icon: Lightbulb,
+    expiredAllowed: false,
   },
   {
     title: "個人設定",
     href: "/dashboard/settings",
     icon: Settings,
+    expiredAllowed: true,
   },
 ];
 
@@ -75,6 +84,7 @@ export function AppSidebar() {
   const router = useRouter();
 
   const isAdmin = user?.role === "admin" || user?.role === "owner";
+  const isExpiredUser = user?.role === "expired";
 
   const handleLogout = () => {
     logout();
@@ -105,11 +115,34 @@ export function AppSidebar() {
 
       {/* Nav */}
       <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1 scrollbar-dark">
+        {/* Expired Banner */}
+        {isExpiredUser && (
+          <div className="mb-3 rounded-md bg-amber-500/15 border border-amber-500/30 px-3 py-2">
+            <p className="text-xs text-amber-400 font-medium">社員資格已過期</p>
+            <p className="text-xs text-amber-400/70 mt-0.5">至「個人設定」重新啟用</p>
+          </div>
+        )}
         {dashboardNavItems.map((item) => {
+          const isDisabled = isExpiredUser && !item.expiredAllowed;
           const isActive =
-            item.href === "/dashboard"
+            !isDisabled &&
+            (item.href === "/dashboard"
               ? pathname === item.href
-              : pathname === item.href || pathname.startsWith(item.href + "/");
+              : pathname === item.href || pathname.startsWith(item.href + "/"));
+          if (isDisabled) {
+            return (
+              <div key={item.href} title="社員資格已過期">
+                <Button
+                  variant="ghost"
+                  disabled
+                  className="w-full justify-start mb-1 opacity-30 cursor-not-allowed"
+                >
+                  <item.icon className="mr-3 h-5 w-5" style={{ color: "rgba(255,255,255,0.2)" }} />
+                  {item.title}
+                </Button>
+              </div>
+            );
+          }
           return (
             <Link key={item.href} href={item.href}>
               <Button

@@ -442,7 +442,7 @@ export default function AdminUsersPage() {
     try {
       await UserAPI.adminSetMemberYear({
         targetStudentId: yearTarget.studentId,
-        lastPaidYear: yearInput.trim(),
+        activeUntilYear: yearInput.trim(),
       });
       const msg = yearInput.trim() ? `已設定為 ${yearInput.trim()} 學年度` : "已清除社費記錄";
       toast({ title: "社費學年已更新", description: `${yearTarget.name} ${msg}。` });
@@ -621,15 +621,22 @@ export default function AdminUsersPage() {
                       </TableCell>
                       <TableCell>{roleBadge(u.role)}</TableCell>
                       <TableCell className="text-xs">
-                        {u.positions
-                          ? u.positions.split(",").filter(Boolean).map(p => (
-                            <Badge key={p} variant="outline" className="text-xs mr-0.5">{p}</Badge>
-                          ))
-                          : <span className="text-muted-foreground">—</span>
-                        }
+                        {(() => {
+                          const latestOffRec = [...(u.membershipHistory ?? [])].reverse()
+                            .find(h => h.type === "admin" || h.type === "owner");
+                          if ((u.role === "admin" || u.role === "owner") && latestOffRec?.positions) {
+                            return latestOffRec.positions.split(",").filter(Boolean).map((p: string) => (
+                              <Badge key={p} variant="outline" className="text-xs mr-0.5">{p}</Badge>
+                            ));
+                          }
+                          if (u.role === "admin" || u.role === "owner") {
+                            return <Badge variant="outline" className="text-xs">幹部</Badge>;
+                          }
+                          return <span className="text-muted-foreground">—</span>;
+                        })()}
                       </TableCell>
                       <TableCell className="text-xs text-center">
-                        {u.lastPaidYear || <span className="text-muted-foreground">—</span>}
+                        {u.activeUntilYear || <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell>{statusBadge(u.status)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -654,9 +661,13 @@ export default function AdminUsersPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
                                 onClick={() => {
-                                  const existing = u.positions ? u.positions.split(",").filter(Boolean) : [];
-                                  setSelectedPositions(existing.filter(p => PRESET_POSITIONS.includes(p)));
-                                  setCustomPosition(existing.filter(p => !PRESET_POSITIONS.includes(p)).join(","));
+                                  const latestPosRec = [...(u.membershipHistory ?? [])].reverse()
+                                    .find(h => h.type === "admin" || h.type === "owner");
+                                  const existingPos = latestPosRec?.positions
+                                    ? latestPosRec.positions.split(",").filter(Boolean)
+                                    : [];
+                                  setSelectedPositions(existingPos.filter((p: string) => PRESET_POSITIONS.includes(p)));
+                                  setCustomPosition(existingPos.filter((p: string) => !PRESET_POSITIONS.includes(p)).join(","));
                                   setPosTarget(u);
                                 }}
                               >
@@ -665,7 +676,7 @@ export default function AdminUsersPage() {
                               <DropdownMenuItem
                                 onClick={() => {
                                   setYearTarget(u);
-                                  setYearInput(u.lastPaidYear || "");
+                                  setYearInput(u.activeUntilYear || "");
                                 }}
                               >
                                 設定社費學年

@@ -3,10 +3,17 @@
  */
 
 /** 使用者角色 */
-export type UserRole = "visitor" | "member" | "admin" | "owner";
+export type UserRole = "visitor" | "member" | "admin" | "owner" | "expired";
 
 /** 使用者狀態 */
 export type UserStatus = "active" | "deleted";
+
+/** 歷年身份組記錄 */
+export interface MembershipRecord {
+  year: string;       // 學年如 "115"
+  type: "member" | "admin" | "owner";  // 身份
+  positions: string;  // 職位（社員為空字串）
+}
 
 /** 使用者個人資料 (不含敏感欄位) */
 export interface UserProfile {
@@ -19,8 +26,8 @@ export interface UserProfile {
   registrationTime: string;
   loginCount: number;
   lastLoginTime: string;
-  positions: string;     // 逗號分隔職位，如 "副社長,教學"
-  lastPaidYear: string;  // 最後繳費學年，如 "114"
+  membershipHistory: MembershipRecord[];  // 歷年身份組
+  activeUntilYear: string;               // 有效截止學年，如 "115"
 }
 
 /** 更新個人資料 Request */
@@ -65,13 +72,13 @@ export interface AdminDeleteUserRequest {
 /** 管理員用 — 設定職位 Request */
 export interface AdminUpdatePositionsRequest {
   targetStudentId: string;
-  positions: string[];  // 前端以陣列傳入，後端轉為逗號字串
+  positions: string[];  // 前端以陣列傳入，如 ['副社長']
 }
 
 /** 管理員用 — 手動設定社費學年 Request */
 export interface AdminSetMemberYearRequest {
   targetStudentId: string;
-  lastPaidYear: string;  // 3 位學年如 "114"，空字串代表清除
+  activeUntilYear: string;  // 3 位學年如 "115"，空字串代表清除
 }
 
 /** 驗證碼物件 */

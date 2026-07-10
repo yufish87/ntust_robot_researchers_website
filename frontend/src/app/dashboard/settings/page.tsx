@@ -68,9 +68,10 @@ function getRoleBadge(role: string) {
       variant: "default" | "secondary" | "destructive" | "outline";
     }
   > = {
-    owner: { label: "社長", variant: "destructive" },
+    owner: { label: "Owner", variant: "destructive" },
     admin: { label: "幹部", variant: "default" },
     member: { label: "社員", variant: "secondary" },
+    expired: { label: "已過期", variant: "outline" },
     visitor: { label: "訪客", variant: "outline" },
   };
   const info = map[role] || { label: role, variant: "outline" as const };
@@ -99,13 +100,13 @@ export default function SettingsPage() {
   const [membershipSuccess, setMembershipSuccess] = useState(false);
 
   // 判斷社費有效狀態
-  function getMembershipStatus(lastPaidYear: string): "valid" | "expired" | "none" {
-    if (!lastPaidYear) return "none";
+  function getMembershipStatus(activeUntilYear: string): "valid" | "expired" | "none" {
+    if (!activeUntilYear) return "none";
     const now = new Date();
     const yr = now.getFullYear() - 1911;
     const month = now.getMonth() + 1;
     const currentAcademicYear = month >= 9 ? yr : yr - 1;
-    return Number(lastPaidYear) >= currentAcademicYear ? "valid" : "expired";
+    return Number(activeUntilYear) >= currentAcademicYear ? "valid" : "expired";
   }
 
   // 刪除帳號 Dialog
@@ -196,10 +197,20 @@ export default function SettingsPage() {
     setMembershipSuccess(false);
     try {
       const res = await UserAPI.extendMembership({ code: membershipCode.trim() });
-      // 同步更新 Zustand store 中的 lastPaidYear
-      const newYear = res.data?.lastPaidYear ||
-        (res.message?.match(/(\d{3})/) ? res.message.match(/(\d{3})/)[1] : undefined);
-      if (newYear) updateUser({ lastPaidYear: newYear });
+      // 從回傳或訊息提取目標學年
+      const newYear: string | undefined = res.data?.activeUntilYear ||
+        (res.message?.match(/(\d{3})/) ? res.message.match(/(\d{3})/)![1] : undefined);
+      if (newYear) {
+        // 同時更新 store 中的 activeUntilYear 與 membershipHistory
+        updateUser({
+          activeUntilYear: newYear,
+          role: "member",
+          membershipHistory: [
+            ...(user?.membershipHistory?.filter(h => h.year !== newYear) || []),
+            { year: newYear, type: "member", positions: "" },
+          ],
+        });
+      }
       setMembershipCode("");
       setMembershipSuccess(true);
       toast({ title: "重新加入社團成功", description: res.message });
@@ -331,17 +342,22 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* 職位 Badge */}
-            {user?.positions && (
-              <div className="space-y-2">
-                <Label>職位</Label>
-                <div className="flex flex-wrap gap-1.5">
-                  {user.positions.split(",").filter(Boolean).map((p) => (
-                    <Badge key={p} variant="outline" className="text-xs">{p}</Badge>
-                  ))}
+            {/* 職位 Badge — 從最新幹部記錄取得 */}
+            {(user?.role === "admin" || user?.role === "owner") && (() => {
+              const latestPos = [...(user?.membershipHistory ?? [])].reverse()
+                .find(h => h.type === "admin" || h.type === "owner")?.positions;
+              if (!latestPos) return null;
+              return (
+                <div className="space-y-2">
+                  <Label>職位</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {latestPos.split(",").filter(Boolean).map((p: string) => (
+                      <Badge key={p} variant="outline" className="text-xs">{p}</Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* 身份 Badge */}
             <div className="space-y-2">
@@ -384,55 +400,98 @@ export default function SettingsPage() {
           <CardDescription>輸入財務發放的驗證碼，重新啟用社團網站的功能。</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* 社費狀態顯示 */}
+          {/* 歷年身份組 */}
+          {(user?.membershipHistory?.length ?? 0) > 0 && (
+            <div className="space-y-1.5">
+              <Label>歷年身份紀錄</Label>
+              <div className="rounded-md border divide-y text-sm">
+                {[...(user?.membershipHistory ?? [])].reverse().map((record) => (
+                  <div key={record.year} className="flex items-center justify-between px-3 py-1.5">
+                    <span className="text-muted-foreground">{record.year} 學年度</span>
+                    <span className="flex items-center gap-1.5">
+                      {record.type === "admin" || record.type === "owner" ? (
+                        <Badge variant="default">{record.positions || "幹部"}</Badge>
+                      ) : (
+                        <Badge variant="secondary">社員</Badge>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 當前有效狀態 */}
           <div className="space-y-1">
-            <Label>目前的社籍有效學年</Label>
+            <Label>目前社籍有效狀態</Label>
             {(() => {
-              const status = getMembershipStatus(user?.lastPaidYear || "");
+              const isOfficer = user?.role === "admin" || user?.role === "owner";
+              if (isOfficer) {
+                const currentRecord = [...(user?.membershipHistory ?? [])].reverse()
+                  .find(h => h.type === "admin" || h.type === "owner");
+                return (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
+                      <CheckCircle2 className="h-4 w-4" />
+                      目前為社團幹部（自動啟用）
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {currentRecord?.positions && `職位：${currentRecord.positions}。`}
+                      幹部有效至 {user?.activeUntilYear} 學年度，無須繳交社費。
+                    </p>
+                  </div>
+                );
+              }
+              const status = getMembershipStatus(user?.activeUntilYear || "");
               if (status === "valid") return (
                 <div className="flex items-center gap-1.5 text-sm text-emerald-600">
                   <CheckCircle2 className="h-4 w-4" />
-                  {user?.lastPaidYear} 學年度（有效）
+                  {user?.activeUntilYear} 學年度（有效）
                 </div>
               );
               if (status === "expired") return (
                 <div className="flex items-center gap-1.5 text-sm text-amber-600">
                   <AlertTriangle className="h-4 w-4" />
-                  {user?.lastPaidYear} 學年度（已到期）
+                  {user?.activeUntilYear} 學年度（已到期）
                 </div>
               );
               return <p className="text-sm text-muted-foreground">尚未登記社團記錄</p>;
             })()}
           </div>
-          <Separator />
-          {/* 重新啟用填寫 */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center h-5">
-              <Label htmlFor="membership-code">重新啟用驗證碼</Label>
-              {membershipSuccess && (
-                <span className="flex items-center gap-1 text-sm text-green-600">
-                  <CheckCircle2 className="h-4 w-4" />重新加入成功
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Input
-                id="membership-code"
-                placeholder="請輸入財務發放的驗證碼"
-                value={membershipCode}
-                onChange={(e) => setMembershipCode(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") onExtendMembership(); }}
-                autoComplete="off"
-              />
-              <Button
-                onClick={onExtendMembership}
-                disabled={extendingMembership || !membershipCode.trim()}
-                className="shrink-0"
-              >
-                {extendingMembership ? <Loader2 className="h-4 w-4 animate-spin" /> : "重新加入社團"}
-              </Button>
-            </div>
-          </div>
+
+          {/* 驗證碼輸入：僅 member / expired 顯示 */}
+          {(user?.role === "member" || user?.role === "expired") && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <div className="flex justify-between items-center h-5">
+                  <Label htmlFor="membership-code">重新啟用驗證碼</Label>
+                  {membershipSuccess && (
+                    <span className="flex items-center gap-1 text-sm text-green-600">
+                      <CheckCircle2 className="h-4 w-4" />重新加入成功
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    id="membership-code"
+                    placeholder="請輸入財務發放的驗證碼"
+                    value={membershipCode}
+                    onChange={(e) => setMembershipCode(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") onExtendMembership(); }}
+                    autoComplete="off"
+                  />
+                  <Button
+                    onClick={onExtendMembership}
+                    disabled={extendingMembership || !membershipCode.trim()}
+                    className="shrink-0"
+                  >
+                    {extendingMembership ? <Loader2 className="h-4 w-4 animate-spin" /> : "重新加入社團"}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
