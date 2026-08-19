@@ -56,6 +56,7 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
                 sizes="200px"
                 className="object-cover"
                 loading="eager"
+                quality={55}
               />
             </div>
           ))}
@@ -80,8 +81,8 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
               alt="NTUST Robot Researchers Club"
               width={650}
               height={150}
-              className="w-[350px] md:w-[500px] lg:w-[650px] object-contain"
-              style={{ width: "100%", height: "auto" }}
+              className="w-[350px] md:w-[500px] lg:w-[650px] h-auto object-contain"
+              sizes="(max-width: 768px) 350px, (max-width: 1024px) 500px, 650px"
               priority
             />
           </div>

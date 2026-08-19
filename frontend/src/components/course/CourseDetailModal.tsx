@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dialog";
 import { Course, CourseResource } from "@/lib/types/course";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   ExternalLink,
@@ -173,7 +172,7 @@ export function CourseDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="outline">{course.semester}</Badge>
@@ -192,93 +191,91 @@ export function CourseDetailModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 pr-4">
-          <div className="space-y-6 py-4">
-            {/* Handouts */}
-            {course.handouts && course.handouts.length > 0 && (
+        <div className="space-y-6 py-4">
+          {/* Handouts */}
+          {course.handouts && course.handouts.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+                <FileText className="w-5 h-5" /> 講義
+              </h3>
+              <div className="grid gap-2">
+                {course.handouts.map((item, i) => (
+                  <div key={i}>
+                    {renderResourceButton(
+                      item,
+                      <FileText className="w-4 h-4" />,
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Videos */}
+          {course.videos && course.videos.length > 0 && (
+            <>
+              <Separator />
               <div>
                 <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
-                  <FileText className="w-5 h-5" /> 講義
+                  <Video className="w-5 h-5" /> 課程錄影
                 </h3>
                 <div className="grid gap-2">
-                  {course.handouts.map((item, i) => (
+                  {course.videos.map((item, i) => (
+                    <div key={i}>
+                      {/* Videos usually don't support file download, keep as link */}
+                      <Button
+                        variant="outline"
+                        className="justify-start h-auto py-3 px-4 border-l-4 border-l-primary w-full"
+                        asChild
+                      >
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span className="font-medium mr-auto truncate">
+                            {item.title}
+                          </span>
+                          <ExternalLink className="w-4 h-4 ml-2 opacity-50" />
+                        </a>
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Others */}
+          {course.others && course.others.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+                  <LinkIcon className="w-5 h-5" /> 其他資源
+                </h3>
+                <div className="grid gap-2">
+                  {course.others.map((item, i) => (
                     <div key={i}>
                       {renderResourceButton(
                         item,
-                        <FileText className="w-4 h-4" />,
+                        <LinkIcon className="w-4 h-4" />,
                       )}
                     </div>
                   ))}
                 </div>
               </div>
-            )}
+            </>
+          )}
 
-            {/* Videos */}
-            {course.videos && course.videos.length > 0 && (
-              <>
-                <Separator />
-                <div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
-                    <Video className="w-5 h-5" /> 課程錄影
-                  </h3>
-                  <div className="grid gap-2">
-                    {course.videos.map((item, i) => (
-                      <div key={i}>
-                        {/* Videos usually don't support file download, keep as link */}
-                        <Button
-                          variant="outline"
-                          className="justify-start h-auto py-3 px-4 border-l-4 border-l-primary w-full"
-                          asChild
-                        >
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <span className="font-medium mr-auto truncate">
-                              {item.title}
-                            </span>
-                            <ExternalLink className="w-4 h-4 ml-2 opacity-50" />
-                          </a>
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
+          {!course.handouts?.length &&
+            !course.videos?.length &&
+            !course.others?.length && (
+              <div className="text-center text-muted-foreground py-8">
+                本課程尚無相關資源
+              </div>
             )}
-
-            {/* Others */}
-            {course.others && course.others.length > 0 && (
-              <>
-                <Separator />
-                <div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
-                    <LinkIcon className="w-5 h-5" /> 其他資源
-                  </h3>
-                  <div className="grid gap-2">
-                    {course.others.map((item, i) => (
-                      <div key={i}>
-                        {renderResourceButton(
-                          item,
-                          <LinkIcon className="w-4 h-4" />,
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {!course.handouts?.length &&
-              !course.videos?.length &&
-              !course.others?.length && (
-                <div className="text-center text-muted-foreground py-8">
-                  本課程尚無相關資源
-                </div>
-              )}
-          </div>
-        </ScrollArea>
+        </div>
 
         <div className="text-xs text-muted-foreground text-right mt-2">
           發布於 {course.uploadTime}

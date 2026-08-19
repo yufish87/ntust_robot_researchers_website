@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Home,
   Info,
@@ -34,6 +33,7 @@ export function PublicSidebar() {
   const { user, logout, authChecked, syncSession } = useAuthStore();
   const isAuthenticated = authChecked && !!user;
   const router = useRouter();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -42,6 +42,20 @@ export function PublicSidebar() {
       void syncSession();
     }
   }, [mounted, authChecked, syncSession]);
+
+  const handleItemClick = (item: (typeof publicNavItems)[number], e: React.MouseEvent) => {
+    e.preventDefault();
+    if (item.href.startsWith("#")) {
+      if (pathname === "/") {
+        const target = document.querySelector(item.href);
+        if (target) target.scrollIntoView({ behavior: "smooth" });
+      } else {
+        router.push("/" + item.href);
+      }
+    } else {
+      router.push(item.href);
+    }
+  };
 
   return (
     <div className="hidden lg:flex bg-slate-50 border-r border-slate-200 h-dvh w-64 flex-col fixed left-0 top-0 z-50">
@@ -52,9 +66,10 @@ export function PublicSidebar() {
             src="/image/Bar_Logo.png"
             alt="RRC Logo"
             fill
-            sizes="(max-width: 768px) 100vw, 20vw"
+            sizes="208px"
             className="object-contain"
             priority
+            quality={75}
           />
         </div>
         <p className="text-base font-bold text-black tracking-[0.2em] mt-1 text-center">
@@ -64,22 +79,20 @@ export function PublicSidebar() {
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1 scrollbar-light">
-        {publicNavItems.map((item) => (
-          <div key={item.href} className="block">
-            <Button
-              variant="ghost"
-              className="w-full justify-start mb-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
-              onClick={(e) => {
-                e.preventDefault();
-                const target = document.querySelector(item.href);
-                if (target) target.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              <item.icon className="mr-3 h-5 w-5 text-slate-400" />
-              {item.title}
-            </Button>
-          </div>
-        ))}
+        {publicNavItems.map((item) => {
+          return (
+            <div key={item.href} className="block">
+              <Button
+                variant="ghost"
+                className="w-full justify-start mb-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                onClick={(e) => handleItemClick(item, e)}
+              >
+                <item.icon className="mr-3 h-5 w-5 text-slate-400" />
+                {item.title}
+              </Button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Footer / Auth */}

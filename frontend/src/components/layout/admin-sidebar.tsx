@@ -16,6 +16,7 @@ import {
   LogOut,
   User,
   ClipboardCheck,
+  BookOpenCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,11 @@ export const adminNavItems = [
     title: "報帳審核",
     href: "/admin/finance",
     icon: CreditCard,
+  },
+  {
+    title: "系統手冊",
+    href: "/admin/manual",
+    icon: BookOpenCheck,
   },
 ];
 

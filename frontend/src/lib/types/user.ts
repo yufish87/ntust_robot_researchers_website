@@ -3,10 +3,17 @@
  */
 
 /** 使用者角色 */
-export type UserRole = "visitor" | "member" | "admin" | "owner";
+export type UserRole = "visitor" | "member" | "admin" | "owner" | "expired";
 
 /** 使用者狀態 */
 export type UserStatus = "active" | "deleted";
+
+/** 歷年身份組記錄 */
+export interface MembershipRecord {
+  year: string;       // 學年如 "115"
+  type: "member" | "admin" | "owner";  // 身份
+  positions: string;  // 職位（社員為空字串）
+}
 
 /** 使用者個人資料 (不含敏感欄位) */
 export interface UserProfile {
@@ -19,6 +26,8 @@ export interface UserProfile {
   registrationTime: string;
   loginCount: number;
   lastLoginTime: string;
+  membershipHistory: MembershipRecord[];  // 歷年身份組
+  activeUntilYear: string;               // 有效截止學年，如 "115"
 }
 
 /** 更新個人資料 Request */
@@ -38,6 +47,11 @@ export interface DeleteAccountRequest {
   password: string;
 }
 
+/** 社員自助更新社費學年 Request */
+export interface ExtendMembershipRequest {
+  code: string;
+}
+
 /** 管理員用 — 使用者列表回應 */
 export interface AdminListUsersResponse {
   users: UserProfile[];
@@ -55,6 +69,18 @@ export interface AdminDeleteUserRequest {
   targetStudentId: string;
 }
 
+/** 管理員用 — 設定職位 Request */
+export interface AdminUpdatePositionsRequest {
+  targetStudentId: string;
+  positions: string[];  // 前端以陣列傳入，如 ['副社長']
+}
+
+/** 管理員用 — 手動設定社費學年 Request */
+export interface AdminSetMemberYearRequest {
+  targetStudentId: string;
+  activeUntilYear: string;  // 3 位學年如 "115"，空字串代表清除
+}
+
 /** 驗證碼物件 */
 export interface VerifyCode {
   code: string;
@@ -66,6 +92,7 @@ export interface VerifyCode {
   usageLimit: number;
   createdBy: string;
   createdAt: string;
+  targetYear: string;  // 目標學年，如 "114"，空字串代表無特定學年
 }
 
 /** 管理員用 — 產生驗證碼 Request */
@@ -75,6 +102,7 @@ export interface AdminGenerateCodeRequest {
   validFrom: string;
   validUntil: string;
   usageLimit: number;
+  targetYear?: string;  // 選填：目標學年
 }
 
 /** 管理員用 — 產生驗證碼 Response */

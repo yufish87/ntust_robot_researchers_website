@@ -22,6 +22,7 @@ import {
 import { getGoogleDriveImageUrl } from '@/lib/utils';
 import { ArrowLeft, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 
 // Schema Definition
 const checkoutSchema = z.object({
@@ -129,45 +130,55 @@ export default function CheckoutPage() {
 
     if (items.length === 0) {
         return (
-            <div className="container mx-auto p-10 text-center">
-                <h1 className="text-2xl font-bold mb-4">借用清單是空的</h1>
-                <Button onClick={() => router.push('/dashboard/equipment')}>
-                    返回器材目錄
-                </Button>
+            <div className="space-y-6 max-w-6xl mx-auto pb-12">
+                <AdminPageHeader
+                    title="器材借用申請"
+                    description="確認借用器材清單、數量，填寫借用原因與預計歸還時間。"
+                />
+                <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm p-12 text-center">
+                    <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">借用清單是空的</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">請先至器材目錄挑選需要的元件或模組加入清單。</p>
+                    <Button onClick={() => router.push('/dashboard/equipment')} className="bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold">
+                        <ArrowLeft className="mr-1.5 h-4 w-4" />
+                        返回器材目錄
+                    </Button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowLeft className="h-4 w-4" />
+        <div className="space-y-6 max-w-6xl mx-auto pb-12">
+            <AdminPageHeader
+                title="器材借用申請"
+                description="確認借用器材清單、數量，填寫借用原因與預計歸還時間。"
+            >
+                <Button
+                    variant="outline"
+                    onClick={() => router.push('/dashboard/equipment')}
+                    className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+                >
+                    <ArrowLeft className="mr-1.5 h-4 w-4" />
+                    返回器材目錄
                 </Button>
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">借用申請確認</h1>
-                    <p className="text-muted-foreground">
-                        確認您的借用器材清單與申請資料。
-                    </p>
-                </div>
-            </div>
+            </AdminPageHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Left: Form */}
                 <div className="md:col-span-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>申請資料</CardTitle>
+                    <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+                        <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/5">
+                            <CardTitle className="text-lg font-bold">申請資料填寫</CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-6">
                             <Form {...form}>
                                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
                                     {/* Applicant Info (Read-only) */}
                                     <div>
                                         <div className="flex justify-between items-center h-5 mb-2">
-                                            <FormLabel className="text-sm font-medium">申請人</FormLabel>
+                                            <FormLabel className="text-sm font-medium">申請人資訊</FormLabel>
                                         </div>
-                                        <Input value={`${user?.name} (${user?.studentId})`} disabled className="bg-gray-50" />
+                                        <Input value={`${user?.name} (${user?.studentId})`} disabled className="bg-slate-50 dark:bg-white/5" />
                                     </div>
 
                                     {/* Reason */}
@@ -188,7 +199,7 @@ export default function CheckoutPage() {
                                                 </div>
                                                 <FormControl>
                                                     <Textarea 
-                                                        placeholder="請說明借用用途 (例如: 期末專題展示)" 
+                                                        placeholder="請說明借用用途 (例如: 期末專題展示、競賽製作)" 
                                                         {...field} 
                                                     />
                                                 </FormControl>
@@ -248,25 +259,25 @@ export default function CheckoutPage() {
                                                             max="9999-12-31"
                                                         />
                                                     </FormControl>
-                                                    <div className="h-5"></div> {/* Spacer to match height */}
+                                                    <div className="h-5"></div>
                                                 </FormItem>
                                             )}
                                         />
                                     </div>
 
                                     {submitError && (
-                                        <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm">
+                                        <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 rounded-lg text-sm">
                                             {submitError}
                                         </div>
                                     )}
 
-                                    <Button type="submit" className="w-full" disabled={submitting}>
+                                    <Button type="submit" className="w-full bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold h-10 mt-2" disabled={submitting}>
                                         {submitting ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                                 提交中...
                                             </>
-                                        ) : '確認提交申請'}
+                                        ) : '確認提交借用申請'}
                                     </Button>
                                 </form>
                             </Form>
@@ -276,14 +287,14 @@ export default function CheckoutPage() {
 
                 {/* Right: Summary */}
                 <div>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>器材清單 ({itemCount()})</CardTitle>
+                    <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+                        <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/5">
+                            <CardTitle className="text-base font-bold">借用清單 ({itemCount()})</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="p-6 space-y-4">
                             {items.map((item) => (
-                                <div key={item.code} className="flex gap-3 text-sm border-b pb-3 last:border-0">
-                                    <div className="h-12 w-12 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
+                                <div key={item.code} className="flex gap-3 text-sm border-b border-slate-100 dark:border-white/5 pb-3 last:border-0 last:pb-0">
+                                    <div className="h-12 w-12 bg-slate-100 dark:bg-white/5 rounded-lg overflow-hidden shrink-0 border border-slate-200/50 dark:border-white/5">
                                         {item.image ? (
                                             /* eslint-disable-next-line @next/next/no-img-element */
                                             <img 
@@ -292,21 +303,21 @@ export default function CheckoutPage() {
                                                 className="w-full h-full object-cover"
                                             />
                                         ) : (
-                                            <div className="flex items-center justify-center h-full text-[10px] text-gray-400">No Img</div>
+                                            <div className="flex items-center justify-center h-full text-[10px] text-slate-400">無圖</div>
                                         )}
                                     </div>
-                                    <div className="flex-1">
-                                        <div className="font-medium">{item.name}</div>
-                                        <div className="text-gray-500">x {item.quantity}</div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-semibold text-slate-900 dark:text-white truncate">{item.name}</div>
+                                        <div className="text-slate-500 dark:text-slate-400 text-xs">數量: {item.quantity}</div>
                                     </div>
                                     <div>
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 
-                                            className="h-6 w-6 text-red-400 hover:text-red-600"
+                                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                                             onClick={() => removeItem(item.code)}
                                         >
-                                            <Trash2 className="h-3 w-3" />
+                                            <Trash2 className="h-3.5 w-3.5" />
                                         </Button>
                                     </div>
                                 </div>

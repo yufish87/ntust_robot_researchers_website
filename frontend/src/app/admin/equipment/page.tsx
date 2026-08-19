@@ -10,6 +10,7 @@ import type {
   AllocatedEquipment,
 } from "@/lib/types/equipment";
 import { useToast } from "@/hooks/use-toast";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -280,27 +281,25 @@ export default function AdminEquipmentPage() {
 
   /* ---------- UI ---------- */
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">器材借用審核</h1>
-          <p className="text-muted-foreground">
-            管理器材借用申請、審核與歸還。
-          </p>
-        </div>
+      <AdminPageHeader
+        title="器材借用審核與點收"
+        description="審核社員器材借用申請，處理待審核、借用中面交點收與歸還結案作業。"
+      >
         <Button
           variant="outline"
           onClick={() => void refetch()}
           disabled={loading || refreshing}
           aria-busy={refreshing}
+          className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
         >
           <RefreshCw
-            className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            className={`mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 ${refreshing ? "animate-spin" : ""}`}
           />
-          {refreshing ? "重新整理" : "重新整理"}
+          重新整理
         </Button>
-      </div>
+      </AdminPageHeader>
 
       {/* Tabs */}
       <Tabs
@@ -310,11 +309,11 @@ export default function AdminEquipmentPage() {
           setExpandedId(null);
         }}
       >
-        <TabsList>
-          <TabsTrigger value="pending">待審核</TabsTrigger>
-          <TabsTrigger value="active">借用中</TabsTrigger>
-          <TabsTrigger value="history">歷史紀錄</TabsTrigger>
-          <TabsTrigger value="all">全部</TabsTrigger>
+        <TabsList className="bg-slate-100 dark:bg-[#1a1820] border border-slate-200/80 dark:border-white/10 p-1 rounded-xl h-auto flex flex-wrap gap-1">
+          <TabsTrigger value="pending" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3.5 py-2 text-sm font-semibold cursor-pointer">待審核</TabsTrigger>
+          <TabsTrigger value="active" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3.5 py-2 text-sm font-semibold cursor-pointer">借用中</TabsTrigger>
+          <TabsTrigger value="history" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3.5 py-2 text-sm font-semibold cursor-pointer">歷史紀錄</TabsTrigger>
+          <TabsTrigger value="all" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3.5 py-2 text-sm font-semibold cursor-pointer">全部</TabsTrigger>
         </TabsList>
 
         {/* 共用內容 — 根據當前 tab 切換顯示不同 action 按鈕 */}
@@ -322,7 +321,7 @@ export default function AdminEquipmentPage() {
           ["pending", "active", "history", "all"] as EquipmentStatusFilter[]
         ).map((t) => (
           <TabsContent key={t} value={t} className="mt-4">
-            <div className="border rounded-lg overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <Table
                 className={
                   data.length > 0

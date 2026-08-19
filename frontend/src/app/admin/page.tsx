@@ -8,85 +8,107 @@ import {
   Printer,
   CreditCard,
   Users,
+  ClipboardCheck,
+  BookOpenCheck,
+  ArrowRight,
 } from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 const adminModules = [
   {
     title: "人員管理",
-    description: "註冊授權碼管理與人員權限調整",
-    href: "/admin/members",
+    description: "註冊授權碼派發、社員清單與權限組調整",
+    href: "/admin/users",
     icon: Users,
-    color: "text-sky-600 bg-sky-50",
+    badge: "帳號與權限",
   },
   {
     title: "公告管理",
-    description: "新增、編輯與刪除社團公告",
+    description: "發布、編輯與管理社團最新公告與附件",
     href: "/admin/announcements",
     icon: Megaphone,
-    color: "text-blue-600 bg-blue-50",
+    badge: "官網發布",
   },
   {
     title: "課程管理",
-    description: "管理課程資訊、講義與錄影資源",
+    description: "維護社課資訊、講義投影片與錄影回放",
     href: "/admin/courses",
     icon: BookOpen,
-    color: "text-emerald-600 bg-emerald-50",
+    badge: "教學資源",
   },
   {
     title: "器材借用審核",
-    description: "審核社員器材借用申請",
+    description: "審核社員借用申請、面交點收與歸還結案",
     href: "/admin/equipment",
     icon: Wrench,
-    color: "text-orange-600 bg-orange-50",
+    badge: "資產審核",
+  },
+  {
+    title: "器材庫存盤點",
+    description: "管理器材總表庫存、新增規格與狀態清查",
+    href: "/admin/equipment/inventory",
+    icon: ClipboardCheck,
+    badge: "資產管理",
   },
   {
     title: "機器借用審核",
-    description: "審核 3D 列印與雷切申請",
+    description: "審核 3D 列印與雷射切割機預約排程與安全要點",
     href: "/admin/machine",
     icon: Printer,
-    color: "text-violet-600 bg-violet-50",
+    badge: "機具設備",
   },
   {
     title: "報帳審核",
-    description: "審核財務報帳申請與撥款流程",
+    description: "審核財務單據、核銷發票與批次撥款管理",
     href: "/admin/finance",
     icon: CreditCard,
-    color: "text-rose-600 bg-rose-50",
+    badge: "社團財務",
+  },
+  {
+    title: "管理員操作手冊",
+    description: "查看幹部標準作業程序、審核規範與指引說明",
+    href: "/admin/manual",
+    icon: BookOpenCheck,
+    badge: "幹部手冊",
   },
 ];
 
 export default function AdminPage() {
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">管理員後台</h1>
-        <p className="text-muted-foreground">選擇要管理的功能模組</p>
-      </div>
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <AdminPageHeader
+        title="社團管理員後台"
+        description="歡迎進入臺科大機器人研究社 社團管理系統。請選擇下方功能模組進行社團各項資源審核、盤點與人員維護作業。"
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
         {adminModules.map((mod) => (
-          <Link key={mod.href} href={mod.href}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div
-                  className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${mod.color}`}
-                >
-                  <mod.icon className="w-6 h-6" />
+          <Link key={mod.href} href={mod.href} className="block group">
+            <div className="bg-white dark:bg-[#201e26] p-5.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[#ffc000] dark:hover:border-[#ffc000] shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 flex items-center justify-center text-slate-800 dark:text-[#ffc000] group-hover:bg-[#ffc000]/10 group-hover:text-amber-600 dark:group-hover:text-[#ffc000] transition-colors">
+                    <mod.icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-white/5">
+                    {mod.badge}
+                  </span>
                 </div>
                 <div>
-                  <CardTitle className="text-lg">{mod.title}</CardTitle>
-                  <CardDescription className="mt-1">
+                  <h3 className="font-bold text-lg text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-[#ffc000] transition-colors">
+                    {mod.title}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                     {mod.description}
-                  </CardDescription>
+                  </p>
                 </div>
-              </CardHeader>
-            </Card>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-[#ffc000] font-medium transition-colors">
+                <span>進入管理</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
           </Link>
         ))}
       </div>

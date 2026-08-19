@@ -9,6 +9,7 @@ import type {
   MachineStatusFilter,
 } from "@/lib/types/machine";
 import { useToast } from "@/hooks/use-toast";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -538,47 +539,48 @@ export default function AdminMachinePage() {
 
   /* ---------- UI ---------- */
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">機器借用審核</h1>
-          <p className="text-muted-foreground">
-            管理 3D 列印機與雷射切割機借用申請、核准與狀態追蹤。
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => void refetch()}
-          disabled={loading || refreshing}
-          aria-busy={refreshing}
-        >
-          <RefreshCw
-            className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-          />
-          {refreshing ? "重新整理" : "重新整理"}
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="機具設備預約審核"
+        description="管理 3D 列印機與雷射切割機借用申請、安全切片截圖審核與預約排程追蹤。"
+      >
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          {/* Machine Type Toggle in Header */}
+          <div className="flex space-x-1 rounded-lg bg-black/40 border border-white/15 p-1 h-9 sm:h-10 items-center">
+            {(["3d-printer", "laser-cutter"] as MachineType[]).map((mt) => (
+              <button
+                key={mt}
+                type="button"
+                onClick={() => {
+                  setMachineTab(mt);
+                  setExpandedId(null);
+                }}
+                className={`px-3 py-1 sm:py-1.5 h-full flex items-center justify-center text-xs sm:text-sm font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap min-w-[96px] text-center ${
+                  machineTab === mt
+                    ? "bg-[#ffc000] text-black shadow-xs"
+                    : "text-slate-300 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                {mt === "3d-printer" ? "3D 列印機" : "雷射切割機"}
+              </button>
+            ))}
+          </div>
 
-      {/* Machine Type Tabs (pill style) */}
-      <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
-        {(["3d-printer", "laser-cutter"] as MachineType[]).map((mt) => (
-          <button
-            key={mt}
-            onClick={() => {
-              setMachineTab(mt);
-              setExpandedId(null);
-            }}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              machineTab === mt
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
-            }`}
+          <Button
+            variant="outline"
+            onClick={() => void refetch()}
+            disabled={loading || refreshing}
+            aria-busy={refreshing}
+            className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
           >
-            {mt === "3d-printer" ? "3D 列印機" : "雷射切割機"}
-          </button>
-        ))}
-      </div>
+            <RefreshCw
+              className={`mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            重新整理
+          </Button>
+        </div>
+      </AdminPageHeader>
 
       {/* Status filter Tabs */}
       <Tabs
@@ -588,9 +590,13 @@ export default function AdminMachinePage() {
           setExpandedId(null);
         }}
       >
-        <TabsList>
+        <TabsList className="bg-slate-100 dark:bg-[#1a1820] border border-slate-200/80 dark:border-white/10 p-1 rounded-xl h-auto flex flex-wrap gap-1">
           {SUB_TABS.map((st) => (
-            <TabsTrigger key={st.value} value={st.value}>
+            <TabsTrigger
+              key={st.value}
+              value={st.value}
+              className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3.5 py-2 text-sm font-semibold cursor-pointer"
+            >
               {st.label}
             </TabsTrigger>
           ))}
@@ -602,7 +608,7 @@ export default function AdminMachinePage() {
             className={machineTab === mt ? "mt-4 space-y-4" : "hidden"}
           >
             {/* Data Table */}
-            <div className="border rounded-lg overflow-hidden">
+            <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
               <Table
                 className={
                   data.length > 0

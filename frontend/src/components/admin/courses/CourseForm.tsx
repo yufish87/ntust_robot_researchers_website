@@ -722,7 +722,6 @@ function ResourceItem({
                         <input
                           ref={fileInputRef}
                           type="file"
-                          accept=".pdf"
                           className="hidden"
                           onChange={handleFileSelect}
                         />
@@ -734,7 +733,7 @@ function ResourceItem({
                           onClick={() => fileInputRef.current?.click()}
                         >
                           <Upload className="w-4 h-4 mr-1" />
-                          上傳 PDF
+                          上傳檔案
                         </Button>
                       </>
                     )}

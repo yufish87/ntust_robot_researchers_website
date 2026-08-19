@@ -1,17 +1,21 @@
+import { Sparkles } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+
 export default function WishlistPage() {
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">許願池</h1>
-        <p className="text-muted-foreground">
-          向社團提出器材或課程的採購建議。
-        </p>
-      </div>
-      <div className="flex h-[400px] items-center justify-center rounded-md border border-dashed p-8 text-center animate-in fade-in-50">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <AdminPageHeader
+        title="社團許願池"
+        description="向社團幹部提出新器材採購建議、想上的社課工作坊主題或系統反饋。"
+      />
+      <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm p-12 text-center">
         <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-          <h3 className="mt-4 text-lg font-semibold">功能開發中</h3>
-          <p className="mb-4 mt-2 text-sm text-muted-foreground">
-             想要什麼新器材或新課程？歡迎在此許願！
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-white/5 border border-amber-200/60 dark:border-white/10 flex items-center justify-center text-amber-600 dark:text-[#ffc000] mb-4">
+            <Sparkles className="w-7 h-7" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">功能籌備中</h3>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            想要什麼新硬體模組、特殊感測器或進階技術講座？許願池系統即將上線！
           </p>
         </div>
       </div>

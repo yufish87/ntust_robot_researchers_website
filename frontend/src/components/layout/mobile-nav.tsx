@@ -97,7 +97,11 @@ export function MobileNav({ variant }: MobileNavProps) {
   /* ----- helpers ----- */
 
   const checkActive = (item: (typeof navItems)[number]) => {
-    if (variant === "public") return false;
+    if (variant === "public") {
+      return item.href.startsWith("/")
+        ? pathname === item.href || pathname.startsWith(item.href + "/")
+        : false;
+    }
     // dashboard: "/dashboard" exact, others prefix
     if (variant === "dashboard") {
       return item.href === "/dashboard"
@@ -113,8 +117,16 @@ export function MobileNav({ variant }: MobileNavProps) {
 
   const handleNavClick = (href: string) => {
     setOpen(false);
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    if (href.startsWith("#")) {
+      if (pathname === "/") {
+        const el = document.querySelector(href);
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      } else {
+        router.push("/" + href);
+      }
+    } else {
+      router.push(href);
+    }
   };
 
   const handleLogout = () => {
@@ -204,14 +216,25 @@ export function MobileNav({ variant }: MobileNavProps) {
           <div className={cn("flex-1 overflow-y-auto py-6 px-3 space-y-1", isDarkSidebar ? "scrollbar-dark" : "scrollbar-light")}>
             {navItems.map((item) => {
               if (variant === "public") {
+                const isActive = checkActive(item);
                 return (
                   <div key={item.href} className="block">
                     <Button
                       variant="ghost"
-                      className="w-full justify-start mb-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                      className={cn(
+                        "w-full justify-start mb-1 cursor-pointer transition-colors duration-150",
+                        isActive
+                          ? "bg-slate-200 text-slate-900 font-semibold"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      )}
                       onClick={() => handleNavClick(item.href)}
                     >
-                      <item.icon className="mr-3 h-5 w-5 text-slate-400" />
+                      <item.icon
+                        className={cn(
+                          "mr-3 h-5 w-5 transition-colors",
+                          isActive ? "text-[#34313c]" : "text-slate-400"
+                        )}
+                      />
                       {item.title}
                     </Button>
                   </div>

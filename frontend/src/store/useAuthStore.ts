@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "@/lib/api";
+import type { MembershipRecord } from "@/lib/types/user";
 
 interface User {
   studentId: string;
@@ -8,6 +9,8 @@ interface User {
   role: string;
   department: string;
   grade?: string;
+  membershipHistory?: MembershipRecord[]; // 歷年身份組
+  activeUntilYear?: string;              // 有效截止學年，如 "115"
 }
 
 interface AuthState {
@@ -18,6 +21,7 @@ interface AuthState {
   logout: () => Promise<void>;
   syncSession: (force?: boolean) => Promise<void>;
   isAuthenticated: () => boolean;
+  isExpired: () => boolean;
   updateUser: (partial: Partial<User>) => void;
 }
 
@@ -110,6 +114,10 @@ export const useAuthStore = create<AuthState>()(
 
       isAuthenticated: () => {
         return get().authChecked && !!get().user;
+      },
+
+      isExpired: () => {
+        return get().user?.role === "expired";
       },
 
       updateUser: (partial) => {

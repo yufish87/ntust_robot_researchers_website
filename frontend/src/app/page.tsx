@@ -54,45 +54,47 @@ export default async function Home() {
       <MobileNav variant="public" />
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 w-full h-dvh overflow-y-auto scroll-smooth pt-14 lg:pt-0 pb-[env(safe-area-inset-bottom)] scrollbar-dark">
-        {/* 1. Hero Section */}
-        <section
-          id="hero"
-          className="min-h-dvh flex items-center justify-center relative"
-        >
-          <HomeHero mosaicImages={mosaicImages} />
-        </section>
-
-        <div className="max-w-7xl mx-auto flex flex-col">
-          {/* 2. About Section */}
+      <main className="flex-1 lg:ml-64 w-full h-dvh overflow-y-auto scroll-smooth pt-14 lg:pt-0 pb-[env(safe-area-inset-bottom)] scrollbar-dark flex flex-col justify-between">
+        <div className="flex-1">
+          {/* 1. Hero Section */}
           <section
-            id="about"
-            className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
+            id="hero"
+            className="min-h-dvh flex items-center justify-center relative"
           >
-            <AboutSection awardImages={awardImages} />
+            <HomeHero mosaicImages={mosaicImages} />
           </section>
 
-          {/* 3. News Section */}
-          <section
-            id="news"
-            className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20"
-          >
-            <AnnouncementSection />
-          </section>
+          <div className="max-w-7xl mx-auto flex flex-col">
+            {/* 2. About Section */}
+            <section
+              id="about"
+              className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
+            >
+              <AboutSection awardImages={awardImages} />
+            </section>
 
-          {/* 4. Course Section */}
-          <section
-            id="courses"
-            className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
-          >
-            <CourseSection />
-          </section>
+            {/* 3. News Section */}
+            <section
+              id="news"
+              className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20"
+            >
+              <AnnouncementSection />
+            </section>
 
-          {/* Footer */}
-          <SiteFooter />
+            {/* 4. Course Section */}
+            <section
+              id="courses"
+              className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
+            >
+              <CourseSection />
+            </section>
 
-          <ScrollIndicator />
+            <ScrollIndicator />
+          </div>
         </div>
+
+        {/* Full-width Footer */}
+        <SiteFooter className="w-full" />
       </main>
     </div>
   );

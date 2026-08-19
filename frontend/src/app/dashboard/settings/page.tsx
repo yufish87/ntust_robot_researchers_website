@@ -29,7 +29,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, User, Lock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, User, Lock, AlertTriangle, CheckCircle2, CreditCard } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 // ─── Zod Schemas ───────────────────────────────────────────
 
@@ -68,9 +69,10 @@ function getRoleBadge(role: string) {
       variant: "default" | "secondary" | "destructive" | "outline";
     }
   > = {
-    owner: { label: "社長", variant: "destructive" },
+    owner: { label: "Owner", variant: "destructive" },
     admin: { label: "幹部", variant: "default" },
     member: { label: "社員", variant: "secondary" },
+    expired: { label: "已過期", variant: "outline" },
     visitor: { label: "訪客", variant: "outline" },
   };
   const info = map[role] || { label: role, variant: "outline" as const };
@@ -92,6 +94,21 @@ export default function SettingsPage() {
   // 修改成功提示
   const [profileSuccess, setProfileSuccess] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  // 重新加入社團
+  const [membershipCode, setMembershipCode] = useState("");
+  const [extendingMembership, setExtendingMembership] = useState(false);
+  const [membershipSuccess, setMembershipSuccess] = useState(false);
+
+  // 判斷社費有效狀態
+  function getMembershipStatus(activeUntilYear: string): "valid" | "expired" | "none" {
+    if (!activeUntilYear) return "none";
+    const now = new Date();
+    const yr = now.getFullYear() - 1911;
+    const month = now.getMonth() + 1;
+    const currentAcademicYear = month >= 9 ? yr : yr - 1;
+    return Number(activeUntilYear) >= currentAcademicYear ? "valid" : "expired";
+  }
 
   // 刪除帳號 Dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -171,6 +188,41 @@ export default function SettingsPage() {
     }
   };
 
+  // 重新加入社團
+  const onExtendMembership = async () => {
+    if (!membershipCode.trim()) {
+      toast({ title: "請輸入驗證碼", variant: "destructive" });
+      return;
+    }
+    setExtendingMembership(true);
+    setMembershipSuccess(false);
+    try {
+      const res = await UserAPI.extendMembership({ code: membershipCode.trim() });
+      // 從回傳或訊息提取目標學年
+      const newYear: string | undefined = res.data?.activeUntilYear ||
+        (res.message?.match(/(\d{3})/) ? res.message.match(/(\d{3})/)![1] : undefined);
+      if (newYear) {
+        // 同時更新 store 中的 activeUntilYear 與 membershipHistory
+        updateUser({
+          activeUntilYear: newYear,
+          role: "member",
+          membershipHistory: [
+            ...(user?.membershipHistory?.filter(h => h.year !== newYear) || []),
+            { year: newYear, type: "member", positions: "" },
+          ],
+        });
+      }
+      setMembershipCode("");
+      setMembershipSuccess(true);
+      toast({ title: "重新加入社團成功", description: res.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "重新加入社團失敗";
+      toast({ title: "重新加入社團失敗", description: message, variant: "destructive" });
+    } finally {
+      setExtendingMembership(false);
+    }
+  };
+
   // ─── Delete Account ───
 
   const onConfirmDelete = async () => {
@@ -201,12 +253,12 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">個人設定</h1>
-          <p className="text-muted-foreground">管理您的個人資料與帳號安全。</p>
-        </div>
-        <div className="flex h-[300px] items-center justify-center">
+      <div className="space-y-6 max-w-6xl mx-auto pb-12">
+        <AdminPageHeader
+          title="個人帳號設定"
+          description="檢視個人基本資料、社團身份組、社費繳納狀態與修改登入密碼。"
+        />
+        <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm flex h-[300px] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </div>
@@ -214,23 +266,23 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* 頁面標題 */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">個人設定</h1>
-        <p className="text-muted-foreground">管理您的個人資料與帳號安全。</p>
-      </div>
+      <AdminPageHeader
+        title="個人帳號設定"
+        description="檢視個人基本資料、社團身份組、社費繳納狀態與修改登入密碼。"
+      />
 
       {/* ─── 基本資料 Card ─── */}
-      <Card>
-        <CardHeader>
+      <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+        <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/5">
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            <CardTitle>基本資料</CardTitle>
+            <User className="h-5 w-5 text-[#ffc000]" />
+            <CardTitle className="text-lg font-bold">基本資料</CardTitle>
           </div>
-          <CardDescription>查看與修改您的個人資訊。</CardDescription>
+          <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">查看與修改您的個人資訊。</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <form
             onSubmit={profileForm.handleSubmit(onSubmitProfile)}
             className="space-y-4"
@@ -291,6 +343,23 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* 職位 Badge — 從最新幹部記錄取得 */}
+            {(user?.role === "admin" || user?.role === "owner") && (() => {
+              const latestPos = [...(user?.membershipHistory ?? [])].reverse()
+                .find(h => h.type === "admin" || h.type === "owner")?.positions;
+              if (!latestPos) return null;
+              return (
+                <div className="space-y-2">
+                  <Label>職位</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {latestPos.split(",").filter(Boolean).map((p: string) => (
+                      <Badge key={p} variant="outline" className="text-xs">{p}</Badge>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* 身份 Badge */}
             <div className="space-y-2">
               <Label>身份</Label>
@@ -322,16 +391,121 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* ─── 修改密碼 Card ─── */}
-      <Card>
-        <CardHeader>
+      {/* ─── 重新加入社團 Card ─── */}
+      <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+        <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/5">
           <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            <CardTitle>修改密碼</CardTitle>
+            <CreditCard className="h-5 w-5 text-[#ffc000]" />
+            <CardTitle className="text-lg font-bold">社團身份與社費狀態</CardTitle>
           </div>
-          <CardDescription>定期更換密碼以確保帳號安全。</CardDescription>
+          <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">查看歷年社籍身份紀錄與輸入驗證碼重新啟用社員資格。</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 space-y-4">
+          {/* 歷年身份組 */}
+          {(user?.membershipHistory?.length ?? 0) > 0 && (
+            <div className="space-y-1.5">
+              <Label>歷年身份紀錄</Label>
+              <div className="rounded-xl border border-slate-200 dark:border-white/10 divide-y divide-slate-100 dark:divide-white/5 text-sm overflow-hidden">
+                {[...(user?.membershipHistory ?? [])].reverse().map((record) => (
+                  <div key={record.year} className="flex items-center justify-between px-4 py-2.5 bg-slate-50/50 dark:bg-white/5">
+                    <span className="text-muted-foreground">{record.year} 學年度</span>
+                    <span className="flex items-center gap-1.5">
+                      {record.type === "admin" || record.type === "owner" ? (
+                        <Badge variant="default">{record.positions || "幹部"}</Badge>
+                      ) : (
+                        <Badge variant="secondary">社員</Badge>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 當前有效狀態 */}
+          <div className="space-y-1">
+            <Label>目前社籍有效狀態</Label>
+            {(() => {
+              const isOfficer = user?.role === "admin" || user?.role === "owner";
+              if (isOfficer) {
+                const currentRecord = [...(user?.membershipHistory ?? [])].reverse()
+                  .find(h => h.type === "admin" || h.type === "owner");
+                return (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
+                      <CheckCircle2 className="h-4 w-4" />
+                      目前為社團幹部（自動啟用）
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {currentRecord?.positions && `職位：${currentRecord.positions}。`}
+                      幹部有效至 {user?.activeUntilYear} 學年度，無須繳交社費。
+                    </p>
+                  </div>
+                );
+              }
+              const status = getMembershipStatus(user?.activeUntilYear || "");
+              if (status === "valid") return (
+                <div className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {user?.activeUntilYear} 學年度（有效）
+                </div>
+              );
+              if (status === "expired") return (
+                <div className="flex items-center gap-1.5 text-sm text-amber-600 font-medium">
+                  <AlertTriangle className="h-4 w-4" />
+                  {user?.activeUntilYear} 學年度（已到期）
+                </div>
+              );
+              return <p className="text-sm text-muted-foreground">尚未登記社團記錄</p>;
+            })()}
+          </div>
+
+          {/* 驗證碼輸入：僅 member / expired 顯示 */}
+          {(user?.role === "member" || user?.role === "expired") && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <div className="flex justify-between items-center h-5">
+                  <Label htmlFor="membership-code">重新啟用驗證碼</Label>
+                  {membershipSuccess && (
+                    <span className="flex items-center gap-1 text-sm text-emerald-600 font-medium">
+                      <CheckCircle2 className="h-4 w-4" />重新加入成功
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    id="membership-code"
+                    placeholder="請輸入財務發放的驗證碼"
+                    value={membershipCode}
+                    onChange={(e) => setMembershipCode(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") onExtendMembership(); }}
+                    autoComplete="off"
+                  />
+                  <Button
+                    onClick={onExtendMembership}
+                    disabled={extendingMembership || !membershipCode.trim()}
+                    className="shrink-0 bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold cursor-pointer"
+                  >
+                    {extendingMembership ? <Loader2 className="h-4 w-4 animate-spin" /> : "重新加入社團"}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ─── 修改密碼 Card ─── */}
+      <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+        <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/5">
+          <div className="flex items-center gap-2">
+            <Lock className="h-5 w-5 text-[#ffc000]" />
+            <CardTitle className="text-lg font-bold">修改登入密碼</CardTitle>
+          </div>
+          <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">定期更換密碼以確保個人帳號安全。</CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
           <form
             onSubmit={passwordForm.handleSubmit(onSubmitPassword)}
             className="space-y-4"
@@ -391,7 +565,7 @@ export default function SettingsPage() {
 
             <div className="flex justify-end items-center gap-3">
               {passwordSuccess && (
-                <span className="flex items-center gap-1 text-sm text-green-600">
+                <span className="flex items-center gap-1 text-sm text-emerald-600 font-medium">
                   <CheckCircle2 className="h-4 w-4" />
                   密碼修改成功
                 </span>
@@ -399,7 +573,7 @@ export default function SettingsPage() {
               <Button
                 type="submit"
                 disabled={savingPassword}
-                className="min-w-[100px]"
+                className="min-w-[100px] bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold cursor-pointer"
               >
                 {savingPassword ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -413,25 +587,25 @@ export default function SettingsPage() {
       </Card>
 
       {/* ─── 危險區域 Card ─── */}
-      <Card className="border-destructive/50">
-        <CardHeader>
+      <Card className="bg-white dark:bg-[#201e26] border border-red-200 dark:border-red-900/40 rounded-xl shadow-sm overflow-hidden">
+        <CardHeader className="p-6 pb-4 border-b border-red-100 dark:border-red-950/40">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <CardTitle className="text-destructive">危險區域</CardTitle>
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            <CardTitle className="text-lg font-bold text-red-600 dark:text-red-400">危險區域</CardTitle>
           </div>
-          <CardDescription>以下操作不可逆，請謹慎執行。</CardDescription>
+          <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">以下操作不可逆，請謹慎執行。</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <p className="font-medium">刪除帳號</p>
-              <p className="text-sm text-muted-foreground">
-                此操作將停用您的帳號，停用後將無法登入。
+              <p className="font-semibold text-slate-900 dark:text-white">停用 / 刪除帳號</p>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                此操作將停用您的帳號，停用後將無法登入社團系統。
               </p>
             </div>
             <Button
               variant="destructive"
-              className="min-w-[100px]"
+              className="min-w-[100px] shrink-0"
               onClick={() => {
                 setDeletePassword("");
                 setDeleteDialogOpen(true);

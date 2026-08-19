@@ -1,21 +1,22 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Mail, MapPin, Facebook, Instagram } from "lucide-react";
+import { Mail, MapPin, Facebook, Instagram, BookOpen } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export function SiteFooter({ className }: { className?: string }) {
   return (
     <footer
       id="footer"
       className={cn(
-        "border-t border-white/10 bg-black/30 scroll-mt-20",
+        "w-full border-t border-white/10 bg-black/40 scroll-mt-20",
         className,
       )}
     >
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        {/* 上半部: Logo + 聯絡資訊 */}
-        <div className="flex flex-col md:flex-row justify-between gap-8 mb-8">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        {/* 上半部: Logo + 說明按鈕 + 社群連結 */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
           {/* 左側: Logo + 名稱 */}
           <div className="flex items-center gap-3">
             <Image
@@ -33,33 +34,43 @@ export function SiteFooter({ className }: { className?: string }) {
             </div>
           </div>
 
-          {/* 右側: 社群連結 */}
-          <div className="flex items-center gap-4">
-            <a
-              href="https://www.facebook.com/ntust.robot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:bg-[#ffc000] hover:text-black transition-colors"
-              aria-label="Facebook"
+          {/* 右側: 使用說明按鈕 + 社群連結 */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/manual"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/10 hover:bg-[#ffc000] border border-white/15 hover:border-transparent text-xs font-semibold text-slate-200 hover:text-black transition-all duration-200 shadow-sm"
             >
-              <Facebook className="w-4 h-4" />
-            </a>
-            <a
-              href="https://www.instagram.com/ntust.robot/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:bg-[#ffc000] hover:text-black transition-colors"
-              aria-label="Instagram"
-            >
-              <Instagram className="w-4 h-4" />
-            </a>
-            <a
-              href="mailto:ntust.robot@gmail.com"
-              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:bg-[#ffc000] hover:text-black transition-colors"
-              aria-label="Email"
-            >
-              <Mail className="w-4 h-4" />
-            </a>
+              <BookOpen className="w-4 h-4 text-[#ffc000] group-hover:text-black" />
+              <span>系統使用說明</span>
+            </Link>
+
+            <div className="flex items-center gap-2">
+              <a
+                href="https://www.facebook.com/ntust.robot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:bg-[#ffc000] hover:text-black transition-colors"
+                aria-label="Facebook"
+              >
+                <Facebook className="w-4 h-4" />
+              </a>
+              <a
+                href="https://www.instagram.com/ntust.robot/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:bg-[#ffc000] hover:text-black transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-4 h-4" />
+              </a>
+              <a
+                href="mailto:ntust.robot@gmail.com"
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:bg-[#ffc000] hover:text-black transition-colors"
+                aria-label="Email"
+              >
+                <Mail className="w-4 h-4" />
+              </a>
+            </div>
           </div>
         </div>
 

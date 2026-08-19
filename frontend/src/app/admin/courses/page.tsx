@@ -6,11 +6,12 @@ import { Course } from '@/lib/types/course';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from "@/hooks/use-toast";
 import { CourseForm } from '@/components/admin/courses/CourseForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 export default function AdminCoursesPage() {
     const queryClient = useQueryClient();
@@ -25,7 +26,12 @@ export default function AdminCoursesPage() {
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
     /* ---------- 資料載入（useQuery 快取）---------- */
-    const { data: courses = [], isLoading: loading } = useQuery({
+    const {
+        data: courses = [],
+        isLoading: loading,
+        isFetching: refreshing,
+        refetch,
+    } = useQuery({
         queryKey: ['admin-courses'],
         queryFn: async () => {
             const res = await fetch('/api/courses');
@@ -116,26 +122,40 @@ export default function AdminCoursesPage() {
     };
 
     return (
-        <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">課程管理</h1>
-                    <p className="text-muted-foreground">管理課程資訊、講義與錄影資源。</p>
-                </div>
-                <Button onClick={() => { setEditingCourse(null); setIsFormOpen(true); }}>
-                    <Plus className="w-4 h-4 mr-2" /> 新增課程
+        <div className="space-y-6 max-w-6xl mx-auto pb-12">
+            <AdminPageHeader
+                title="社團課程與教材維護"
+                description="管理各學期社課、講義投影片、影片連結與補充教材資源。"
+            >
+                <Button
+                    variant="outline"
+                    onClick={() => void refetch()}
+                    disabled={loading || refreshing}
+                    aria-busy={refreshing}
+                    className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+                >
+                    <RefreshCw
+                        className={`mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 ${refreshing ? "animate-spin" : ""}`}
+                    />
+                    重新整理
                 </Button>
-            </div>
+                <Button
+                    onClick={() => { setEditingCourse(null); setIsFormOpen(true); }}
+                    className="w-full sm:w-auto bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold shadow-xs cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+                >
+                    <Plus className="w-4 h-4 mr-1.5" /> 新增課程
+                </Button>
+            </AdminPageHeader>
 
-            <div className="border rounded-lg overflow-hidden">
-                <Table>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <Table className="min-w-[720px]">
                     <TableHeader>
                         <TableRow className="bg-muted/50">
                             <TableHead className="w-[140px]">課程 ID</TableHead>
-                            <TableHead className="w-[60px]">學期</TableHead>
-                            <TableHead className="w-[220px]">課程名稱</TableHead>
-                            <TableHead className="w-[60px]">權限</TableHead>
-                            <TableHead className="w-[160px]">教材</TableHead>
+                            <TableHead className="w-[70px]">學期</TableHead>
+                            <TableHead>課程名稱</TableHead>
+                            <TableHead className="w-[70px]">權限</TableHead>
+                            <TableHead className="w-[160px]">教材資源</TableHead>
                             <TableHead className="w-[110px]">上傳者</TableHead>
                             <TableHead className="w-[120px]">上課時間</TableHead>
                             <TableHead className="w-[110px] text-center">操作</TableHead>
