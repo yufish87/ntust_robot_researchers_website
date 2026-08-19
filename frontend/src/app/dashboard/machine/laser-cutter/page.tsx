@@ -7,6 +7,8 @@ import { useForm, SubmitHandler, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -287,25 +289,21 @@ export default function LaserCutterApplicationPage() {
   };
 
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          type="button"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            雷射切割機借用申請
-          </h1>
-          <p className="text-muted-foreground">
-            請詳細填寫切割參數並上傳相關檔案。
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <AdminPageHeader
+        title="雷射切割機借用申請"
+        description="填寫雷切材料規格、預估切割時長與借用時段，並上傳設計圖檔（.ai / .dxf / .svg / .pdf）。"
+      >
+        <Link href="/dashboard/machine" className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+          >
+            <ArrowLeft className="mr-1.5 h-4 w-4" />
+            返回機臺總覽
+          </Button>
+        </Link>
+      </AdminPageHeader>
 
       <Form {...form}>
         <form
@@ -318,13 +316,13 @@ export default function LaserCutterApplicationPage() {
               description: "請檢查欄位是否填寫正確 (必填欄位標示紅色錯誤)",
             });
           })}
-          className="space-y-8"
+          className="space-y-6"
         >
-          <Card>
-            <CardHeader>
-              <CardTitle>基本資訊</CardTitle>
+          <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+            <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/5">
+              <CardTitle className="text-lg font-bold">基本參數與時段借用</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-6 space-y-4">
               <FormField
                 control={form.control}
                 name="purpose"
@@ -609,21 +607,21 @@ export default function LaserCutterApplicationPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>檔案上傳</CardTitle>
-              <CardDescription>
-                請上傳雷射切割檔案 (ai, dxf, svg, pdf)。
+          <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+            <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/5">
+              <CardTitle className="text-lg font-bold">檔案上傳</CardTitle>
+              <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                請上傳雷射切割圖檔 (ai, dxf, svg, pdf, png, jpg)。
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <FormField
                 control={form.control}
                 name="fileId"
                 render={({ field }) => (
                   <FormItem data-field="fileId">
                     <div className="flex justify-between items-center mb-2">
-                      <FormLabel className="text-base font-semibold">
+                      <FormLabel className="text-sm font-semibold">
                         雷切圖檔 <span className="text-red-500 ml-1">*</span>
                       </FormLabel>
                       {form.formState.errors.fileId && (
@@ -659,7 +657,7 @@ export default function LaserCutterApplicationPage() {
                       />
                     </FormControl>
                     {field.value && (
-                      <p className="text-sm text-green-600 mt-2 flex items-center">
+                      <p className="text-sm text-emerald-600 mt-2 flex items-center">
                         <span className="mr-2">✓</span>{" "}
                         {field.value === "pending"
                           ? "檔案已選擇"
@@ -674,7 +672,7 @@ export default function LaserCutterApplicationPage() {
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold h-11 text-base cursor-pointer"
             size="lg"
             disabled={isSubmitting}
           >
@@ -684,7 +682,7 @@ export default function LaserCutterApplicationPage() {
                 提交中...
               </>
             ) : (
-              "送出申請"
+              "確認送出雷射切割申請"
             )}
           </Button>
         </form>

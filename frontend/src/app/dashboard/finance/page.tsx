@@ -9,6 +9,7 @@ import {
   FileText,
   Calendar,
   DollarSign,
+  RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -43,6 +44,7 @@ import { CancelConfirmModal } from "@/components/finance/CancelConfirmModal";
 
 import { FinanceAPI } from "@/lib/api/finance";
 import type { FinanceApplication } from "@/lib/types/finance";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 export default function FinanceDashboardPage() {
   const { toast } = useToast();
@@ -59,7 +61,12 @@ export default function FinanceDashboardPage() {
   const [isCancelling, setIsCancelling] = useState(false);
 
   /* ---------- 資料載入（useQuery 快取）---------- */
-  const { data = [], isLoading: loading } = useQuery<FinanceApplication[]>({
+  const {
+    data = [],
+    isLoading: loading,
+    isFetching: refreshing,
+    refetch,
+  } = useQuery<FinanceApplication[]>({
     queryKey: ["my-finance-apps"],
     queryFn: async () => {
       const res = await FinanceAPI.getMyApplications();
@@ -181,78 +188,92 @@ export default function FinanceDashboardPage() {
   }
 
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">財務報帳</h1>
-          <p className="text-muted-foreground">
-            管理您的所有報帳申請與歷史紀錄。
-          </p>
-        </div>
-        <Link href="/dashboard/finance/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            新增申請
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <AdminPageHeader
+        title="財務報帳"
+        description="管理個人社團支出報帳申請、追蹤審核進度、發票繳交與撥款紀錄。"
+      >
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={() => void refetch()}
+            disabled={loading || refreshing}
+            aria-busy={refreshing}
+            className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+          >
+            <RefreshCw
+              className={`mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            重新整理
           </Button>
-        </Link>
-      </div>
 
-      {/* Custom Tabs */}
-      <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
+          <Link href="/dashboard/finance/new" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold shadow-xs cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4">
+              <Plus className="mr-1.5 h-4 w-4" />
+              新增申請
+            </Button>
+          </Link>
+        </div>
+      </AdminPageHeader>
+
+      {/* Custom Track Tabs */}
+      <div className="flex space-x-1.5 rounded-xl bg-slate-100 dark:bg-[#1a1820] border border-slate-200/80 dark:border-white/10 p-1 w-fit">
         <button
           onClick={() => setActiveTab("active")}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+          className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
             activeTab === "active"
-              ? "bg-white text-slate-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
+              ? "bg-white dark:bg-[#201e26] text-slate-900 dark:text-[#ffc000] shadow-xs"
+              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           進行中 ({activeApplications.length})
         </button>
         <button
           onClick={() => setActiveTab("history")}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+          className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
             activeTab === "history"
-              ? "bg-white text-slate-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
+              ? "bg-white dark:bg-[#201e26] text-slate-900 dark:text-[#ffc000] shadow-xs"
+              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           歷史紀錄 ({historyApplications.length})
         </button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {activeTab === "active" ? "進行中" : "歷史紀錄"}
-          </CardTitle>
-          <CardDescription>
-            {activeTab === "active"
-              ? "目前正在進行報帳流程的項目。"
-              : "已經結束報帳流程的項目。"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+              {activeTab === "active" ? "進行中報帳項目" : "歷史報帳紀錄"}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              {activeTab === "active"
+                ? "目前正在進行幹部審核、發票點收或撥款流程的單據。"
+                : "已經結束報帳流程或不予通過之項目。"}
+            </p>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
           {loading ? (
-            <div className="py-8 text-center text-muted-foreground">
+            <div className="py-12 text-center text-muted-foreground text-sm">
               載入中...
             </div>
           ) : currentList.length === 0 ? (
-            <div className="py-12 text-center border-2 border-dashed rounded-lg">
-              <p className="text-muted-foreground">目前沒有資料</p>
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground text-sm">目前沒有資料</p>
               {activeTab === "active" && (
                 <Link
                   href="/dashboard/finance/new"
                   className="mt-4 inline-block"
                 >
-                  <Button variant="link">立即申請</Button>
+                  <Button variant="link" className="text-amber-600 dark:text-[#ffc000]">立即申請</Button>
                 </Link>
               )}
             </div>
           ) : (
-            <Table>
+            <Table className="min-w-[750px]">
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-muted/50">
                   <TableHead>單號</TableHead>
                   <TableHead>類別</TableHead>
                   <TableHead className="w-[300px]">說明</TableHead>
@@ -344,8 +365,8 @@ export default function FinanceDashboardPage() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <FinanceDetailModal
         application={selectedApp}

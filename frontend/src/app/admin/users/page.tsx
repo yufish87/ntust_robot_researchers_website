@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/useAuthStore";
 import { UserAPI } from "@/lib/api/user";
+import api from "@/lib/api";
 import type { UserProfile, UserRole, VerifyCode } from "@/lib/types/user";
 import {
   Table,
@@ -43,6 +44,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import {
   Dices,
   KeyRound,
@@ -178,6 +180,10 @@ export default function AdminUsersPage() {
   const [yearTarget, setYearTarget] = useState<UserProfile | null>(null);
   const [yearInput, setYearInput] = useState("");
   const [yearLoading, setYearLoading] = useState(false);
+
+  // Reset Password AlertDialog
+  const [resetPwdTarget, setResetPwdTarget] = useState<UserProfile | null>(null);
+  const [resetPwdLoading, setResetPwdLoading] = useState(false);
 
   /* ---------- 使用者資料（useQuery）---------- */
   const {
@@ -456,84 +462,102 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleAdminResetPassword = async () => {
+    if (!resetPwdTarget) return;
+    setResetPwdLoading(true);
+    try {
+      const res = await api.post("/admin/users/reset-password", {
+        targetStudentId: resetPwdTarget.studentId,
+      });
+      if (!res.data.success) throw new Error(res.data.message || "重設失敗");
+      toast({
+        title: "密碼已重設",
+        description: `${resetPwdTarget.name} 的密碼已重設為學號。`,
+      });
+      setResetPwdTarget(null);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "重設失敗";
+      toast({ variant: "destructive", title: "重設密碼失敗", description: message });
+    } finally {
+      setResetPwdLoading(false);
+    }
+  };
+
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">人員管理</h1>
-          <p className="text-muted-foreground">管理社團成員、權限與驗證碼。</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+      <AdminPageHeader
+        title="人員與權限管理"
+        description="管理社團成員資料、分配幹部職位與權限組，並派發新成員註冊驗證碼。"
+      >
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          {/* Main Tab Capsule in Header */}
+          <div className="flex space-x-1 rounded-lg bg-black/40 border border-white/15 p-1 h-9 sm:h-10 items-center">
+            <button
+              type="button"
+              onClick={() => setMainTab("users")}
+              className={`px-3 py-1 sm:py-1.5 h-full flex items-center justify-center text-xs sm:text-sm font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap min-w-[72px] sm:min-w-[80px] text-center ${
+                mainTab === "users"
+                  ? "bg-[#ffc000] text-black shadow-xs"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              社員名冊
+            </button>
+            <button
+              type="button"
+              onClick={() => setMainTab("codes")}
+              className={`px-3 py-1 sm:py-1.5 h-full flex items-center justify-center text-xs sm:text-sm font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap min-w-[72px] sm:min-w-[80px] text-center ${
+                mainTab === "codes"
+                  ? "bg-[#ffc000] text-black shadow-xs"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              社團註冊碼
+            </button>
+          </div>
+
           <Button
             variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => setCodeDialogOpen(true)}
+            onClick={() =>
+              void (mainTab === "users" ? refetchUsers() : refetchCodes())
+            }
+            disabled={
+              mainTab === "users"
+                ? loading || usersRefreshing
+                : codesLoading || codesRefreshing
+            }
+            aria-busy={mainTab === "users" ? usersRefreshing : codesRefreshing}
+            className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
           >
-            <KeyRound className="h-4 w-4 mr-2" />
+            <RefreshCw
+              className={`mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 ${
+                (mainTab === "users" ? usersRefreshing : codesRefreshing)
+                  ? "animate-spin"
+                  : ""
+              }`}
+            />
+            重新整理
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => setCodeDialogOpen(true)}
+            className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+          >
+            <KeyRound className="h-4 w-4 mr-1.5" />
             產生註冊碼
           </Button>
+
           <Button
-            className="w-full sm:w-auto"
             onClick={() => setAddUserOpen(true)}
+            className="w-full sm:w-auto bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold shadow-xs cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-1.5" />
             新增人員
           </Button>
         </div>
-      </div>
-
-      {/* Main Tabs: 人員 / 驗證碼 (pill style) + Refresh */}
-      <div className="flex items-center justify-between">
-        <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
-          <button
-            onClick={() => setMainTab("users")}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              mainTab === "users"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            人員
-          </button>
-          <button
-            onClick={() => setMainTab("codes")}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              mainTab === "codes"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            驗證碼
-          </button>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            void (mainTab === "users" ? refetchUsers() : refetchCodes())
-          }
-          disabled={
-            mainTab === "users"
-              ? loading || usersRefreshing
-              : codesLoading || codesRefreshing
-          }
-          aria-busy={mainTab === "users" ? usersRefreshing : codesRefreshing}
-        >
-          <RefreshCw
-            className={`mr-2 h-4 w-4 ${
-              (mainTab === "users" ? usersRefreshing : codesRefreshing)
-                ? "animate-spin"
-                : ""
-            }`}
-          />
-          {(mainTab === "users" ? usersRefreshing : codesRefreshing)
-            ? "重新整理"
-            : "重新整理"}
-        </Button>
-      </div>
-
-      {/* ===== 人員 Tab ===== */}
+      </AdminPageHeader>
       {mainTab === "users" && (
         <div className="space-y-4">
           {/* Sub filter + Search */}
@@ -541,18 +565,18 @@ export default function AdminUsersPage() {
             value={tabFilter}
             onValueChange={(v) => setTabFilter(v as TabFilter)}
           >
-            <div className="flex items-center gap-4">
-              <TabsList>
-                <TabsTrigger value="all" className="w-16">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <TabsList className="bg-slate-100 dark:bg-[#1a1820] border border-slate-200/80 dark:border-white/10 p-1 rounded-xl h-auto flex flex-wrap gap-1">
+                <TabsTrigger value="all" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer">
                   全部
                 </TabsTrigger>
-                <TabsTrigger value="member" className="w-16">
+                <TabsTrigger value="member" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer">
                   社員
                 </TabsTrigger>
-                <TabsTrigger value="admin" className="w-20">
+                <TabsTrigger value="admin" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer">
                   管理員
                 </TabsTrigger>
-                <TabsTrigger value="disabled" className="w-20">
+                <TabsTrigger value="disabled" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer">
                   已停用
                 </TabsTrigger>
               </TabsList>
@@ -569,8 +593,8 @@ export default function AdminUsersPage() {
           </Tabs>
 
           {/* Users Table */}
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
+          <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
+            <Table className="min-w-[850px]">
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="w-[120px]">學號</TableHead>
@@ -681,7 +705,14 @@ export default function AdminUsersPage() {
                               >
                                 設定社費學年
                               </DropdownMenuItem>
-                              {!isSelf(u) && u.status === "active" && (
+                              {!isSelf(u) && (
+                <DropdownMenuItem
+                  onClick={() => setResetPwdTarget(u)}
+                >
+                  重設密碼為學號
+                </DropdownMenuItem>
+              )}
+              {!isSelf(u) && u.status === "active" && (
                                 <DropdownMenuItem
                                   className="text-red-600 focus:text-red-600"
                                   onClick={() => setDeleteTarget(u)}
@@ -721,8 +752,8 @@ export default function AdminUsersPage() {
       {/* ===== 驗證碼 Tab ===== */}
       {mainTab === "codes" && (
         <div className="space-y-4">
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
+          <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
+            <Table className="min-w-[850px]">
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="w-[120px]">驗證碼</TableHead>
@@ -1023,9 +1054,6 @@ export default function AdminUsersPage() {
                 value={codeTargetYear}
                 onChange={(e) => setCodeTargetYear(e.target.value.replace(/\D/g, ""))}
               />
-              <p className="text-xs text-muted-foreground">
-                填入後，持此碼註冊或續約的社員，lastPaidYear 將設為此學年。
-              </p>
             </div>
           </div>
           <DialogFooter>
@@ -1241,6 +1269,41 @@ export default function AdminUsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Reset Password AlertDialog */}
+      <AlertDialog
+        open={!!resetPwdTarget}
+        onOpenChange={(open) => !open && setResetPwdTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>確認重設密碼</AlertDialogTitle>
+            <AlertDialogDescription>
+              確定要將{" "}
+              <span className="font-semibold">{resetPwdTarget?.name}</span>{" "}
+              ({resetPwdTarget?.studentId}) 的密碼重設為其學號嗎？
+              <br />
+              <span className="text-orange-600 font-medium">
+                操作後使用者必須用學號登入，建議請他們盡快修改密碼。
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleAdminResetPassword}
+              disabled={resetPwdLoading}
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+            >
+              {resetPwdLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "確認重設"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

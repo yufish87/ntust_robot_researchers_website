@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EquipmentDetailModal } from "@/components/equipment/EquipmentDetailModal";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { History } from "lucide-react";
 interface EquipmentIndex {
   code: string;
   name: string;
@@ -99,58 +101,64 @@ export default function EquipmentCatalogPage() {
       : catalog.filter((item) => item.category === selectedCategory);
 
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">器材借用</h1>
-          <p className="text-muted-foreground">瀏覽可用器材並送出借用申請。</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Link
-            href="/dashboard/equipment/applications"
-            className="w-full sm:w-auto"
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <AdminPageHeader
+        title="器材列表"
+        description="瀏覽社團各項硬體模組、感測器與工具庫存，加入借用清單並送出借用申請。"
+      >
+        <Link
+          href="/dashboard/equipment/applications"
+          className="w-full sm:w-auto"
+        >
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
           >
-            <Button variant="outline" className="w-full sm:w-auto">
-              我的申請紀錄
-            </Button>
-          </Link>
-        </div>
-      </div>
+            <History className="mr-1.5 h-4 w-4" />
+            我的申請紀錄
+          </Button>
+        </Link>
+      </AdminPageHeader>
 
       {/* Category Filter */}
-      <div className="mb-4 space-y-4">
+      <div className="space-y-4">
         {/* Mobile Dropdown */}
         <div className="block md:hidden">
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white dark:bg-[#201e26] border-slate-200 dark:border-white/10 h-10 text-sm">
               <SelectValue placeholder="選擇分類..." />
             </SelectTrigger>
             <SelectContent>
               {categories.map((cat) => (
                 <SelectItem key={cat} value={cat}>
-                  {cat}
+                  {cat === "All" ? "全部分類" : cat}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        {/* Desktop Buttons */}
-        <div className="hidden md:flex gap-2 overflow-x-auto pb-2">
+        {/* Desktop / Tablet Buttons */}
+        <div className="hidden md:flex space-x-1.5 rounded-xl bg-slate-100 dark:bg-[#1a1820] border border-slate-200/80 dark:border-white/10 p-1 overflow-x-auto max-w-full w-fit">
           {categories.map((cat) => (
-            <Button
+            <button
               key={cat}
-              variant={selectedCategory === cat ? "default" : "outline"}
               onClick={() => setSelectedCategory(cat)}
-              className={`whitespace-nowrap ${selectedCategory === cat ? "border border-primary" : ""}`}
+              className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+                selectedCategory === cat
+                  ? "bg-white dark:bg-[#201e26] text-slate-900 dark:text-[#ffc000] shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              }`}
             >
-              {cat}
-            </Button>
+              {cat === "All" ? "全部分類" : cat}
+            </button>
           ))}
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-10">載入器材目錄中...</div>
+        <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm p-12 text-center text-muted-foreground text-sm">
+          載入器材目錄中...
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredCatalog.map((item) => {
@@ -158,19 +166,19 @@ export default function EquipmentCatalogPage() {
             return (
               <Card
                 key={item.code}
-                className="flex flex-col h-full hover:shadow-lg transition-shadow cursor-pointer overflow-hidden p-0 gap-0"
+                className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm hover:border-[#ffc000] dark:hover:border-[#ffc000] transition-all cursor-pointer overflow-hidden p-0 gap-0 flex flex-col justify-between group"
                 onClick={() => {
                   setSelectedItem(item);
                   setIsModalOpen(true);
                 }}
               >
                 <CardHeader className="p-0">
-                  <div className="aspect-video w-full bg-gray-200 relative">
+                  <div className="aspect-video w-full bg-slate-100 dark:bg-white/5 relative overflow-hidden">
                     {item.image ? (
                       <img
                         src={getGoogleDriveImageUrl(item.image)}
                         alt={item.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         referrerPolicy="no-referrer"
                         loading="lazy"
                         onError={(e) => {
@@ -179,13 +187,13 @@ export default function EquipmentCatalogPage() {
                         }}
                       />
                     ) : (
-                      <div className="flex items-center justify-center h-full text-gray-400">
-                        No Image
+                      <div className="flex items-center justify-center h-full text-slate-400 text-xs">
+                        無預覽圖
                       </div>
                     )}
                     <Badge
-                      className={`absolute top-2 right-2 ${
-                        item.available > 0 ? "bg-green-500" : "bg-red-500"
+                      className={`absolute top-2 right-2 text-xs font-semibold ${
+                        item.available > 0 ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
                       }`}
                     >
                       {item.available > 0
@@ -194,26 +202,27 @@ export default function EquipmentCatalogPage() {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="flex-grow p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <CardContent className="flex-grow p-4 space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded-md">
                       {item.category}
-                    </div>
-                    <div className="text-xs text-gray-400 font-mono">
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">
                       {item.code}
-                    </div>
+                    </span>
                   </div>
-                  <CardTitle className="text-lg mb-2">{item.name}</CardTitle>
+                  <CardTitle className="text-base font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-amber-600 dark:group-hover:text-[#ffc000] transition-colors">
+                    {item.name}
+                  </CardTitle>
                 </CardContent>
                 <CardFooter className="p-4 pt-0">
                   <Button
-                    className="w-full"
-                    disabled={!isConsumable && item.available <= 0}
-                    variant={
+                    className={`w-full text-xs sm:text-sm h-9 ${
                       isConsumable || item.available > 0
-                        ? "default"
-                        : "secondary"
-                    }
+                        ? "bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold"
+                        : "bg-slate-100 dark:bg-white/10 text-slate-400 cursor-not-allowed"
+                    }`}
+                    disabled={!isConsumable && item.available <= 0}
                   >
                     {isConsumable ? "可直接取用" : "檢視詳情"}
                   </Button>

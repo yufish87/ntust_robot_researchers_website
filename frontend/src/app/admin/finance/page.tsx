@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FinanceAdminAPI } from "@/lib/api/finance";
+import { FinanceAPI, FinanceAdminAPI } from "@/lib/api/finance";
 import type {
   FinanceApplication,
   FinanceStatusFilter,
@@ -36,11 +36,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, CheckCircle2, XCircle, Banknote, Eye } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Banknote, Eye, FileCheck, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { FinanceDetailModal } from "@/components/finance/FinanceDetailModal";
 import { format } from "date-fns";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 type TabKey = "pending" | "invoice" | "disburse" | "history";
 
@@ -70,8 +71,17 @@ export default function AdminFinancePage() {
     null,
   );
 
+  // Receive invoice confirm dialog
+  const [receiveInvoiceApp, setReceiveInvoiceApp] =
+    useState<FinanceApplication | null>(null);
+
   /* ---------- 資料載入（useQuery 快取）---------- */
-  const { data: allData = [], isLoading: loading } = useQuery<FinanceApplication[]>({
+  const {
+    data: allData = [],
+    isLoading: loading,
+    isFetching: refreshing,
+    refetch,
+  } = useQuery<FinanceApplication[]>({
     queryKey: ["admin-finance"],
     queryFn: async () => {
       const res = await FinanceAdminAPI.list("all");
@@ -88,7 +98,7 @@ export default function AdminFinancePage() {
           return app.status === "審核中";
         case "invoice":
           return (
-            app.status === "已通過" && app.invoiceSubmitStatus !== "已確認"
+            app.status === "已通過" && app.invoiceSubmitStatus === "未提交"
           );
         case "disburse":
           return (
@@ -198,6 +208,36 @@ export default function AdminFinancePage() {
     }
   };
 
+  const handleReceiveInvoice = async () => {
+    if (!receiveInvoiceApp) return;
+    setActionLoading(true);
+    try {
+      const res = await FinanceAPI.submitInvoice(receiveInvoiceApp.id);
+      if (res.success) {
+        toast({
+          title: "已確認收到發票",
+          description: `申請 ${receiveInvoiceApp.id} 已標記收到發票，並轉入待撥款清單。`,
+        });
+        setReceiveInvoiceApp(null);
+        queryClient.invalidateQueries({ queryKey: ["admin-finance"] });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "操作失敗",
+          description: res.message || "無法更新發票投遞狀態",
+        });
+      }
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "系統錯誤",
+        description: "無法連線至伺服器",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // ── Helpers ────────────────────────
   function getStatusBadge(app: FinanceApplication) {
     switch (app.status) {
@@ -245,20 +285,35 @@ export default function AdminFinancePage() {
   }
 
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">財務報帳審核</h1>
-        <p className="text-muted-foreground">
-          審核社員報帳申請、確認發票與撥款。
-        </p>
-      </div>
+      <AdminPageHeader
+        title="財務報帳審核與核銷"
+        description="審核社員經費報帳申請、核對發票抬頭統編與發放撥款作業。"
+      >
+        <Button
+          variant="outline"
+          onClick={() => void refetch()}
+          disabled={loading || refreshing}
+          aria-busy={refreshing}
+          className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+        >
+          <RefreshCw
+            className={`mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 ${refreshing ? "animate-spin" : ""}`}
+          />
+          重新整理
+        </Button>
+      </AdminPageHeader>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)}>
-        <TabsList>
+        <TabsList className="bg-slate-100 dark:bg-[#1a1820] border border-slate-200/80 dark:border-white/10 p-1 rounded-xl h-auto flex flex-wrap gap-1">
           {TABS.map((tab) => (
-            <TabsTrigger key={tab.key} value={tab.key}>
+            <TabsTrigger
+              key={tab.key}
+              value={tab.key}
+              className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3.5 py-2 text-sm font-semibold cursor-pointer"
+            >
               {tab.label}
             </TabsTrigger>
           ))}
@@ -266,7 +321,7 @@ export default function AdminFinancePage() {
       </Tabs>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
         <Table className={data.length > 0 ? "min-w-[62.5rem] table-fixed" : "w-full table-fixed"}>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -364,6 +419,21 @@ export default function AdminFinancePage() {
                           </Button>
                         </>
                       )}
+
+                      {activeTab === "invoice" &&
+                        app.status === "已通過" &&
+                        app.invoiceSubmitStatus === "未提交" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50 cursor-pointer"
+                            onClick={() => setReceiveInvoiceApp(app)}
+                            disabled={actionLoading}
+                            title="收到發票 (進入待撥款)"
+                          >
+                            <FileCheck className="h-4 w-4" />
+                          </Button>
+                        )}
 
                       {activeTab === "disburse" &&
                         app.invoiceSubmitStatus === "已提交" &&
@@ -466,6 +536,42 @@ export default function AdminFinancePage() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               確認撥款
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Receive Invoice Confirm Dialog */}
+      <AlertDialog
+        open={!!receiveInvoiceApp}
+        onOpenChange={(open) => {
+          if (!open) setReceiveInvoiceApp(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>確認收到實體發票？</AlertDialogTitle>
+            <AlertDialogDescription>
+              確定已收到申請人「
+              <span className="font-semibold text-slate-800 dark:text-white">
+                {receiveInvoiceApp?.applicantName || receiveInvoiceApp?.applicantId}
+              </span>
+              」的實體紙本發票？
+              <br />
+              確認後單據（單號：<span className="font-mono">{receiveInvoiceApp?.id}</span>）將直接轉入「待撥款」階段。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReceiveInvoice}
+              disabled={actionLoading}
+              className="bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold cursor-pointer"
+            >
+              {actionLoading && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              確認收到發票
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

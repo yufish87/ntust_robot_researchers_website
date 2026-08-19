@@ -22,6 +22,7 @@ import {
   ANNOUNCEMENT_CATEGORIES,
   type Announcement,
 } from "@/lib/types/announcement";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 const categoryColor: Record<string, string> = {
   一般公告: "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30",
@@ -91,18 +92,14 @@ export default function AnnouncementsPage() {
       : announcements.filter((a) => a.category === selectedCategory);
 
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">公告</h1>
-          <p className="text-muted-foreground">
-            查看社團的最新動態與重要通知。
-          </p>
-        </div>
-
-        <div className="w-full md:w-56 md:shrink-0 md:self-start">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <AdminPageHeader
+        title="社團公告"
+        description="查看社團最新消息、重要通知、社課異動與活動賽事資訊。"
+      >
+        <div className="w-full sm:w-56 shrink-0">
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white/10 border-white/20 text-white h-9 sm:h-10 text-xs sm:text-sm">
               <SelectValue placeholder="選擇公告類別" />
             </SelectTrigger>
             <SelectContent position="popper" side="bottom" sideOffset={6}>
@@ -115,24 +112,24 @@ export default function AnnouncementsPage() {
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </AdminPageHeader>
 
       {loading ? (
-        <div className="flex h-[400px] items-center justify-center rounded-md border border-dashed p-8">
-          <p className="text-muted-foreground">載入中...</p>
+        <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm p-12 flex items-center justify-center">
+          <p className="text-muted-foreground text-sm">載入中...</p>
         </div>
       ) : announcements.length === 0 ? (
-        <div className="flex h-[400px] items-center justify-center rounded-md border border-dashed p-8 text-center">
+        <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm p-12 text-center">
           <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-            <Megaphone className="h-10 w-10 text-muted-foreground mb-4" />
-            <h3 className="mt-2 text-lg font-semibold">目前沒有公告</h3>
+            <Megaphone className="h-10 w-10 text-slate-400 mb-4" />
+            <h3 className="mt-2 text-lg font-semibold text-slate-900 dark:text-white">目前沒有公告</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               有新公告時會顯示在這裡。
             </p>
           </div>
         </div>
       ) : (
-        <div className="border rounded-lg divide-y">
+        <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden divide-y divide-slate-100 dark:divide-white/5">
           {filteredAnnouncements.length === 0 ? (
             <div className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
               目前沒有符合分類的公告
@@ -142,7 +139,7 @@ export default function AnnouncementsPage() {
               <button
                 key={a.id}
                 onClick={() => setSelected(a)}
-                className="w-full flex items-start gap-4 p-4 text-left hover:bg-muted/50 transition-colors cursor-pointer"
+                className="w-full flex items-start gap-4 p-5 text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">

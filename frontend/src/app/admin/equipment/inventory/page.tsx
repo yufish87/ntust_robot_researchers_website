@@ -12,6 +12,7 @@ import type {
   InventoryAddResult,
 } from "@/lib/types/inventory";
 import { useToast } from "@/hooks/use-toast";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -490,98 +491,94 @@ export default function InventoryPage() {
 
   /* ---------- UI ---------- */
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">器材盤點</h1>
-          <p className="text-muted-foreground">
-            盤點社團器材狀態，管理異常器材。
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button
-            className="w-full sm:w-auto"
-            onClick={() => {
-              resetAddForm();
-              setShowAddModal(true);
-            }}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            新增器材
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowResetConfirm(true)}
-            disabled={loading || stats.checked === 0}
-            className="w-full sm:w-auto text-orange-600 border-orange-300 hover:bg-orange-50"
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            重置盤點
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => void refetch()}
-            disabled={loading || refreshing}
-            aria-busy={refreshing}
-          >
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-            />
-            {refreshing ? "重新整理" : "重新整理"}
-          </Button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="器材庫存與盤點管理"
+        description="管理社團器材總表庫存狀態、新增器材規格與清查批次盤點紀錄。"
+      >
+        <Button
+          onClick={() => {
+            resetAddForm();
+            setShowAddModal(true);
+          }}
+          className="w-full sm:w-auto bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold shadow-xs cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+        >
+          <PlusCircle className="mr-1.5 h-4 w-4" />
+          新增器材
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setShowResetConfirm(true)}
+          disabled={loading || stats.checked === 0}
+          className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+        >
+          <RotateCcw className="mr-1.5 h-4 w-4" />
+          重置盤點
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => void refetch()}
+          disabled={loading || refreshing}
+          aria-busy={refreshing}
+          className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+        >
+          <RefreshCw
+            className={`mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 ${refreshing ? "animate-spin" : ""}`}
+          />
+          重新整理
+        </Button>
+      </AdminPageHeader>
 
-      {/* 統計 */}
+      {/* 統計指標卡片 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="border rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold">{stats.total}</p>
-          <p className="text-sm text-muted-foreground">總器材數</p>
+        <div className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl p-4.5 text-center shadow-xs">
+          <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white">{stats.total}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">總器材數</p>
         </div>
-        <div className="border rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{stats.checked}</p>
-          <p className="text-sm text-muted-foreground">已盤點</p>
+        <div className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl p-4.5 text-center shadow-xs">
+          <p className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{stats.checked}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">已盤點</p>
         </div>
-        <div className="border rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-yellow-600">
+        <div className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl p-4.5 text-center shadow-xs">
+          <p className="text-2xl font-bold font-mono text-amber-500 dark:text-amber-400">
             {stats.unchecked}
           </p>
-          <p className="text-sm text-muted-foreground">未盤點</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">未盤點</p>
         </div>
-        <div className="border rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-red-600">{stats.abnormal}</p>
-          <p className="text-sm text-muted-foreground">異常</p>
+        <div className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl p-4.5 text-center shadow-xs">
+          <p className="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">{stats.abnormal}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">異常器材</p>
         </div>
       </div>
 
       {/* 搜尋列 */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input
           placeholder="搜尋器材編號或名稱..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-10 bg-white dark:bg-[#201e26] border-slate-200 dark:border-white/10 rounded-xl h-10 text-sm"
         />
       </div>
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as InventoryTabFilter)}>
-        <TabsList>
-          <TabsTrigger value="all">全部 ({stats.total})</TabsTrigger>
-          <TabsTrigger value="unchecked">
+        <TabsList className="bg-slate-100 dark:bg-[#1a1820] border border-slate-200/80 dark:border-white/10 p-1 rounded-xl h-auto flex flex-wrap gap-1">
+          <TabsTrigger value="all" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3.5 py-2 text-sm font-semibold cursor-pointer">全部 ({stats.total})</TabsTrigger>
+          <TabsTrigger value="unchecked" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3.5 py-2 text-sm font-semibold cursor-pointer">
             未盤點 ({stats.unchecked})
           </TabsTrigger>
-          <TabsTrigger value="checked">已盤點 ({stats.checked})</TabsTrigger>
-          <TabsTrigger value="abnormal">異常 ({stats.abnormal})</TabsTrigger>
+          <TabsTrigger value="checked" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3.5 py-2 text-sm font-semibold cursor-pointer">已盤點 ({stats.checked})</TabsTrigger>
+          <TabsTrigger value="abnormal" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3.5 py-2 text-sm font-semibold cursor-pointer">異常 ({stats.abnormal})</TabsTrigger>
         </TabsList>
 
         {(
           ["all", "unchecked", "checked", "abnormal"] as InventoryTabFilter[]
         ).map((t) => (
           <TabsContent key={t} value={t} className="mt-4">
-            <div className="border rounded-lg overflow-hidden">
+            <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
               <Table
                 className={
                   data.length > 0

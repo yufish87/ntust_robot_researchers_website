@@ -32,6 +32,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { FileUpload, FileUploadRef } from "@/components/ui/file-upload";
 import { FinanceAPI } from "@/lib/api/finance";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 // --- Schema Definitions (Aligned with process.txt) ---
 
@@ -49,7 +50,7 @@ const itemSchema = z.object({
 // App Schema
 // App Schema
 const formSchema = z.object({
-  category: z.enum(["一般報銷", "社團内部競賽報銷", "上銀競賽報銷", "暑期營隊報銷"]),
+  category: z.enum(["一般報銷", "社團內部競賽報銷", "上銀競賽報銷", "暑期營隊報銷"]),
   description: z.string().min(5, "請輸入詳細說明 (至少 5 字)"),
   invoiceType: z.enum([
     "電子發票",
@@ -174,18 +175,20 @@ export default function NewFinanceApplicationPage() {
   }
 
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" type="button" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4" />
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <AdminPageHeader
+        title="新增財務報帳申請"
+        description="請依照社團財務規範填寫各項支出明細、發票收據種類並上傳單據畫面。"
+      >
+        <Button
+          variant="outline"
+          onClick={() => router.push('/dashboard/finance')}
+          className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+        >
+          <ArrowLeft className="mr-1.5 h-4 w-4" />
+          返回報帳清單
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">財務報帳申請</h1>
-          <p className="text-muted-foreground">
-            請依照規定填寫費用明細，並上傳發票證明。
-          </p>
-        </div>
-      </div>
+      </AdminPageHeader>
 
       <Form {...form}>
         <form 
@@ -227,7 +230,7 @@ export default function NewFinanceApplicationPage() {
                         </FormControl>
                         <SelectContent position="popper">
                           <SelectItem value="一般報銷">一般報銷</SelectItem>
-                          <SelectItem value="社團内部競賽報銷">社團内部競賽報銷</SelectItem>
+                          <SelectItem value="社團內部競賽報銷">社團內部競賽報銷</SelectItem>
                           <SelectItem value="上銀競賽報銷">上銀競賽報銷</SelectItem>
                           <SelectItem value="暑期營隊報銷">暑期營隊報銷</SelectItem>
                         </SelectContent>
@@ -340,22 +343,23 @@ export default function NewFinanceApplicationPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>費用明細</CardTitle>
+          <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+            <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/5 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-lg font-bold">費用明細</CardTitle>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => append({ itemName: "", itemSpec: "", expenseType: "文具費", quantity: 1, unitPrice: 0 })}
+                className="cursor-pointer text-xs h-8"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
                 新增項目
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4 pt-0">
+            <CardContent className="p-6 space-y-4">
               {fields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end border p-4 rounded-lg bg-slate-50/50">
+                <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end border border-slate-200/80 dark:border-white/10 p-4 rounded-xl bg-slate-50/50 dark:bg-white/5">
                   
                   {/* Row 1: Item Name (3) + Spec (6) + Delete (3) */}
                   <div className="md:col-span-3">
@@ -407,7 +411,7 @@ export default function NewFinanceApplicationPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => remove(index)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -489,9 +493,9 @@ export default function NewFinanceApplicationPage() {
                       )}
                     />
                   </div>
-                  <div className="md:col-span-3 flex flex-col justify-center bg-slate-200/50 p-2 rounded h-[4.5rem]">
+                  <div className="md:col-span-3 flex flex-col justify-center bg-slate-100 dark:bg-white/10 p-3 rounded-lg h-[4.5rem]">
                      <span className="text-xs text-muted-foreground">小計</span>
-                     <span className="font-semibold">
+                     <span className="font-semibold text-slate-900 dark:text-white">
                        NT$ {((Number(form.watch(`items.${index}.quantity`)) || 0) * (Number(form.watch(`items.${index}.unitPrice`)) || 0)).toLocaleString()}
                      </span>
                   </div>
@@ -501,19 +505,19 @@ export default function NewFinanceApplicationPage() {
               
               <Separator className="my-4" />
               
-              <div className="flex justify-between items-center bg-primary/5 p-4 rounded-lg border border-primary/20">
-                <span className="font-semibold text-lg">總金額 (Total)</span>
-                <span className="font-bold text-3xl text-primary">
+              <div className="flex justify-between items-center bg-amber-500/10 dark:bg-[#ffc000]/10 p-4 rounded-xl border border-amber-500/20 dark:border-[#ffc000]/20">
+                <span className="font-semibold text-base sm:text-lg">總金額 (Total)</span>
+                <span className="font-bold text-2xl sm:text-3xl text-amber-600 dark:text-[#ffc000]">
                   NT$ {totalAmount.toLocaleString()}
                 </span>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader>
+          <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+            <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/5">
               <div className="flex justify-between items-center">
-                <CardTitle>
+                <CardTitle className="text-lg font-bold">
                   發票畫面/單據上傳 <span className="text-red-500 ml-1">*</span>
                 </CardTitle>
                 {form.formState.errors.fileId && (
@@ -523,11 +527,11 @@ export default function NewFinanceApplicationPage() {
                   </div>
                 )}
               </div>
-              <CardDescription>
+              <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                 請上傳清晰的發票或收據照片 (支援 JPG, PNG, PDF)。檔案將儲存於社團雲端。
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <FormField
                 control={form.control}
                 name="fileId"
@@ -538,7 +542,7 @@ export default function NewFinanceApplicationPage() {
                         ref={fileUploadRef}
                         onFileChange={(file) => {
                            if (file) {
-                             field.onChange("pending"); // Set temp value to pass required validation
+                             field.onChange("pending");
                              form.clearErrors("fileId");
                            } else {
                              field.onChange("");
@@ -551,9 +555,8 @@ export default function NewFinanceApplicationPage() {
                         className={form.formState.errors.fileId ? "border-red-500 bg-red-50" : ""}
                       />
                     </FormControl>
-                    {/* <FormMessage /> Moved to Header */}
                     {field.value && (
-                       <p className="text-sm text-green-600 mt-2 flex items-center">
+                       <p className="text-sm text-emerald-600 mt-2 flex items-center">
                          <span className="mr-2">✓</span> 
                          文件已上傳 (File ID: {field.value.substring(0, 10)}...)
                        </p>
@@ -564,14 +567,14 @@ export default function NewFinanceApplicationPage() {
             </CardContent>
           </Card>
 
-          <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+          <Button type="submit" className="w-full bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold h-11 text-base cursor-pointer" size="lg" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 提交中...
               </>
             ) : (
-              "送出申請"
+              "確認送出報帳申請"
             )}
           </Button>
         </form>

@@ -1,17 +1,21 @@
+import { Trophy } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+
 export default function CompetitionsPage() {
   return (
-    <div className="container p-6 space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">競賽意願</h1>
-        <p className="text-muted-foreground">
-          提交競賽意願或組隊完成訊息。
-        </p>
-      </div>
-      <div className="flex h-[400px] items-center justify-center rounded-md border border-dashed p-8 text-center animate-in fade-in-50">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <AdminPageHeader
+        title="競賽意願專區"
+        description="提交各項機器人競賽參與意願、尋找跨系所組隊隊友與查看歷年競賽戰報。"
+      />
+      <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm p-12 text-center">
         <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-          <h3 className="mt-4 text-lg font-semibold">功能開發中</h3>
-          <p className="mb-4 mt-2 text-sm text-muted-foreground">
-             競賽系統即將上線，敬請期待。
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-white/5 border border-amber-200/60 dark:border-white/10 flex items-center justify-center text-amber-600 dark:text-[#ffc000] mb-4">
+            <Trophy className="w-7 h-7" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">功能籌備中</h3>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            競賽意願媒合與戰報系統即將上線，敬請期待。
           </p>
         </div>
       </div>

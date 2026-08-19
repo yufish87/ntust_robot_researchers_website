@@ -74,8 +74,8 @@ export default function AdminLayout({
       <AdminSidebar />
       <MobileNav variant="admin" />
       <main
-        className="flex-1 lg:ml-64 overflow-y-auto h-full p-4 pt-14 lg:p-8 scrollbar-light"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+        className="flex-1 lg:ml-64 overflow-y-auto h-full p-4 pt-14 lg:p-6 lg:pt-6 scrollbar-light"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
       >
         {children}
       </main>

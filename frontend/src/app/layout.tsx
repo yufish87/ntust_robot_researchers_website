@@ -9,11 +9,14 @@ const notoSansTC = Noto_Sans_TC({
   variable: "--font-noto-sans-tc",
   subsets: ["latin"],
   weight: ["400", "500", "700"],
+  display: "swap",
+  preload: true,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {

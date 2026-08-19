@@ -109,7 +109,7 @@ export const UserAPI = {
   /** 社員 — 使用驗證碼更新社費學年 */
   extendMembership: async (data: ExtendMembershipRequest) => {
     const res = await api.post("/user/extend-membership", data);
-    if (!res.data.success) throw new Error(res.data.message || "社費續約失敗");
+    if (!res.data.success) throw new Error(res.data.message || "重新加入社團失敗");
     return res.data;
   },
 

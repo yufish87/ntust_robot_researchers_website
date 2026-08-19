@@ -69,9 +69,10 @@ export function AboutSection({
                           src={img.src}
                           alt={img.text}
                           fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) calc(50vw - 2rem), calc(min(100vw - 16rem, 1280px) / 3)"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
+                          quality={65}
                         />
                       </div>
                       <div className="p-4">

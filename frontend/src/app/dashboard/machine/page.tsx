@@ -11,6 +11,7 @@ import {
   FileText,
   Loader2,
   Plus,
+  RefreshCw,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
 import { MachineAPI, type MachineOccupiedSlot } from "@/lib/api/machine";
 import { cn } from "@/lib/utils";
 import type { MachineApplication, MachineType } from "@/lib/types/machine";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 const HOUR_HEIGHT = 42;
 const HOURS = Array.from({ length: 25 }, (_, idx) => idx);
@@ -40,13 +42,13 @@ const MACHINE_OPTIONS: Array<{
   {
     value: "3d-printer",
     label: "3D 列印",
-    applyLabel: "申請3D列印",
+    applyLabel: "借用3D列印",
     href: "/dashboard/machine/3d-printer",
   },
   {
     value: "laser-cutter",
     label: "雷射切割",
-    applyLabel: "申請雷射切割",
+    applyLabel: "借用雷射切割",
     href: "/dashboard/machine/laser-cutter",
   },
 ];
@@ -148,9 +150,12 @@ export default function MachineReservationPage() {
   const [activeType, setActiveType] = useState<MachineType>("3d-printer");
   const [weekOffset, setWeekOffset] = useState(0);
 
-  const { data: myApplications = [], isLoading: myAppsLoading } = useQuery<
-    MachineApplication[]
-  >({
+  const {
+    data: myApplications = [],
+    isLoading: myAppsLoading,
+    isFetching: myAppsFetching,
+    refetch: refetchMyApps,
+  } = useQuery<MachineApplication[]>({
     queryKey: ["my-machine-apps"],
     queryFn: async () => {
       const res = await MachineAPI.getMyApplications();
@@ -158,15 +163,24 @@ export default function MachineReservationPage() {
     },
   });
 
-  const { data: calendarSlots = [], isLoading: calendarLoading } = useQuery<
-    MachineOccupiedSlot[]
-  >({
+  const {
+    data: calendarSlots = [],
+    isLoading: calendarLoading,
+    isFetching: calendarFetching,
+    refetch: refetchCalendar,
+  } = useQuery<MachineOccupiedSlot[]>({
     queryKey: ["machine-calendar-slots", activeType],
     queryFn: async () => {
       const res = await MachineAPI.getOccupiedSlots(activeType, "calendar");
       return res;
     },
   });
+
+  const refreshing = myAppsFetching || calendarFetching;
+
+  const handleRefresh = async () => {
+    await Promise.all([refetchMyApps(), refetchCalendar()]);
+  };
 
   const typeCounts = useMemo(
     () => ({
@@ -258,49 +272,61 @@ export default function MachineReservationPage() {
   const timelineHeight = HOUR_HEIGHT * 24;
 
   return (
-    <div className="container p-6 space-y-3 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">機器設備借用</h1>
-          <p className="text-muted-foreground">借用3D列印機或雷射切割機。</p>
-        </div>
-
-        <div className="flex w-full sm:w-auto gap-2">
-          {MACHINE_OPTIONS.map((option) => (
-            <Link
-              key={option.value}
-              href={option.href}
-              className="flex-1 sm:flex-none"
-            >
-              <Button
-                variant={option.value === "3d-printer" ? "default" : "outline"}
-                className="w-full"
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      <AdminPageHeader
+        title="機器設備借用"
+        description="查看社辦 3D 列印機與雷射切割機可用時段排程，送出切片與圖檔借用申請。"
+      >
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          {/* 3D 列印 / 雷射切割 切換膠囊 */}
+          <div className="flex space-x-1 rounded-lg bg-black/40 border border-white/15 p-1 h-9 sm:h-10 items-center">
+            {MACHINE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setActiveType(option.value)}
+                className={`px-3 py-1 sm:py-1.5 h-full flex items-center justify-center text-xs sm:text-sm font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap min-w-[96px] text-center ${
+                  activeType === option.value
+                    ? "bg-[#ffc000] text-black shadow-xs"
+                    : "text-slate-300 hover:text-white hover:bg-white/10"
+                }`}
               >
-                <Plus className="mr-2 h-4 w-4" />
-                {option.applyLabel}
-              </Button>
-            </Link>
-          ))}
-        </div>
-      </div>
+                {option.label} ({typeCounts[option.value]})
+              </button>
+            ))}
+          </div>
 
-      <div className="flex space-x-1 rounded-lg bg-slate-100 p-1 w-fit">
-        {MACHINE_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            onClick={() => setActiveType(option.value)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-              activeType === option.value
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
-            }`}
+          {/* 重新整理按鈕 */}
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={myAppsLoading || calendarLoading || refreshing}
+            aria-busy={refreshing}
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10"
           >
-            {option.label} ({typeCounts[option.value]})
-          </button>
-        ))}
-      </div>
+            <RefreshCw
+              className={`mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            重新整理
+          </Button>
 
-      <Card>
+          <Link
+            href={
+              activeType === "3d-printer"
+                ? "/dashboard/machine/3d-printer"
+                : "/dashboard/machine/laser-cutter"
+            }
+            className="w-full sm:w-auto"
+          >
+            <Button className="w-full sm:w-[136px] bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold shadow-xs cursor-pointer text-xs sm:text-sm h-9 sm:h-10 justify-center">
+              <Plus className="mr-1.5 h-4 w-4" />
+              {activeType === "3d-printer" ? "借用 3D 列印" : "借用雷射切割"}
+            </Button>
+          </Link>
+        </div>
+      </AdminPageHeader>
+
+      <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
         <CardHeader className="space-y-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle>機台使用情形</CardTitle>
@@ -458,25 +484,25 @@ export default function MachineReservationPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>個人申請紀錄</CardTitle>
+      <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+        <CardHeader className="p-5 sm:p-6 border-b border-slate-100 dark:border-white/5">
+          <CardTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">個人機台申請紀錄</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {myAppsLoading ? (
-            <div className="py-8 text-center text-muted-foreground flex justify-center items-center">
+            <div className="py-12 text-center text-muted-foreground flex justify-center items-center text-sm">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               載入中...
             </div>
           ) : filteredMyApplications.length === 0 ? (
-            <div className="py-12 text-center border-2 border-dashed rounded-lg">
-              <p className="text-muted-foreground">目前沒有資料</p>
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground text-sm">目前沒有資料</p>
             </div>
           ) : (
-            <div className="border rounded-lg overflow-x-auto">
+            <div className="overflow-x-auto">
               <Table className="min-w-[920px] table-fixed">
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted/50">
                     <TableHead className="w-[180px]">單號</TableHead>
                     <TableHead className="w-[120px]">狀態</TableHead>
                     <TableHead className="w-[170px]">申請時間</TableHead>

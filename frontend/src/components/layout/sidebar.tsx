@@ -17,6 +17,7 @@ import {
   BookOpen,
   Lightbulb,
   Shield,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,12 @@ export const dashboardNavItems = [
     href: "/dashboard/wishlist",
     icon: Lightbulb,
     expiredAllowed: false,
+  },
+  {
+    title: "使用說明",
+    href: "/dashboard/manual",
+    icon: HelpCircle,
+    expiredAllowed: true,
   },
   {
     title: "個人設定",
