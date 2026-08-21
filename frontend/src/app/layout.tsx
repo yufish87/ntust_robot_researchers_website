@@ -20,8 +20,52 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "臺科大機器人研究社 社團網站",
-  description: "國立臺灣科技大學 機器人研究社 社團網站",
+  metadataBase: new URL("https://ntust-robotresearchers.vercel.app"),
+  title: {
+    default: "臺科大機器人研究社 社團網站 | NTUST Robot Researchers Club Website",
+    template: "%s | 臺科大機器人研究社",
+  },
+  description: "國立臺灣科技大學 機器人研究社（NTUST Robot Researchers Club）社團官網",
+  keywords: [
+    "臺科大",
+    "臺灣科技大學",
+    "NTUST",
+    "機器人研究社",
+    "機器人",
+    "創客",
+    "程式",
+    "Arduino",
+    "3D列印",
+    "雷射切割",
+    "社團",
+  ],
+  authors: [{ name: "國立臺灣科技大學 機器人研究社" }],
+  creator: "NTUST RRC",
+  publisher: "國立臺灣科技大學 機器人研究社",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "zh_TW",
+    url: "https://ntust-robotresearchers.vercel.app",
+    siteName: "NTUST RRC 臺科大機器人研究社",
+    title: "臺科大機器人研究社 社團官網",
+    description: "國立臺灣科技大學 機器人研究社（NTUST Robot Researchers Club）社團官網",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "臺科大機器人研究社 社團官網",
+    description: "國立臺灣科技大學 機器人研究社（NTUST Robot Researchers Club）社團官網",
+  },
   verification: {
     google: "6ohWJUh6HtS-jw5dKoELpnViGjB1xx_aGiZq7dT9CTQ",
   },
