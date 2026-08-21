@@ -12,7 +12,6 @@ import {
   ArrowLeft,
   LogIn,
   UserPlus,
-  LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -52,7 +51,7 @@ const variantConfig = {
     logo: "/image/Bar_Logo.png",
     subtitle: "社團官網",
     headerClass: "bg-[#34313c]/95 backdrop-blur-md",
-    dark: false, // public uses light sidebar, but MobileNav top bar is dark on public page
+    dark: false,
   },
 } as const;
 
@@ -82,30 +81,33 @@ export function MobileNav({ variant }: MobileNavProps) {
     }
   }, [variant, mounted, authChecked, syncSession]);
 
-  const cfg = variantConfig[variant];
+  const isAuthenticated = authChecked && !!user;
+  const effectiveVariant =
+    variant === "public" && mounted && isAuthenticated ? "dashboard" : variant;
+
+  const cfg = variantConfig[effectiveVariant];
   const isDarkSidebar = cfg.dark;
   const isAdmin = user?.role === "admin" || user?.role === "owner";
-  const isAuthenticated = authChecked && !!user;
 
   const navItems =
-    variant === "admin"
+    effectiveVariant === "admin"
       ? adminNavItems
-      : variant === "dashboard"
+      : effectiveVariant === "dashboard"
         ? dashboardNavItems
         : publicNavItems;
 
   /* ----- helpers ----- */
 
   const checkActive = (item: (typeof navItems)[number]) => {
-    if (variant === "public") {
+    if (effectiveVariant === "public") {
       return item.href.startsWith("/")
         ? pathname === item.href || pathname.startsWith(item.href + "/")
         : false;
     }
     // dashboard: "/dashboard" exact, others prefix
-    if (variant === "dashboard") {
+    if (effectiveVariant === "dashboard") {
       return item.href === "/dashboard"
-        ? pathname === item.href
+        ? pathname === "/dashboard" || pathname === "/"
         : pathname === item.href || pathname.startsWith(item.href + "/");
     }
     // admin: items with exact flag
@@ -143,8 +145,7 @@ export function MobileNav({ variant }: MobileNavProps) {
       <div
         className={cn(
           "fixed top-0 left-0 right-0 h-14 z-50 lg:hidden flex items-center justify-between px-4 border-b",
-          // public page top bar 延續深色主題
-          variant === "public"
+          effectiveVariant === "public"
             ? "bg-[#34313c]/95 backdrop-blur-md border-white/10"
             : cfg.headerClass + " border-white/10",
         )}
@@ -159,12 +160,16 @@ export function MobileNav({ variant }: MobileNavProps) {
             <Menu className="h-5 w-5" />
           </Button>
           <span className="font-bold text-lg text-white">
-            機器人研究社 社團網站
+            {effectiveVariant === "admin"
+              ? "管理員後台"
+              : effectiveVariant === "dashboard"
+                ? "資源管理系統"
+                : "機器人研究社 社團網站"}
           </span>
         </div>
 
         {/* 右側 — 歡迎訊息 (dashboard/admin) */}
-        {mounted && variant !== "public" && user && (
+        {mounted && effectiveVariant !== "public" && user && (
           <span className="text-sm text-white/70 truncate max-w-[120px]">
             歡迎，{user.name || "使用者"}
           </span>
@@ -213,9 +218,14 @@ export function MobileNav({ variant }: MobileNavProps) {
           </SheetHeader>
 
           {/* --- Nav --- */}
-          <div className={cn("flex-1 overflow-y-auto py-6 px-3 space-y-1", isDarkSidebar ? "scrollbar-dark" : "scrollbar-light")}>
+          <div
+            className={cn(
+              "flex-1 overflow-y-auto py-6 px-3 space-y-1",
+              isDarkSidebar ? "scrollbar-dark" : "scrollbar-light",
+            )}
+          >
             {navItems.map((item) => {
-              if (variant === "public") {
+              if (effectiveVariant === "public") {
                 const isActive = checkActive(item);
                 return (
                   <div key={item.href} className="block">
@@ -225,14 +235,14 @@ export function MobileNav({ variant }: MobileNavProps) {
                         "w-full justify-start mb-1 cursor-pointer transition-colors duration-150",
                         isActive
                           ? "bg-slate-200 text-slate-900 font-semibold"
-                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100",
                       )}
                       onClick={() => handleNavClick(item.href)}
                     >
                       <item.icon
                         className={cn(
                           "mr-3 h-5 w-5 transition-colors",
-                          isActive ? "text-[#34313c]" : "text-slate-400"
+                          isActive ? "text-[#34313c]" : "text-slate-400",
                         )}
                       />
                       {item.title}
@@ -284,7 +294,7 @@ export function MobileNav({ variant }: MobileNavProps) {
             )}
           >
             {/* Dashboard / Admin footer */}
-            {variant !== "public" && user && (
+            {effectiveVariant !== "public" && user && (
               <>
                 <div className="flex items-center gap-3 mb-3 px-2">
                   <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
@@ -305,7 +315,7 @@ export function MobileNav({ variant }: MobileNavProps) {
                   </div>
                 </div>
 
-                {variant === "dashboard" && isAdmin && (
+                {effectiveVariant === "dashboard" && isAdmin && (
                   <>
                     <div className="border-t border-white/10 my-2" />
                     <Link href="/admin">
@@ -321,7 +331,7 @@ export function MobileNav({ variant }: MobileNavProps) {
                   </>
                 )}
 
-                {variant === "admin" && (
+                {effectiveVariant === "admin" && (
                   <>
                     <div className="border-t border-white/10 my-2" />
                     <Link href="/dashboard">
@@ -349,7 +359,7 @@ export function MobileNav({ variant }: MobileNavProps) {
             )}
 
             {/* Public footer */}
-            {variant === "public" && mounted && (
+            {effectiveVariant === "public" && mounted && (
               <div className="space-y-2">
                 {!authChecked ? (
                   <Button
@@ -359,27 +369,6 @@ export function MobileNav({ variant }: MobileNavProps) {
                   >
                     正在確認登入狀態...
                   </Button>
-                ) : isAuthenticated ? (
-                  <>
-                    <Button
-                      onClick={() => {
-                        setOpen(false);
-                        router.push("/dashboard");
-                      }}
-                      className="w-full bg-[#ffc000] hover:bg-yellow-400 text-[#34313c] font-bold justify-start cursor-pointer"
-                    >
-                      <LayoutDashboard className="mr-3 h-4 w-4" />
-                      進入系統
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleLogout}
-                      className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start cursor-pointer"
-                    >
-                      <LogOut className="mr-3 h-4 w-4" />
-                      登出系統
-                    </Button>
-                  </>
                 ) : (
                   <>
                     <LoginModal>

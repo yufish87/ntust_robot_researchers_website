@@ -22,6 +22,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -287,6 +288,36 @@ export default function AdminAnnouncementsPage() {
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
   // 暫存待刪除的舊 fileId
   const pendingDeletionsRef = useRef<Set<string>>(new Set());
+  // 記錄初始表單內容以比對是否有未儲存之變更
+  const initialFormRef = useRef<string>("");
+
+  const isFormDirty = useCallback(() => {
+    if (!initialFormRef.current) return false;
+    const currentSerialized = JSON.stringify(form);
+    return (
+      currentSerialized !== initialFormRef.current ||
+      pendingFilesRef.current.size > 0 ||
+      pendingDeletionsRef.current.size > 0
+    );
+  }, [form]);
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && isFormDirty()) {
+        const confirmClose = window.confirm(
+          "您有尚未儲存的公告內容，確定要放棄編輯並關閉視窗嗎？\n\nAre you sure you want to discard your changes and close this window?"
+        );
+        if (!confirmClose) return;
+      }
+      setIsFormOpen(open);
+      if (!open) {
+        initialFormRef.current = "";
+        pendingFilesRef.current.clear();
+        pendingDeletionsRef.current.clear();
+      }
+    },
+    [isFormDirty]
+  );
 
   const setPendingFile = useCallback((key: string, file: File | null) => {
     if (file) {
@@ -319,6 +350,7 @@ export default function AdminAnnouncementsPage() {
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
+    initialFormRef.current = JSON.stringify(emptyForm);
     pendingFilesRef.current.clear();
     pendingDeletionsRef.current.clear();
     setIsFormOpen(true);
@@ -326,7 +358,7 @@ export default function AdminAnnouncementsPage() {
 
   const openEdit = (a: Announcement) => {
     setEditingId(a.id);
-    setForm({
+    const formData: FormData = {
       title: a.title,
       content: a.content,
       category: a.category,
@@ -336,7 +368,9 @@ export default function AdminAnnouncementsPage() {
         link: att.link || "",
         fileId: (att as AttachmentFormItem).fileId || "",
       })),
-    });
+    };
+    setForm(formData);
+    initialFormRef.current = JSON.stringify(formData);
     pendingFilesRef.current.clear();
     pendingDeletionsRef.current.clear();
     setIsFormOpen(true);
@@ -416,6 +450,7 @@ export default function AdminAnnouncementsPage() {
 
       if (json.success) {
         toast({ title: isEdit ? "公告已更新" : "公告已新增" });
+        initialFormRef.current = "";
         setIsFormOpen(false);
         queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
       } else {
@@ -600,12 +635,15 @@ export default function AdminAnnouncementsPage() {
       </div>
 
       {/* Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog open={isFormOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingId ? "編輯公告" : "新增公告"}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              填寫或修改公告標題、內容、發布狀態與附件檔案。
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
@@ -721,7 +759,7 @@ export default function AdminAnnouncementsPage() {
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 variant="outline"
-                onClick={() => setIsFormOpen(false)}
+                onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
               >
                 取消

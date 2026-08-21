@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -178,6 +178,7 @@ function LoginForm({
   onForgot,
 }: FormProps & { onForgot: () => void }) {
   const router = useRouter();
+  const pathname = usePathname();
   const login = useAuthStore((state) => state.login);
   const [loading, setLoading] = useState(false);
 
@@ -193,7 +194,9 @@ function LoginForm({
       await login(values);
       onSuccess();
       toast({ title: "登入成功", description: "歡迎回到機器人研究社" });
-      router.push("/dashboard");
+      if (pathname.startsWith("/auth/")) {
+        router.push("/dashboard");
+      }
     } catch (err: any) {
       const msg = err.message || "";
       if (msg.includes("找不到") || msg.includes("USER_NOT_FOUND")) {

@@ -11,15 +11,13 @@ import {
   Phone,
   LogIn,
   UserPlus,
-  LogOut,
-  LayoutDashboard,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/useAuthStore";
 import { LoginModal } from "@/components/auth/login-modal";
 import { RegisterModal } from "@/components/auth/register-modal";
+import { AppSidebar } from "./sidebar";
 
 export const publicNavItems = [
   { title: "首頁", href: "#hero", icon: Home },
@@ -30,7 +28,7 @@ export const publicNavItems = [
 ];
 
 export function PublicSidebar() {
-  const { user, logout, authChecked, syncSession } = useAuthStore();
+  const { user, authChecked, syncSession } = useAuthStore();
   const isAuthenticated = authChecked && !!user;
   const router = useRouter();
   const pathname = usePathname();
@@ -43,7 +41,15 @@ export function PublicSidebar() {
     }
   }, [mounted, authChecked, syncSession]);
 
-  const handleItemClick = (item: (typeof publicNavItems)[number], e: React.MouseEvent) => {
+  // 當使用者已登入時，直接在 Sidebar 區域切換為資源管理系統 Sidebar，無須重整整個頁面
+  if (mounted && isAuthenticated) {
+    return <AppSidebar />;
+  }
+
+  const handleItemClick = (
+    item: (typeof publicNavItems)[number],
+    e: React.MouseEvent,
+  ) => {
     e.preventDefault();
     if (item.href.startsWith("#")) {
       if (pathname === "/") {
@@ -109,24 +115,6 @@ export function PublicSidebar() {
             >
               請稍後...
             </Button>
-          ) : isAuthenticated ? (
-            <>
-              <Button
-                onClick={() => router.push("/dashboard")}
-                className="w-full bg-[#ffc000] hover:bg-yellow-400 text-[#34313c] font-bold justify-start cursor-pointer"
-              >
-                <LayoutDashboard className="mr-3 h-4 w-4" />
-                進入系統
-              </Button>
-              <Button
-                variant="outline"
-                onClick={logout}
-                className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 justify-start cursor-pointer"
-              >
-                <LogOut className="mr-3 h-4 w-4" />
-                登出系統
-              </Button>
-            </>
           ) : (
             <>
               <LoginModal>

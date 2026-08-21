@@ -231,6 +231,13 @@ export default function AnnouncementsPage() {
                             src={imgSrc}
                             alt={att.title || "附件圖片"}
                             className="w-full h-auto object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (att.fileId && !target.dataset.fallback) {
+                                target.dataset.fallback = "1";
+                                target.src = `https://drive.google.com/thumbnail?id=${att.fileId}&sz=w1200`;
+                              }
+                            }}
                           />
                           {att.title && (
                             <p className="p-3 text-xs text-muted-foreground">

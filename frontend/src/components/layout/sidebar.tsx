@@ -134,7 +134,7 @@ export function AppSidebar() {
           const isActive =
             !isDisabled &&
             (item.href === "/dashboard"
-              ? pathname === item.href
+              ? pathname === "/dashboard" || pathname === "/"
               : pathname === item.href || pathname.startsWith(item.href + "/"));
           if (isDisabled) {
             return (

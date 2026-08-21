@@ -289,6 +289,35 @@ export default function InventoryPage() {
     addFileUploadRef.current?.clear();
   };
 
+  const isAddFormDirty = useCallback(() => {
+    return (
+      !!addForm.name.trim() ||
+      !!addForm.category ||
+      !!addForm.status.trim() ||
+      !!addForm.accessories.trim() ||
+      !!addForm.purchaseDate.trim() ||
+      !!selectedImageFile ||
+      !!addFileUploadRef.current?.hasFile()
+    );
+  }, [addForm, selectedImageFile]);
+
+  const handleAddModalOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && isAddFormDirty()) {
+        const confirmClose = window.confirm(
+          "您有尚未儲存的器材資料，確定要放棄新增並關閉視窗嗎？\n\nAre you sure you want to discard your changes and close this window?"
+        );
+        if (!confirmClose) return;
+      }
+      setShowAddModal(open);
+      if (!open) {
+        setShowAddDoubleCheck(false);
+        resetAddForm();
+      }
+    },
+    [isAddFormDirty]
+  );
+
   const applyRecommendation = (option: InventoryIndexOption) => {
     const recommendedCategory = CATEGORY_OPTIONS.includes(
       option.category as InventoryCategory,
@@ -909,12 +938,7 @@ export default function InventoryPage() {
       {/* ---- 新增器材 Dialog ---- */}
       <Dialog
         open={showAddModal}
-        onOpenChange={(open) => {
-          if (!open) {
-            setShowAddModal(false);
-            setShowAddDoubleCheck(false);
-          }
-        }}
+        onOpenChange={handleAddModalOpenChange}
       >
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1103,10 +1127,7 @@ export default function InventoryPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => {
-                setShowAddModal(false);
-                setShowAddDoubleCheck(false);
-              }}
+              onClick={() => handleAddModalOpenChange(false)}
             >
               取消
             </Button>
