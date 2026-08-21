@@ -26,6 +26,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -378,7 +386,7 @@ export default function ApplicationsPage() {
         {/* 卡片 1: 借用品項種類數 */}
         <div className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-5 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
+            <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wider">
               借用器材
             </span>
             <div className="w-7 h-7 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
@@ -389,9 +397,9 @@ export default function ApplicationsPage() {
             <span className="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-slate-900 dark:text-white tabular-nums">
               {stats.distinctItemCount}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">種</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">種</span>
           </div>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">
             包含目前已借出與已核准之器材
           </p>
         </div>
@@ -399,7 +407,7 @@ export default function ApplicationsPage() {
         {/* 卡片 2: 尚未歸還總件數 */}
         <div className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-5 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
+            <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wider">
               尚未歸還
             </span>
             <div className="w-7 h-7 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
@@ -410,9 +418,9 @@ export default function ApplicationsPage() {
             <span className="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-slate-900 dark:text-white tabular-nums">
               {stats.totalUnreturnedQty}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">件</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">件</span>
           </div>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">
             名下 {stats.activeAppsCount} 筆借用單持有中
           </p>
         </div>
@@ -420,7 +428,7 @@ export default function ApplicationsPage() {
         {/* 卡片 3: 待審核申請數 */}
         <div className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl p-4 sm:p-5 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
+            <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-wider">
               待審核
             </span>
             <div className="w-7 h-7 rounded-lg bg-yellow-500/10 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 flex items-center justify-center">
@@ -431,9 +439,9 @@ export default function ApplicationsPage() {
             <span className="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-slate-900 dark:text-white tabular-nums">
               {stats.pendingAppsCount}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">筆</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">筆</span>
           </div>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">
             幹部審核通過後即可取件
           </p>
         </div>
@@ -450,10 +458,10 @@ export default function ApplicationsPage() {
           <div className="flex items-center justify-between">
             <span
               className={cn(
-                "text-xs font-semibold tracking-wider",
+                "text-sm font-semibold tracking-wider",
                 stats.overdueCount > 0
                   ? "text-red-600 dark:text-red-400"
-                  : "text-slate-500 dark:text-slate-400",
+                  : "text-slate-600 dark:text-slate-300",
               )}
             >
               {stats.overdueCount > 0 ? "逾期未歸還" : "已歸還結案"}
@@ -484,11 +492,11 @@ export default function ApplicationsPage() {
             >
               {stats.overdueCount > 0 ? stats.overdueCount : stats.returnedAppsCount}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">
               {stats.overdueCount > 0 ? "項逾期" : "筆歷史"}
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">
             {stats.overdueCount > 0 ? "請盡速攜帶器材至社辦歸還" : "無任何逾期借用項目"}
           </p>
         </div>
@@ -503,7 +511,7 @@ export default function ApplicationsPage() {
             size="sm"
             onClick={() => setStatusFilter("all")}
             className={cn(
-              "h-8 px-3 text-xs font-semibold cursor-pointer rounded-lg shrink-0",
+              "h-9 px-3.5 text-sm font-semibold cursor-pointer rounded-lg shrink-0",
               statusFilter === "all"
                 ? "bg-[#34313d] text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10",
@@ -516,7 +524,7 @@ export default function ApplicationsPage() {
             size="sm"
             onClick={() => setStatusFilter("active")}
             className={cn(
-              "h-8 px-3 text-xs font-semibold cursor-pointer rounded-lg shrink-0",
+              "h-9 px-3.5 text-sm font-semibold cursor-pointer rounded-lg shrink-0",
               statusFilter === "active"
                 ? "bg-[#ffc000] text-black hover:bg-yellow-400 font-bold"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10",
@@ -529,7 +537,7 @@ export default function ApplicationsPage() {
             size="sm"
             onClick={() => setStatusFilter("pending")}
             className={cn(
-              "h-8 px-3 text-xs font-semibold cursor-pointer rounded-lg shrink-0",
+              "h-9 px-3.5 text-sm font-semibold cursor-pointer rounded-lg shrink-0",
               statusFilter === "pending"
                 ? "bg-amber-500 text-white hover:bg-amber-600"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10",
@@ -542,7 +550,7 @@ export default function ApplicationsPage() {
             size="sm"
             onClick={() => setStatusFilter("returned")}
             className={cn(
-              "h-8 px-3 text-xs font-semibold cursor-pointer rounded-lg shrink-0",
+              "h-9 px-3.5 text-sm font-semibold cursor-pointer rounded-lg shrink-0",
               statusFilter === "returned"
                 ? "bg-slate-600 text-white hover:bg-slate-700"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10",
@@ -554,14 +562,14 @@ export default function ApplicationsPage() {
 
         {/* 搜尋欄 + Google Drive 風格切換按鈕群組 */}
         <div className="flex items-center gap-2">
-          <div className="relative flex-1 md:w-56 lg:w-64">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+          <div className="relative flex-1 md:w-60 lg:w-68">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
             <Input
               type="text"
               placeholder="搜尋單號、器材或原因…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8.5 pl-8 text-xs bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 focus-visible:ring-1 focus-visible:ring-[#ffc000]"
+              className="h-9 pl-9 text-sm bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 focus-visible:ring-1 focus-visible:ring-[#ffc000]"
             />
           </div>
 
@@ -577,7 +585,7 @@ export default function ApplicationsPage() {
               size="sm"
               onClick={() => handleViewModeChange("grid")}
               className={cn(
-                "h-7.5 px-2.5 rounded-md cursor-pointer text-xs flex items-center gap-1.5 transition-all",
+                "h-8 px-3 rounded-md cursor-pointer text-sm flex items-center gap-1.5 transition-all",
                 viewMode === "grid"
                   ? "bg-white dark:bg-[#34313d] text-slate-900 dark:text-white shadow-xs font-semibold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
@@ -585,7 +593,7 @@ export default function ApplicationsPage() {
               aria-label="切換為格狀檢視"
               aria-pressed={viewMode === "grid"}
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
+              <LayoutGrid className="w-4 h-4" />
               <span className="hidden sm:inline">格狀</span>
             </Button>
             <Button
@@ -594,7 +602,7 @@ export default function ApplicationsPage() {
               size="sm"
               onClick={() => handleViewModeChange("table")}
               className={cn(
-                "h-7.5 px-2.5 rounded-md cursor-pointer text-xs flex items-center gap-1.5 transition-all",
+                "h-8 px-3 rounded-md cursor-pointer text-sm flex items-center gap-1.5 transition-all",
                 viewMode === "table"
                   ? "bg-white dark:bg-[#34313d] text-slate-900 dark:text-white shadow-xs font-semibold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
@@ -602,7 +610,7 @@ export default function ApplicationsPage() {
               aria-label="切換為表格檢視"
               aria-pressed={viewMode === "table"}
             >
-              <List className="w-3.5 h-3.5" />
+              <List className="w-4 h-4" />
               <span className="hidden sm:inline">表格</span>
             </Button>
           </div>
@@ -658,35 +666,35 @@ export default function ApplicationsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-sm font-bold text-slate-900 dark:text-white tracking-wider">
+                            <span className="font-mono text-base font-bold text-slate-900 dark:text-white tracking-wider">
                               {app.id}
                             </span>
                             <Badge
                               variant={badge.variant}
                               className={cn(
-                                "text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1 font-medium",
+                                "text-xs px-2.5 py-0.5 rounded-md flex items-center gap-1 font-medium",
                                 badge.className,
                               )}
                             >
-                              <BadgeIcon className="w-3 h-3" />
+                              <BadgeIcon className="w-3.5 h-3.5" />
                               {badge.label}
                             </Badge>
                           </div>
-                          <CardDescription className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-slate-400" />
+                          <CardDescription className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
                             申請日期: {formatAppDate(app.createdAt, app.id)}
                           </CardDescription>
                         </div>
 
                         {/* 歸還日期與倒數 */}
                         <div className="text-right shrink-0">
-                          <div className="text-xs font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                          <div className="text-sm font-mono text-slate-700 dark:text-slate-200 whitespace-nowrap">
                             歸還期限: {formatAppDate(app.returnDate)}
                           </div>
                           {app.status === "已借出" && (
                             <span
                               className={cn(
-                                "inline-block text-[11px] font-mono font-semibold mt-0.5 whitespace-nowrap",
+                                "inline-block text-xs font-mono font-semibold mt-0.5 whitespace-nowrap",
                                 returnCountdown.isOverdue
                                   ? "text-red-500"
                                   : returnCountdown.isUrgent
@@ -702,14 +710,14 @@ export default function ApplicationsPage() {
                     </CardHeader>
 
                     {/* 卡片內容區 */}
-                    <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                      <div className="space-y-2.5">
+                    <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-3.5">
+                      <div className="space-y-3">
                         {/* 借用原因 */}
                         <div>
-                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">
+                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
                             借用原因
                           </span>
-                          <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                          <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
                             {app.reason || "無填寫原因"}
                           </p>
                         </div>
@@ -717,7 +725,7 @@ export default function ApplicationsPage() {
                         {/* 借用器材清單 */}
                         <div>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                               器材清單 (
                               {Array.isArray(app.items)
                                 ? app.items.reduce(
@@ -728,14 +736,14 @@ export default function ApplicationsPage() {
                               件)
                             </span>
                           </div>
-                          <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-2 border border-slate-100 dark:border-white/5 space-y-1.5 max-h-48 overflow-y-auto scrollbar-thin">
+                          <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-2.5 border border-slate-100 dark:border-white/5 space-y-2 max-h-52 overflow-y-auto scrollbar-thin">
                             {Array.isArray(app.items) && app.items.length > 0 ? (
                               app.items.map((item, idx) => {
                                 if (typeof item === "string") {
                                   return (
                                     <div
                                       key={idx}
-                                      className="text-xs text-slate-700 dark:text-slate-300 p-2 rounded-md bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/5"
+                                      className="text-sm text-slate-700 dark:text-slate-300 p-2.5 rounded-md bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/5"
                                     >
                                       <span className="font-medium">{item}</span>
                                     </div>
@@ -745,7 +753,7 @@ export default function ApplicationsPage() {
                                 return (
                                   <div
                                     key={idx}
-                                    className="text-xs p-2 rounded-md bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/5 space-y-1.5"
+                                    className="text-sm p-2.5 rounded-md bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/5 space-y-1.5"
                                   >
                                     {/* 品項名稱與借用數量 */}
                                     <div className="flex items-center justify-between gap-2">
@@ -753,7 +761,7 @@ export default function ApplicationsPage() {
                                         <span className="font-medium text-slate-900 dark:text-white truncate">
                                           {item.name}
                                         </span>
-                                        <span className="text-[11px] font-mono text-slate-400 shrink-0">
+                                        <span className="text-xs font-mono text-slate-400 shrink-0">
                                           ({item.code})
                                         </span>
                                       </div>
@@ -764,15 +772,15 @@ export default function ApplicationsPage() {
 
                                     {/* 實體編號 Pill 清單（自動換行，不擠壓品項名稱） */}
                                     {allocated.length > 0 && (
-                                      <div className="flex items-center gap-1 flex-wrap pt-0.5">
-                                        <span className="text-[10px] text-slate-400 font-mono shrink-0">
+                                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                        <span className="text-xs text-slate-400 font-mono shrink-0">
                                           分配序號:
                                         </span>
                                         {allocated.map((idStr) => (
                                           <Badge
                                             key={idStr}
                                             variant="outline"
-                                            className="text-[10px] px-1.5 py-0 font-mono bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                                            className="text-xs px-2 py-0.5 font-mono bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800"
                                           >
                                             {idStr}
                                           </Badge>
@@ -783,14 +791,14 @@ export default function ApplicationsPage() {
                                 );
                               })
                             ) : (
-                              <div className="text-xs text-slate-500">{app.summary || "無詳細品項"}</div>
+                              <div className="text-sm text-slate-500">{app.summary || "無詳細品項"}</div>
                             )}
                           </div>
                         </div>
 
                         {/* 若被拒絕，顯示拒絕理由 */}
                         {app.rejectReason && (
-                          <div className="p-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-lg text-xs text-red-600 dark:text-red-400">
+                          <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-lg text-sm text-red-600 dark:text-red-400">
                             <span className="font-bold mr-1">拒絕原因:</span>
                             {app.rejectReason}
                           </div>
@@ -798,17 +806,17 @@ export default function ApplicationsPage() {
                       </div>
 
                       {/* 底部按鈕 */}
-                      <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                        <div className="text-[11px] text-slate-400 font-mono">
+                      <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                        <div className="text-xs text-slate-400 font-mono">
                           {app.reviewer && `審核幹部: ${app.reviewer}`}
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => openAppDetail(app)}
-                          className="h-7 px-2.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                          className="h-8 px-3 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                         >
-                          <Eye className="w-3.5 h-3.5 mr-1" />
+                          <Eye className="w-4 h-4 mr-1.5" />
                           查看詳情
                         </Button>
                       </div>
@@ -830,216 +838,244 @@ export default function ApplicationsPage() {
                   <div className="p-4 bg-slate-50/90 dark:bg-white/5 border-b border-slate-200 dark:border-white/10 flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-5 bg-[#ffc000] rounded-xs" />
-                      <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         目前尚未歸還器材清單
                         <Badge className="bg-[#ffc000] text-black font-mono font-bold text-xs h-5 px-1.5">
                           {stats.totalUnreturnedQty} 件持有中
                         </Badge>
                       </h2>
                     </div>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 font-mono whitespace-nowrap">
+                    <span className="text-sm text-slate-500 dark:text-slate-400 font-mono whitespace-nowrap">
                       涵蓋 {stats.distinctItemCount} 種不重複品項
                     </span>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse font-sans min-w-[800px]">
-                      <thead>
-                        <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-100/75 dark:bg-white/5 text-slate-500 dark:text-slate-400 font-mono text-[11px] uppercase tracking-wider">
-                          <th className="py-3 px-4 font-semibold whitespace-nowrap">器材名稱</th>
-                          <th className="py-3 px-3 font-semibold whitespace-nowrap">型號代碼</th>
-                          <th className="py-3 px-3 font-semibold text-center whitespace-nowrap">借用數量</th>
-                          <th className="py-3 px-3 font-semibold whitespace-nowrap">分配實體編號</th>
-                          <th className="py-3 px-3 font-semibold whitespace-nowrap">所屬申請單</th>
-                          <th className="py-3 px-3 font-semibold whitespace-nowrap">借用日期</th>
-                          <th className="py-3 px-3 font-semibold whitespace-nowrap">預計歸還</th>
-                          <th className="py-3 px-3 font-semibold whitespace-nowrap">歸還狀態</th>
-                          <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                        {unreturnedItemList.map((item, idx) => {
-                          const countdown = getReturnCountdownText(item.returnDate, item.status);
-                          return (
-                            <tr
-                              key={`${item.appId}-${item.itemCode}-${idx}`}
-                              className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors"
-                            >
-                              <td className="py-3 px-4 font-medium text-slate-900 dark:text-white whitespace-nowrap">
-                                <div className="flex items-center gap-2">
-                                  <Wrench className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                  <span className="truncate max-w-[200px]">{item.itemName}</span>
+                  <Table className="min-w-[850px]">
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap pl-4">
+                          器材名稱
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                          型號代碼
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white text-center whitespace-nowrap">
+                          借用數量
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                          分配實體編號
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                          所屬申請單
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                          借用日期
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                          預計歸還
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                          歸還狀態
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white text-right whitespace-nowrap pr-4">
+                          操作
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {unreturnedItemList.map((item, idx) => {
+                        const countdown = getReturnCountdownText(item.returnDate, item.status);
+                        return (
+                          <TableRow
+                            key={`${item.appId}-${item.itemCode}-${idx}`}
+                            className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors"
+                          >
+                            <TableCell className="font-medium text-slate-900 dark:text-white text-sm pl-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <Wrench className="w-4 h-4 text-slate-400 shrink-0" />
+                                <span className="truncate max-w-[220px]">{item.itemName}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">
+                              {item.itemCode || "-"}
+                            </TableCell>
+                            <TableCell className="font-mono font-bold text-center text-slate-900 dark:text-white text-sm tabular-nums whitespace-nowrap">
+                              {item.qty}
+                            </TableCell>
+                            <TableCell className="font-mono">
+                              {item.allocatedIds.length > 0 ? (
+                                <div className="flex flex-wrap gap-1.5 max-w-[280px]">
+                                  {item.allocatedIds.map((idStr) => (
+                                    <Badge
+                                      key={idStr}
+                                      variant="outline"
+                                      className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800 whitespace-nowrap"
+                                    >
+                                      {idStr}
+                                    </Badge>
+                                  ))}
                                 </div>
-                              </td>
-                              <td className="py-3 px-3 font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                {item.itemCode || "-"}
-                              </td>
-                              <td className="py-3 px-3 font-mono font-bold text-center text-slate-900 dark:text-white tabular-nums whitespace-nowrap">
-                                {item.qty}
-                              </td>
-                              <td className="py-3 px-3 font-mono">
-                                {item.allocatedIds.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1 max-w-[260px]">
-                                    {item.allocatedIds.map((idStr) => (
-                                      <Badge
-                                        key={idStr}
-                                        variant="outline"
-                                        className="text-[10px] px-1.5 py-0 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800 whitespace-nowrap"
-                                      >
-                                        {idStr}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <span className="text-slate-400 text-[11px]">—</span>
+                              ) : (
+                                <span className="text-slate-400 text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-mono text-slate-700 dark:text-slate-200 font-semibold text-sm whitespace-nowrap">
+                              {item.appId}
+                            </TableCell>
+                            <TableCell className="font-mono text-slate-500 dark:text-slate-400 text-sm whitespace-nowrap">
+                              {formatAppDate(item.pickupDate || item.createdAt, item.appId)}
+                            </TableCell>
+                            <TableCell className="font-mono text-slate-900 dark:text-white font-medium text-sm whitespace-nowrap">
+                              {formatAppDate(item.returnDate)}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-medium",
+                                  countdown.isOverdue
+                                    ? "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 font-bold animate-pulse"
+                                    : countdown.isUrgent
+                                      ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                                      : "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
                                 )}
-                              </td>
-                              <td className="py-3 px-3 font-mono text-slate-600 dark:text-slate-300 font-semibold whitespace-nowrap">
-                                {item.appId}
-                              </td>
-                              <td className="py-3 px-3 font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                {formatAppDate(item.pickupDate || item.createdAt, item.appId)}
-                              </td>
-                              <td className="py-3 px-3 font-mono text-slate-900 dark:text-white font-medium whitespace-nowrap">
-                                {formatAppDate(item.returnDate)}
-                              </td>
-                              <td className="py-3 px-3 whitespace-nowrap">
-                                <span
-                                  className={cn(
-                                    "inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-medium",
-                                    countdown.isOverdue
-                                      ? "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 font-bold animate-pulse"
-                                      : countdown.isUrgent
-                                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
-                                        : "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
-                                  )}
-                                >
-                                  {countdown.text}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-right whitespace-nowrap">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openAppDetail(item.rawApp)}
-                                  className="h-7 px-2 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-                                >
-                                  詳情
-                                </Button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                              >
+                                {countdown.text}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right pr-4 whitespace-nowrap">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openAppDetail(item.rawApp)}
+                                className="h-8 px-3 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                              >
+                                詳情
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
 
               {/* 區塊二：所有申請單歷史紀錄表格 (Applications Master Table) */}
               <div className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-xs overflow-hidden">
                 <div className="p-4 bg-slate-50/90 dark:bg-white/5 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     借用申請單總表
-                    <span className="text-xs font-normal text-slate-400">
+                    <span className="text-sm font-normal text-slate-400">
                       (共 {filteredApplications.length} 筆紀錄)
                     </span>
                   </h2>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse font-sans min-w-[800px]">
-                    <thead>
-                      <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-100/75 dark:bg-white/5 text-slate-500 dark:text-slate-400 font-mono text-[11px] uppercase tracking-wider">
-                        <th className="py-3 px-4 font-semibold whitespace-nowrap">申請單號</th>
-                        <th className="py-3 px-3 font-semibold whitespace-nowrap">申請日期</th>
-                        <th className="py-3 px-4 font-semibold whitespace-nowrap">借用器材摘要</th>
-                        <th className="py-3 px-4 font-semibold whitespace-nowrap">借用原因</th>
-                        <th className="py-3 px-3 font-semibold whitespace-nowrap">預計歸還</th>
-                        <th className="py-3 px-3 font-semibold whitespace-nowrap">審核狀態</th>
-                        <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">操作</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                      {filteredApplications.map((app) => {
-                        const badge = getStatusBadge(app.status);
-                        const BadgeIcon = badge.icon;
-                        const returnCountdown = getReturnCountdownText(app.returnDate, app.status);
+                <Table className="min-w-[850px]">
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap pl-4">
+                        申請單號
+                      </TableHead>
+                      <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                        申請日期
+                      </TableHead>
+                      <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                        借用器材摘要
+                      </TableHead>
+                      <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                        借用原因
+                      </TableHead>
+                      <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                        預計歸還
+                      </TableHead>
+                      <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                        審核狀態
+                      </TableHead>
+                      <TableHead className="font-semibold text-slate-900 dark:text-white text-right whitespace-nowrap pr-4">
+                        操作
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredApplications.map((app) => {
+                      const badge = getStatusBadge(app.status);
+                      const BadgeIcon = badge.icon;
+                      const returnCountdown = getReturnCountdownText(app.returnDate, app.status);
 
-                        // 器材摘要字串
-                        const itemsSummary = Array.isArray(app.items)
-                          ? app.items
-                              .map((it) => (typeof it === "string" ? it : `${it.name} x${it.qty}`))
-                              .join("、 ")
-                          : app.summary || "無品項";
+                      // 器材摘要字串
+                      const itemsSummary = Array.isArray(app.items)
+                        ? app.items
+                            .map((it) => (typeof it === "string" ? it : `${it.name} x${it.qty}`))
+                            .join("、 ")
+                        : app.summary || "無品項";
 
-                        return (
-                          <tr
-                            key={app.id}
-                            className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors"
-                          >
-                            <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
-                              {app.id}
-                            </td>
-                            <td className="py-3 px-3 font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                              {formatAppDate(app.createdAt, app.id)}
-                            </td>
-                            <td className="py-3 px-4 text-slate-800 dark:text-slate-200 min-w-[160px] max-w-[240px]">
-                              <p className="truncate font-medium" title={itemsSummary}>
-                                {itemsSummary}
-                              </p>
-                            </td>
-                            <td className="py-3 px-4 text-slate-600 dark:text-slate-400 min-w-[140px] max-w-[220px]">
-                              <p className="truncate" title={app.reason}>
-                                {app.reason || "無填寫"}
-                              </p>
-                            </td>
-                            <td className="py-3 px-3 font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                              <div>{formatAppDate(app.returnDate)}</div>
-                              {app.status === "已借出" && (
-                                <div
-                                  className={cn(
-                                    "text-[10px] font-semibold",
-                                    returnCountdown.isOverdue
-                                      ? "text-red-500"
-                                      : returnCountdown.isUrgent
-                                        ? "text-amber-500"
-                                        : "text-blue-500",
-                                  )}
-                                >
-                                  {returnCountdown.text}
-                                </div>
-                              )}
-                            </td>
-                            <td className="py-3 px-3 whitespace-nowrap">
-                              <Badge
-                                variant={badge.variant}
+                      return (
+                        <TableRow
+                          key={app.id}
+                          className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors"
+                        >
+                          <TableCell className="font-mono font-bold text-slate-900 dark:text-white text-sm pl-4 whitespace-nowrap">
+                            {app.id}
+                          </TableCell>
+                          <TableCell className="font-mono text-slate-500 dark:text-slate-400 text-sm whitespace-nowrap">
+                            {formatAppDate(app.createdAt, app.id)}
+                          </TableCell>
+                          <TableCell className="text-slate-800 dark:text-slate-200 text-sm min-w-[180px] max-w-[260px]">
+                            <p className="truncate font-medium" title={itemsSummary}>
+                              {itemsSummary}
+                            </p>
+                          </TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-400 text-sm min-w-[150px] max-w-[240px]">
+                            <p className="truncate" title={app.reason}>
+                              {app.reason || "無填寫"}
+                            </p>
+                          </TableCell>
+                          <TableCell className="font-mono text-slate-700 dark:text-slate-300 text-sm whitespace-nowrap">
+                            <div>{formatAppDate(app.returnDate)}</div>
+                            {app.status === "已借出" && (
+                              <div
                                 className={cn(
-                                  "text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1 font-medium w-fit",
-                                  badge.className,
+                                  "text-xs font-semibold mt-0.5",
+                                  returnCountdown.isOverdue
+                                    ? "text-red-500"
+                                    : returnCountdown.isUrgent
+                                      ? "text-amber-500"
+                                      : "text-blue-500",
                                 )}
                               >
-                                <BadgeIcon className="w-3 h-3" />
-                                {badge.label}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4 text-right whitespace-nowrap">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openAppDetail(app)}
-                                className="h-7 px-2.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-                              >
-                                <Eye className="w-3.5 h-3.5 mr-1" />
-                                查看
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                                {returnCountdown.text}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <Badge
+                              variant={badge.variant}
+                              className={cn(
+                                "text-xs px-2.5 py-1 rounded-md flex items-center gap-1.5 font-medium w-fit",
+                                badge.className,
+                              )}
+                            >
+                              <BadgeIcon className="w-3.5 h-3.5" />
+                              {badge.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right pr-4 whitespace-nowrap">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openAppDetail(app)}
+                              className="h-8 px-3 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                            >
+                              <Eye className="w-4 h-4 mr-1.5" />
+                              查看
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           )}
@@ -1054,10 +1090,10 @@ export default function ApplicationsPage() {
               <DialogHeader>
                 <div className="flex items-center justify-between gap-3 pr-6">
                   <div>
-                    <DialogTitle className="text-lg font-bold font-mono text-slate-900 dark:text-white">
+                    <DialogTitle className="text-xl font-bold font-mono text-slate-900 dark:text-white">
                       申請單詳情: {selectedApp.id}
                     </DialogTitle>
-                    <DialogDescription className="text-xs text-slate-400 mt-1">
+                    <DialogDescription className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                       申請時間: {formatAppDate(selectedApp.createdAt, selectedApp.id)}
                     </DialogDescription>
                   </div>
@@ -1072,7 +1108,7 @@ export default function ApplicationsPage() {
                           badge.className,
                         )}
                       >
-                        <BadgeIcon className="w-3 h-3" />
+                        <BadgeIcon className="w-3.5 h-3.5" />
                         {badge.label}
                       </Badge>
                     );
@@ -1081,21 +1117,21 @@ export default function ApplicationsPage() {
               </DialogHeader>
 
               {/* 申請人與借用時間資訊 */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-sm">
                 <div>
-                  <span className="text-slate-400 block mb-0.5 whitespace-nowrap">申請社員</span>
+                  <span className="text-slate-400 text-xs block mb-0.5 whitespace-nowrap">申請社員</span>
                   <span className="font-semibold text-slate-900 dark:text-white font-mono whitespace-nowrap">
                     {selectedApp.name} ({selectedApp.studentId})
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5 whitespace-nowrap">預計取件日期</span>
+                  <span className="text-slate-400 text-xs block mb-0.5 whitespace-nowrap">預計取件日期</span>
                   <span className="font-semibold text-slate-900 dark:text-white font-mono whitespace-nowrap">
                     {formatAppDate(selectedApp.pickupDate)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5 whitespace-nowrap">預計歸還日期</span>
+                  <span className="text-slate-400 text-xs block mb-0.5 whitespace-nowrap">預計歸還日期</span>
                   <span className="font-semibold text-slate-900 dark:text-white font-mono whitespace-nowrap">
                     {formatAppDate(selectedApp.returnDate)}
                   </span>
@@ -1104,19 +1140,19 @@ export default function ApplicationsPage() {
 
               {/* 借用原因 */}
               <div>
-                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1.5">
                   借用原因與專案用途
                 </h4>
-                <p className="text-xs text-slate-700 dark:text-slate-300 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm text-slate-700 dark:text-slate-300 p-3.5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 leading-relaxed whitespace-pre-wrap">
                   {selectedApp.reason || "無填寫借用原因"}
                 </p>
               </div>
 
               {/* 器材明細清單表格 */}
               <div>
-                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
                   <span>借用器材品項明細</span>
-                  <span className="text-slate-400 font-normal">
+                  <span className="text-slate-400 text-xs font-normal">
                     共{" "}
                     {Array.isArray(selectedApp.items)
                       ? selectedApp.items.reduce(
@@ -1128,72 +1164,82 @@ export default function ApplicationsPage() {
                   </span>
                 </h4>
                 <div className="border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-xs border-collapse font-sans">
-                    <thead>
-                      <tr className="bg-slate-100 dark:bg-white/5 border-b border-slate-200 dark:border-white/10 text-slate-500 font-mono text-[11px]">
-                        <th className="py-2.5 px-3 font-semibold whitespace-nowrap">器材名稱</th>
-                        <th className="py-2.5 px-3 font-semibold whitespace-nowrap">代碼</th>
-                        <th className="py-2.5 px-2 font-semibold text-center whitespace-nowrap">數量</th>
-                        <th className="py-2.5 px-3 font-semibold whitespace-nowrap">分配實體編號</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap pl-3">
+                          器材名稱
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                          代碼
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white text-center whitespace-nowrap">
+                          數量
+                        </TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white whitespace-nowrap pr-3">
+                          分配實體編號
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {Array.isArray(selectedApp.items) && selectedApp.items.length > 0 ? (
                         selectedApp.items.map((item, idx) => {
                           if (typeof item === "string") {
                             return (
-                              <tr key={idx}>
-                                <td className="py-2.5 px-3 font-medium" colSpan={4}>
+                              <TableRow key={idx}>
+                                <TableCell className="font-medium text-sm pl-3" colSpan={4}>
                                   {item}
-                                </td>
-                              </tr>
+                                </TableCell>
+                              </TableRow>
                             );
                           }
                           const allocated = getAllocatedIdArray(selectedApp, item.code);
                           return (
-                            <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
-                              <td className="py-2.5 px-3 font-medium text-slate-900 dark:text-white whitespace-nowrap">
+                            <TableRow key={idx} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
+                              <TableCell className="font-medium text-slate-900 dark:text-white text-sm pl-3 whitespace-nowrap">
                                 {item.name}
-                              </td>
-                              <td className="py-2.5 px-3 font-mono text-slate-500 whitespace-nowrap">{item.code}</td>
-                              <td className="py-2.5 px-2 font-mono font-bold text-center text-slate-900 dark:text-white tabular-nums whitespace-nowrap">
+                              </TableCell>
+                              <TableCell className="font-mono text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">
+                                {item.code}
+                              </TableCell>
+                              <TableCell className="font-mono font-bold text-center text-slate-900 dark:text-white text-sm tabular-nums whitespace-nowrap">
                                 {item.qty}
-                              </td>
-                              <td className="py-2.5 px-3 font-mono">
+                              </TableCell>
+                              <TableCell className="font-mono pr-3">
                                 {allocated.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1 max-w-sm">
+                                  <div className="flex flex-wrap gap-1.5 max-w-sm">
                                     {allocated.map((idStr) => (
                                       <Badge
                                         key={idStr}
                                         variant="outline"
-                                        className="text-[10px] px-1.5 py-0 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800 whitespace-nowrap"
+                                        className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800 whitespace-nowrap"
                                       >
                                         {idStr}
                                       </Badge>
                                     ))}
                                   </div>
                                 ) : (
-                                  <span className="text-slate-400 text-[11px]">尚未分配實體序號</span>
+                                  <span className="text-slate-400 text-xs">尚未分配實體序號</span>
                                 )}
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           );
                         })
                       ) : (
-                        <tr>
-                          <td colSpan={4} className="py-3 px-3 text-slate-500 text-center">
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-slate-500 text-center py-4 text-sm">
                             {selectedApp.summary || "無品項"}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       )}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
 
               {/* 拒絕原因（若有） */}
               {selectedApp.rejectReason && (
-                <div className="p-3.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl text-xs text-red-700 dark:text-red-300">
+                <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl text-sm text-red-700 dark:text-red-300">
                   <span className="font-bold block mb-1">審核不予通過原因:</span>
                   <p className="leading-relaxed">{selectedApp.rejectReason}</p>
                 </div>
@@ -1201,7 +1247,7 @@ export default function ApplicationsPage() {
 
               {/* 審核紀錄 */}
               {selectedApp.reviewer && (
-                <div className="text-[11px] text-slate-400 font-mono flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5">
+                <div className="text-xs text-slate-400 font-mono flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-white/5">
                   <span>審核幹部: {selectedApp.reviewer}</span>
                   {selectedApp.reviewedAt && <span>審核時間: {formatAppDate(selectedApp.reviewedAt)}</span>}
                 </div>
