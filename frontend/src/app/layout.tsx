@@ -22,6 +22,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "臺科大機器人研究社 社團網站",
   description: "國立臺灣科技大學 機器人研究社 社團網站",
+  verification: {
+    google: "6ohWJUh6HtS-jw5dKoELpnViGjB1xx_aGiZq7dT9CTQ",
+  },
 };
 
 export const viewport = {
