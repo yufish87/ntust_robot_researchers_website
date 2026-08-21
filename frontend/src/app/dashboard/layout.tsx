@@ -77,7 +77,7 @@ export default function DashboardLayout({
       <MobileNav variant="dashboard" />
       <main
         ref={mainRef}
-        className={`flex-1 lg:ml-64 overflow-y-auto h-full p-4 pt-14 lg:p-6 lg:pt-6 scroll-smooth ${isDashboardHome ? "scrollbar-dark" : "scrollbar-light"}`}
+        className={`flex-1 lg:ml-64 overflow-y-auto h-full p-4 pt-18 lg:p-6 lg:pt-6 scroll-smooth ${isDashboardHome ? "scrollbar-dark" : "scrollbar-light"}`}
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
       >
         {children}

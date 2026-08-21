@@ -44,7 +44,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="-m-4 -mt-14 lg:-m-6 lg:-mt-6 min-h-[100svh] bg-[#34313c] border-l border-white/10 selection:bg-[#ffc000] selection:text-[#34313c] scroll-smooth">
+    <div className="-m-4 -mt-18 lg:-m-6 lg:-mt-6 min-h-[100svh] bg-[#34313c] border-l border-white/10 selection:bg-[#ffc000] selection:text-[#34313c] scroll-smooth">
       {/* 1. Hero Section — 全寬 */}
       <section
         id="hero"
