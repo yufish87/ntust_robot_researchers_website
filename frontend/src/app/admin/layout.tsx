@@ -55,7 +55,7 @@ export default function AdminLayout({
         title: "權限不足",
         description: "您沒有管理員權限，無法進入管理員後台。",
       });
-      router.replace("/dashboard");
+      router.replace("/dashboard/announcements");
     }
   }, [hasHydrated, authChecked, syncSession, user, isAdmin, router, toast]);
 

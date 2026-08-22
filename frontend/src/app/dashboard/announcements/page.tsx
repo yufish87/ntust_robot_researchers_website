@@ -46,6 +46,13 @@ function isImageAttachment(att: {
     return true;
   }
 
+  if (att.fileId || link.includes("drive.google.com") || link.includes("googleusercontent.com")) {
+    const nonImagePattern = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|7z|txt|csv|json)$/i;
+    if (!nonImagePattern.test(title)) {
+      return true;
+    }
+  }
+
   return Boolean(att.fileId && !att.link);
 }
 
@@ -179,8 +186,8 @@ export default function AnnouncementsPage() {
           aria-describedby={undefined}
           className="max-w-2xl max-h-[80vh]"
         >
-          <DialogHeader>
-            <DialogTitle className="text-xl">{selected?.title}</DialogTitle>
+          <DialogHeader className="pr-8">
+            <DialogTitle className="text-xl pr-6">{selected?.title}</DialogTitle>
             <div className="flex items-center gap-2 pt-1">
               {selected && (
                 <Badge

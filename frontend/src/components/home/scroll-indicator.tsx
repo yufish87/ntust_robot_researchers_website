@@ -8,70 +8,61 @@ export function ScrollIndicator() {
   const [isAtTop, setIsAtTop] = useState(true);
 
   useEffect(() => {
-    const mainContainer = document.querySelector("main");
-    if (!mainContainer) return;
-
     const handleScroll = () => {
-      const scrollTop = mainContainer.scrollTop;
-      setIsAtTop(scrollTop < 100);
+      setIsAtTop(window.scrollY < 200);
     };
 
-    mainContainer.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
 
     return () => {
-      mainContainer.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
-  const scrollMain = (direction: "up" | "down") => {
-    const mainContainer = document.querySelector("main");
-    if (!mainContainer) return;
-
+  const scrollPage = (direction: "up" | "down") => {
     if (direction === "up") {
-      mainContainer.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
-    const nextTop = Math.min(
-      mainContainer.scrollTop + mainContainer.clientHeight * 0.92,
-      mainContainer.scrollHeight,
-    );
-    mainContainer.scrollTo({ top: nextTop, behavior: "smooth" });
+    const nextTop = window.scrollY + window.innerHeight * 0.85;
+    window.scrollTo({ top: nextTop, behavior: "smooth" });
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-40">
-      {/* Container for both buttons occupying same space */}
-      <div className="relative w-12 h-12">
+    <div className="fixed bottom-6 right-6 z-40 select-none">
+      <div className="relative w-11 h-11 sm:w-12 sm:h-12">
         {/* Scroll Down Button (Visible when at top) */}
         <button
-          onClick={() => scrollMain("down")}
+          type="button"
+          onClick={() => scrollPage("down")}
           className={cn(
-            "absolute inset-0 flex items-center justify-center rounded-full shadow-lg border border-white/10 transition-all duration-500",
-            "bg-[#34313c] text-[#ffc000] hover:bg-[#2d2a33] hover:scale-110",
+            "absolute inset-0 flex items-center justify-center rounded-full shadow-xl border border-white/10 transition-all duration-300 cursor-pointer",
+            "bg-[#1e1c24] text-[#ffc000] hover:bg-[#282530] hover:scale-110",
             isAtTop
               ? "opacity-100 rotate-0 pointer-events-auto"
               : "opacity-0 -rotate-90 pointer-events-none",
           )}
-          aria-label="Scroll Down"
+          aria-label="向下滾動"
         >
-          <ArrowDown className="h-6 w-6" />
+          <ArrowDown className="h-5 w-5" />
         </button>
 
         {/* Back to Top Button (Visible when scrolled) */}
         <button
-          onClick={() => scrollMain("up")}
+          type="button"
+          onClick={() => scrollPage("up")}
           className={cn(
-            "absolute inset-0 flex items-center justify-center rounded-full shadow-lg border border-white/10 transition-all duration-500",
-            "bg-[#34313c] text-[#ffc000] hover:bg-[#2d2a33] hover:scale-110",
+            "absolute inset-0 flex items-center justify-center rounded-full shadow-xl border border-white/10 transition-all duration-300 cursor-pointer",
+            "bg-[#1e1c24] text-[#ffc000] hover:bg-[#282530] hover:scale-110",
             !isAtTop
               ? "opacity-100 rotate-0 pointer-events-auto"
               : "opacity-0 rotate-90 pointer-events-none",
           )}
-          aria-label="Back to Top"
+          aria-label="回頂部"
         >
-          <ArrowUp className="h-6 w-6" />
+          <ArrowUp className="h-5 w-5" />
         </button>
       </div>
     </div>

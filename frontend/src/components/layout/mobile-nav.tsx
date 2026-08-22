@@ -104,11 +104,9 @@ export function MobileNav({ variant }: MobileNavProps) {
         ? pathname === item.href || pathname.startsWith(item.href + "/")
         : false;
     }
-    // dashboard: "/dashboard" exact, others prefix
+    // dashboard & public
     if (effectiveVariant === "dashboard") {
-      return item.href === "/dashboard"
-        ? pathname === "/dashboard" || pathname === "/"
-        : pathname === item.href || pathname.startsWith(item.href + "/");
+      return pathname === item.href || pathname.startsWith(item.href + "/");
     }
     // admin: items with exact flag
     const exact = "exact" in item && (item as { exact?: boolean }).exact;
@@ -334,7 +332,7 @@ export function MobileNav({ variant }: MobileNavProps) {
                 {effectiveVariant === "admin" && (
                   <>
                     <div className="border-t border-white/10 my-2" />
-                    <Link href="/dashboard">
+                    <Link href="/dashboard/announcements">
                       <Button
                         variant="ghost"
                         className="w-full justify-start mb-2 hover:bg-white/10"

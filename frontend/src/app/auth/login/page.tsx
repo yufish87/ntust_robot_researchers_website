@@ -83,7 +83,7 @@ export default function LoginPage() {
     }
 
     if (user) {
-      router.replace("/dashboard");
+      router.replace("/dashboard/announcements");
     }
   }, [authChecked, syncSession, user, router]);
 
@@ -114,7 +114,7 @@ export default function LoginPage() {
         title: "登入成功",
         description: "歡迎回到機器人研究社",
       });
-      router.push("/dashboard");
+      router.push("/dashboard/announcements");
     } catch (err: any) {
       const msg = err.message || "";
       if (msg.includes("找不到") || msg.includes("USER_NOT_FOUND")) {

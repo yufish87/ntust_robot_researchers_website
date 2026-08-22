@@ -201,7 +201,7 @@ export function MarkdownViewer({ content, className }: MarkdownViewerProps) {
             <th className="px-4 py-3 font-semibold whitespace-nowrap" {...props} />
           ),
           td: ({ node, ...props }) => (
-            <td className="px-4 py-3.5 border-t border-slate-100 dark:border-slate-800/60 font-normal align-top [&:not(:last-child)]:whitespace-nowrap [&:last-child]:w-full" {...props} />
+            <td className="px-4 py-3.5 border-t border-slate-100 dark:border-slate-800/60 font-normal align-top leading-relaxed text-sm" {...props} />
           ),
           code: ({ node, className, children, ...props }: any) => {
             const isInline = !className && typeof children === "string" && !children.includes("\n");

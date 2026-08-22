@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Mail, MapPin, Facebook, Instagram, BookOpen } from "lucide-react";
+import { Mail, MapPin, Facebook, Instagram, BookOpen, ExternalLink, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,47 +10,99 @@ export function SiteFooter({ className }: { className?: string }) {
     <footer
       id="footer"
       className={cn(
-        "w-full border-t border-white/10 bg-black/40 scroll-mt-20",
+        "w-full border-t border-white/10 bg-[#16141a] text-white select-none",
         className,
       )}
     >
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        {/* 上半部: Logo + 說明按鈕 + 社群連結 */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-          {/* 左側: Logo + 名稱 */}
-          <div className="flex items-center gap-3">
-            <Image
-              src="/image/Icon.png"
-              alt="RRC Logo"
-              width={48}
-              height={48}
-              className="rounded-full"
-            />
-            <div>
-              <p className="font-bold text-white text-lg">
-                臺科大 機器人研究社
-              </p>
-              <p className="text-xs text-slate-400">Robot Researchers Club</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-white/10">
+          {/* 1. 品牌與介紹 */}
+          <div className="md:col-span-2 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="relative w-10 h-10 shrink-0">
+                <Image
+                  src="/image/Icon.png"
+                  alt="NTUST RRC"
+                  fill
+                  className="object-contain"
+                  sizes="40px"
+                />
+              </div>
+              <div>
+                <p className="font-bold text-white text-base tracking-wide">
+                  國立臺灣科技大學 機器人研究社
+                </p>
+                <p className="text-xs text-[#ffc000] font-mono">
+                  NTUST Robot Researchers Club
+                </p>
+              </div>
             </div>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-md">
+              以創客實作為根基，致力於推廣機器人科技、軟硬體整合與全國賽事實戰。提供社課教學、機具借用與跨領域技術交流空間。
+            </p>
           </div>
 
-          {/* 右側: 使用說明按鈕 + 社群連結 */}
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href="/manual"
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/10 hover:bg-[#ffc000] border border-white/15 hover:border-transparent text-xs font-semibold text-slate-200 hover:text-black transition-all duration-200 shadow-sm"
-            >
-              <BookOpen className="w-4 h-4 text-[#ffc000] group-hover:text-black" />
-              <span>系統使用說明</span>
-            </Link>
+          {/* 2. 快速連結 */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-mono font-semibold text-[#ffc000] uppercase tracking-wider">
+              QUICK NAVIGATION
+            </h4>
+            <ul className="space-y-2 text-xs text-slate-300">
+              <li>
+                <a href="#about" className="hover:text-white hover:underline transition-colors">
+                  社團簡介與願景
+                </a>
+              </li>
+              <li>
+                <a href="#awards" className="hover:text-white hover:underline transition-colors">
+                  歷年競賽成果
+                </a>
+              </li>
+              <li>
+                <a href="#news" className="hover:text-white hover:underline transition-colors">
+                  最新社團消息
+                </a>
+              </li>
+              <li>
+                <a href="#courses" className="hover:text-white hover:underline transition-colors">
+                  專業社課資訊
+                </a>
+              </li>
+              <li>
+                <Link href="/manual" className="hover:text-[#ffc000] hover:underline transition-colors inline-flex items-center gap-1">
+                  社團使用說明手冊
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </li>
+            </ul>
+          </div>
 
-            <div className="flex items-center gap-2">
+          {/* 3. 社辦位置與聯絡 */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-mono font-semibold text-[#ffc000] uppercase tracking-wider">
+              CONNECT & LOCATION
+            </h4>
+            <div className="space-y-2 text-xs text-slate-300">
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-[#ffc000] shrink-0 mt-0.5" />
+                <span>台北市大安區基隆路四段43號（研揚大樓）</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#ffc000] shrink-0" />
+                <a href="mailto:ntust.robot@gmail.com" className="hover:text-white transition-colors">
+                  ntust.robot@gmail.com
+                </a>
+              </div>
+            </div>
+
+            {/* 社群圖示列 */}
+            <div className="flex items-center gap-2 pt-2">
               <a
                 href="https://www.facebook.com/ntust.robot"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:bg-[#ffc000] hover:text-black transition-colors"
-                aria-label="Facebook"
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:bg-[#ffc000] hover:text-[#1e1c24] hover:border-transparent transition-all"
+                aria-label="Facebook 粉絲專頁"
               >
                 <Facebook className="w-4 h-4" />
               </a>
@@ -58,15 +110,15 @@ export function SiteFooter({ className }: { className?: string }) {
                 href="https://www.instagram.com/ntust.robot/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:bg-[#ffc000] hover:text-black transition-colors"
-                aria-label="Instagram"
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:bg-[#ffc000] hover:text-[#1e1c24] hover:border-transparent transition-all"
+                aria-label="Instagram 官方帳號"
               >
                 <Instagram className="w-4 h-4" />
               </a>
               <a
                 href="mailto:ntust.robot@gmail.com"
-                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:bg-[#ffc000] hover:text-black transition-colors"
-                aria-label="Email"
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:bg-[#ffc000] hover:text-[#1e1c24] hover:border-transparent transition-all"
+                aria-label="電子郵件"
               >
                 <Mail className="w-4 h-4" />
               </a>
@@ -74,64 +126,20 @@ export function SiteFooter({ className }: { className?: string }) {
           </div>
         </div>
 
-        {/* 聯絡資訊 */}
-        <div className="flex flex-wrap gap-4 sm:gap-8 text-sm text-slate-400 mb-8 md:ml-1">
-          <div className="flex items-center gap-2">
-            <Facebook className="w-4 h-4 text-[#ffc000]" />
-            <a
-              href="https://www.facebook.com/ntust.robot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white transition-colors"
-            >
-              @ntust.robot
-            </a>
+        {/* 下半部: 版權聲明 */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <p>
+            {new Date().getFullYear()} NTUST Robot Researchers Club
+          </p>
+          <div className="flex items-center gap-4">
+            <Link href="/manual" className="hover:text-slate-300 transition-colors">
+              使用條款與規範
+            </Link>
+            <span>・</span>
+            <span className="text-slate-400 font-mono">
+              Designed for NTUST Makers
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Instagram className="w-4 h-4 text-[#ffc000]" />
-            <a
-              href="https://www.instagram.com/ntust.robot/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white transition-colors"
-            >
-              @ntust.robot
-            </a>
-          </div>
-          <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-[#ffc000]" />
-            <a
-              href="mailto:ntust.robot@gmail.com"
-              className="hover:text-white transition-colors"
-            >
-              ntust.robot@gmail.com
-            </a>
-          </div>
-          <div className="flex items-center gap-2 basis-full sm:basis-auto">
-            <MapPin className="w-4 h-4 text-[#ffc000] shrink-0" />
-            <a
-              href="https://maps.app.goo.gl/tpPr18kFj16vtTFN6"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white transition-colors"
-            >
-              臺科大 社團活動大樓二樓 S205
-            </a>
-          </div>
-        </div>
-
-        {/* 分隔線 + 版權 */}
-        <div className="border-t border-white/5 pt-6 text-center text-xs text-slate-500">
-          國立臺灣科技大學 機器人研究社 2026
-          <br />
-          網站設計如有任何建議，請點擊
-          <a
-            href="mailto:yuyongxiang393603@gmail.com"
-            className="hover:text-white transition-colors"
-          >
-            這裡
-          </a>
-          聯絡建置者，謝謝指教
         </div>
       </div>
     </footer>

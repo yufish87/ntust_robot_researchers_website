@@ -56,6 +56,8 @@ import {
   Upload,
   FileText,
   RefreshCw,
+  Trophy,
+  Sparkles,
 } from "lucide-react";
 import axios from "axios";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
@@ -547,6 +549,45 @@ export default function AdminAnnouncementsPage() {
           <Plus className="w-4 h-4 mr-1.5" /> 新增公告
         </Button>
       </AdminPageHeader>
+      {/* 榮譽榜官網自動串接說明卡片 */}
+      <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-amber-950 flex flex-col sm:flex-row items-start gap-3.5 shadow-xs">
+        <div className="p-2 rounded-lg bg-amber-100 border border-amber-300/60 shrink-0 text-amber-700">
+          <Trophy className="w-5 h-5" />
+        </div>
+        <div className="space-y-1.5 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-sm sm:text-base text-amber-950">
+              官網「歷年競賽成果與榮譽」自動串接規則提醒
+            </h3>
+            <Badge
+              variant="outline"
+              className="text-[10px] bg-amber-100 text-amber-800 border-amber-300"
+            >
+              官網聯動
+            </Badge>
+          </div>
+          <p className="text-xs sm:text-sm text-amber-900 leading-relaxed">
+            官網首頁「歷年競賽成果與榮譽」會自動讀取分類為{" "}
+            <span className="font-bold text-amber-950">「榮譽榜」</span> 且狀態為{" "}
+            <span className="font-bold text-amber-950">「顯示中」</span> 並含有{" "}
+            <span className="font-bold text-amber-950">附件相片</span> 的最新 4 筆公告進行輪播跑馬燈展示。
+          </p>
+          <div className="mt-2 text-xs bg-white/90 p-2.5 rounded-lg border border-amber-200 space-y-1">
+            <p className="font-semibold text-amber-950">
+              標題填寫規範：
+              <span className="font-mono font-normal text-amber-800">
+                ...榮獲 [比賽名稱] [獎項名稱] [符號]
+              </span>
+            </p>
+            <p className="text-amber-800 font-mono text-[11px] sm:text-xs">
+              範例：【榮譽榜】本社團成員榮獲 2025技職盃黑客松全國賽 評審團大獎 !
+            </p>
+            <p className="text-amber-700 text-[11px]">
+              系統將自動提取「比賽名稱：2025技職盃黑客松全國賽」與「獎項：評審團大獎」於官網卡片標籤展示。請務必上傳至少一張獲獎照片！
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <Table className="min-w-[650px]">
@@ -649,17 +690,36 @@ export default function AdminAnnouncementsPage() {
           <div className="space-y-4 py-2">
             {/* 標題 */}
             <div className="space-y-2">
-              <Label htmlFor="ann-title">
-                標題 <span className="text-red-500">*</span>
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="ann-title">
+                  標題 <span className="text-red-500">*</span>
+                </Label>
+                {form.category === "榮譽榜" && (
+                  <span className="text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    榮譽榜自動提取格式：...榮獲 [比賽名] [獎項]
+                  </span>
+                )}
+              </div>
               <Input
                 id="ann-title"
                 value={form.title}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, title: e.target.value }))
                 }
-                placeholder="輸入公告標題"
+                placeholder={
+                  form.category === "榮譽榜"
+                    ? "例如：【榮譽榜】本社團成員榮獲 2025技職盃黑客松全國賽 評審團大獎 !"
+                    : "輸入公告標題"
+                }
               />
+              {form.category === "榮譽榜" && (
+                <p className="text-xs text-amber-800 bg-amber-50/90 p-2.5 rounded-lg border border-amber-200/80 flex items-start gap-2">
+                  <Trophy className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>官網輪播提示：</strong>首頁將自動從標題提取比賽名與獎項，請務必使用「<code>...榮獲 比賽名稱 獎項名稱</code>」格式，並在下方附件上傳獲獎相片。
+                  </span>
+                </p>
+              )}
             </div>
 
             {/* 內容 */}

@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { PublicSidebar } from "@/components/layout/public-sidebar";
-import { MobileNav } from "@/components/layout/mobile-nav";
+import { SiteHeader } from "@/components/layout/site-header";
 import { ManualPageContainer, type ManualTabItem } from "@/components/manual/manual-page-container";
 import { SiteFooter } from "@/components/home/site-footer";
 
@@ -90,28 +89,23 @@ export default function PublicManualPage() {
   ];
 
   return (
-    <div className="flex bg-[#34313c] min-h-screen selection:bg-[#ffc000] selection:text-[#34313c]">
-      {/* Sidebar - Visible on Desktop */}
-      <PublicSidebar />
+    <div className="min-h-screen bg-[#1e1c24] text-white selection:bg-[#ffc000] selection:text-[#1e1c24] flex flex-col justify-between">
+      {/* 頂部固定滿版導覽列 */}
+      <SiteHeader />
 
-      {/* Mobile Nav */}
-      <MobileNav variant="public" />
-
-      {/* Main Content */}
-      <main className="flex-1 lg:ml-64 w-full h-dvh overflow-y-auto scroll-smooth pt-16 lg:pt-8 pb-[env(safe-area-inset-bottom)] scrollbar-dark flex flex-col justify-between">
-        <div className="max-w-6xl mx-auto px-4 lg:px-8 w-full space-y-8 flex-1">
-          <ManualPageContainer
-            title="社團使用指南"
-            subtitle="本指南協助全體社員與新生快速了解社團網站與資源管理系統之各項功能操作、借用規範與申請流程。"
-            badgeText="社員指南"
-            tabs={tabs}
-            defaultTabId="overview"
-          />
-        </div>
-
-        {/* Full-width Footer */}
-        <SiteFooter className="mt-16 w-full" />
+      {/* 手冊內容主體 */}
+      <main className="w-full flex-1 pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <ManualPageContainer
+          title="社團使用指南"
+          subtitle="本指南協助全體社員與新生快速了解社團網站與資源管理系統之各項功能操作、借用規範與申請流程。"
+          badgeText="社員指南"
+          tabs={tabs}
+          defaultTabId="overview"
+        />
       </main>
+
+      {/* 頁尾 */}
+      <SiteFooter className="w-full" />
     </div>
   );
 }
