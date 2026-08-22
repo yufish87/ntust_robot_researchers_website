@@ -23,6 +23,7 @@ import {
   type Announcement,
 } from "@/lib/types/announcement";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { isGoogleDriveOrCdnUrl } from "@/lib/utils";
 
 const categoryColor: Record<string, string> = {
   一般公告: "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30",
@@ -46,7 +47,7 @@ function isImageAttachment(att: {
     return true;
   }
 
-  if (att.fileId || link.includes("drive.google.com") || link.includes("googleusercontent.com")) {
+  if (att.fileId || isGoogleDriveOrCdnUrl(link)) {
     const nonImagePattern = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|7z|txt|csv|json)$/i;
     if (!nonImagePattern.test(title)) {
       return true;

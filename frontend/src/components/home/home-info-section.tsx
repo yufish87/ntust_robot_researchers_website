@@ -17,7 +17,7 @@ import {
   Calendar,
   Paperclip,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, isGoogleDriveOrCdnUrl, getGoogleDriveIdFromUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,7 +55,7 @@ function isImageAttachment(att: { title?: string; link?: string; fileId?: string
     return true;
   }
 
-  if (att.fileId || link.includes("drive.google.com") || link.includes("googleusercontent.com")) {
+  if (att.fileId || isGoogleDriveOrCdnUrl(link)) {
     const nonImagePattern = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|7z|txt|csv|json)$/i;
     if (!nonImagePattern.test(title)) {
       return true;
@@ -70,11 +70,9 @@ function getAttachmentImageSrc(att: { link?: string; fileId?: string }) {
     return `https://lh3.googleusercontent.com/d/${att.fileId}=w1200`;
   }
   const link = att.link || "";
-  if (link.includes("drive.google.com")) {
-    const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/) || link.match(/id=([a-zA-Z0-9_-]+)/);
-    if (match && match[1]) {
-      return `https://lh3.googleusercontent.com/d/${match[1]}=w1200`;
-    }
+  const driveId = getGoogleDriveIdFromUrl(link);
+  if (driveId) {
+    return `https://lh3.googleusercontent.com/d/${driveId}=w1200`;
   }
   return link;
 }
@@ -466,7 +464,7 @@ export function AboutSection({ className }: AboutSectionProps) {
                       alt={item.competition}
                       fill
                       sizes="(max-width: 1024px) 50vw, 25vw"
-                      unoptimized={item.imgSrc.includes("googleusercontent.com") || item.imgSrc.includes("drive.google.com")}
+                      unoptimized={isGoogleDriveOrCdnUrl(item.imgSrc)}
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                       quality={70}
@@ -518,7 +516,7 @@ export function AboutSection({ className }: AboutSectionProps) {
                           alt={item.competition}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                          unoptimized={item.imgSrc.includes("googleusercontent.com") || item.imgSrc.includes("drive.google.com")}
+                          unoptimized={isGoogleDriveOrCdnUrl(item.imgSrc)}
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                           priority
                           quality={70}

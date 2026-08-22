@@ -12,7 +12,7 @@ import {
   Clock,
   Sparkles,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, isGoogleDriveOrCdnUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -54,7 +54,7 @@ function isImageAttachment(att: {
     return true;
   }
 
-  if (att.fileId || link.includes("drive.google.com") || link.includes("googleusercontent.com")) {
+  if (att.fileId || isGoogleDriveOrCdnUrl(link)) {
     const nonImagePattern = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|7z|txt|csv|json)$/i;
     if (!nonImagePattern.test(title)) {
       return true;
