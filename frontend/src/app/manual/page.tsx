@@ -6,7 +6,7 @@ import { ManualPageContainer, type ManualTabItem } from "@/components/manual/man
 import { SiteFooter } from "@/components/home/site-footer";
 
 export const metadata = {
-  title: "社團使用說明 | 臺科大機器人研究社",
+  title: "社團使用說明",
   description: "臺科大機器人研究社社團網站與資源管理系統使用指南，包含帳號註冊、器材借用、機台預約與財務報帳規範說明。",
 };
 
