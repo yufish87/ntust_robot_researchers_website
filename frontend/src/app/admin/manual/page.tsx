@@ -3,7 +3,7 @@ import path from "path";
 import { ManualPageContainer, type ManualTabItem } from "@/components/manual/manual-page-container";
 
 export const metadata = {
-  title: "管理員手冊 | 管理員後台 - 臺科大機器人研究社",
+  title: "管理員手冊 | 管理員後台",
   description: "臺科大機器人研究社管理員後台操作手冊與審核作業指引",
 };
 

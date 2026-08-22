@@ -38,9 +38,12 @@ export const metadata: Metadata = {
     "3D列印",
     "雷射切割",
     "社團",
+    "黑客松",
+    "創客松",
+    "工作坊"
   ],
   authors: [{ name: "國立臺灣科技大學 機器人研究社" }],
-  creator: "NTUST RRC",
+  creator: "國立臺灣科技大學 機器人研究社 俞詠翔",
   publisher: "國立臺灣科技大學 機器人研究社",
   robots: {
     index: true,
@@ -56,15 +59,23 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "zh_TW",
-    url: "https://ntust-robotresearchers.vercel.app",
-    siteName: "NTUST RRC 臺科大機器人研究社",
+    siteName: "NTUST Robot Researchers Club 臺科大機器人研究社",
     title: "臺科大機器人研究社 社團官網",
     description: "國立臺灣科技大學 機器人研究社（NTUST Robot Researchers Club）社團官網",
+    images: [
+      {
+        url: "/image/Bar_Logo_Yellow.png",
+        width: 1200,
+        height: 630,
+        alt: "臺科大機器人研究社 NTUST RRC",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "臺科大機器人研究社 社團官網",
     description: "國立臺灣科技大學 機器人研究社（NTUST Robot Researchers Club）社團官網",
+    images: ["/image/Bar_Logo_Yellow.png"],
   },
   verification: {
     google: "6ohWJUh6HtS-jw5dKoELpnViGjB1xx_aGiZq7dT9CTQ",

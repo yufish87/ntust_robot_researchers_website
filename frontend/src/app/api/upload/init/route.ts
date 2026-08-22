@@ -14,14 +14,8 @@ export async function POST(req: NextRequest) {
       throw new Error("GAS API URL not configured");
     }
 
-    // 取得用戶端 Origin 用於 Google Drive CORS 授權
-    const rawOrigin = req.headers.get("origin") || req.headers.get("referer") || "http://localhost:3000";
-    let clientOrigin = "";
-    try {
-      clientOrigin = new URL(rawOrigin).origin;
-    } catch {
-      clientOrigin = rawOrigin;
-    }
+    // 取得用戶端 Origin 用於 Google Drive CORS 授權（使用 NextRequest 內建的 nextUrl.origin，安全且穩定）
+    const clientOrigin = req.nextUrl.origin;
 
     // Wrap params for GAS Router
     const payload = {
