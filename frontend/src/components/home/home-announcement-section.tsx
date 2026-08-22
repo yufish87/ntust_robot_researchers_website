@@ -1,29 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Megaphone, ExternalLink, Calendar, Paperclip } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Megaphone,
+  ExternalLink,
+  Calendar,
+  Paperclip,
+  Pin,
+  Image as ImageIcon,
+  FileText,
+  Clock,
+  Sparkles,
+} from "lucide-react";
+import { cn, isGoogleDriveOrCdnUrl } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ANNOUNCEMENT_CATEGORIES,
   type Announcement,
 } from "@/lib/types/announcement";
+import Image from "next/image";
 
 const categoryColor: Record<string, string> = {
-  一般公告: "bg-blue-500/20 text-blue-300",
-  課程資訊: "bg-green-500/20 text-green-300",
-  活動與競賽: "bg-orange-500/20 text-orange-300",
-  榮譽榜: "bg-yellow-500/20 text-yellow-300",
-  設備與系統: "bg-purple-500/20 text-purple-300",
+  一般公告: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+  課程資訊: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  活動與競賽: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  榮譽榜: "bg-yellow-500/15 text-yellow-300 border-yellow-500/30",
+  設備與系統: "bg-purple-500/15 text-purple-300 border-purple-500/30",
 };
 
 interface AnnouncementSectionProps {
@@ -45,6 +54,13 @@ function isImageAttachment(att: {
     return true;
   }
 
+  if (att.fileId || isGoogleDriveOrCdnUrl(link)) {
+    const nonImagePattern = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|7z|txt|csv|json)$/i;
+    if (!nonImagePattern.test(title)) {
+      return true;
+    }
+  }
+
   return Boolean(att.fileId && !att.link);
 }
 
@@ -52,248 +68,300 @@ function getAttachmentImageSrc(att: { link?: string; fileId?: string }) {
   if (att.fileId) {
     return `https://lh3.googleusercontent.com/d/${att.fileId}=w1200`;
   }
-
   return att.link || "";
 }
 
 function getAttachmentLink(att: { link?: string; fileId?: string }) {
   if (att.link) return att.link;
-  if (att.fileId) return `https://drive.google.com/file/d/${att.fileId}/view`;
-  return "";
+  if (att.fileId) {
+    return `https://drive.google.com/file/d/${att.fileId}/view?usp=sharing`;
+  }
+  return "#";
 }
 
 export function AnnouncementSection({ className }: AnnouncementSectionProps) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Announcement | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-
-  const availableCategories = [
-    ...new Set([
-      ...ANNOUNCEMENT_CATEGORIES,
-      ...announcements.map((a) => a.category).filter(Boolean),
-    ]),
-  ];
-
-  const filteredAnnouncements =
-    selectedCategory === "all"
-      ? announcements
-      : announcements.filter((a) => a.category === selectedCategory);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [selectedAnnouncement, setSelectedAnnouncement] =
+    useState<Announcement | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    fetch("/api/announcements")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data)) {
-          setAnnouncements(json.data);
+    async function fetchAnnouncements() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/announcements");
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setAnnouncements(data.data);
         }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      } catch (err) {
+        console.error("Failed to load announcements:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAnnouncements();
   }, []);
 
-  return (
-    <div className={cn("w-full py-8 md:py-12", className)}>
-      <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
-        {/* Header */}
-        <div className="md:w-1/4 shrink-0">
-          <div className="flex items-center gap-3 mb-2">
-            <Megaphone className="h-6 w-6 text-[#ffc000]" />
-            <h3 className="text-2xl font-bold text-white">最新公告</h3>
-          </div>
-          <p className="text-sm text-slate-400">社團最新消息與異動</p>
+  const filteredAnnouncements = announcements
+    .filter((item) => {
+      if (item.status && item.status !== "顯示中") return false;
+      if (activeCategory === "all") return true;
+      return item.category === activeCategory;
+    })
+    .sort((a, b) => {
+      const timeA = a.publishTime
+        ? new Date(a.publishTime.replace(" ", "T")).getTime()
+        : 0;
+      const timeB = b.publishTime
+        ? new Date(b.publishTime.replace(" ", "T")).getTime()
+        : 0;
+      return timeB - timeA;
+    });
 
-          <div className="mt-4 w-full max-w-xs">
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger className="w-full bg-white/5 border-white/10 text-slate-200">
-                <SelectValue placeholder="選擇公告類別" />
-              </SelectTrigger>
-              <SelectContent
-                position="popper"
-                side="bottom"
-                sideOffset={6}
-                className="bg-[#2d2a33] border-white/10 text-slate-200"
-              >
-                <SelectItem value="all">全部類別</SelectItem>
-                {availableCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+  const categories = ["all", ...ANNOUNCEMENT_CATEGORIES];
+
+  return (
+    <section id="news" className={cn("w-full scroll-mt-24", className)}>
+      {/* 標題與分類過濾器 */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 pb-4 border-b border-white/10 gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-[#ffc000] text-xs font-mono font-semibold uppercase tracking-wider mb-1">
+            <Megaphone className="w-4 h-4" />
+            <span>COMMUNITY BULLETIN</span>
           </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            最新消息與重要公告
+          </h2>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 w-full bg-white/5 rounded-xl overflow-hidden">
-          <ScrollArea className="h-[280px]">
-            {loading ? (
-              <div className="flex items-center justify-center h-[280px] text-slate-500">
-                載入中...
-              </div>
-            ) : filteredAnnouncements.length === 0 ? (
-              <div className="flex items-center justify-center h-[280px] text-slate-500 italic">
-                目前沒有符合分類的公告
-              </div>
-            ) : (
-              <div className="divide-y divide-white/5">
-                {filteredAnnouncements.map((a) => (
-                  <button
-                    key={a.id}
-                    onClick={() => setSelected(a)}
-                    className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-sm font-semibold text-white truncate">
-                          {a.title}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <Badge
-                            variant="secondary"
-                            className={cn(
-                              "text-[10px] px-1.5 py-0 border-none",
-                              categoryColor[a.category] ||
-                                "bg-slate-500/20 text-slate-300",
-                            )}
-                          >
-                            {a.category}
-                          </Badge>
-                          <span className="text-xs text-slate-500">
-                            {a.publishTime}
-                          </span>
-                        </div>
-                      </div>
-                      {a.attachments && a.attachments.length > 0 && (
-                        <ExternalLink className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
+        {/* 分類按鈕列 (Responsive Scrollable Filter Pills) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-none">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setActiveCategory(cat)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer border",
+                activeCategory === cat
+                  ? "bg-[#ffc000] text-[#1e1c24] border-[#ffc000] font-bold shadow-xs"
+                  : "bg-white/[0.03] text-slate-300 border-white/10 hover:border-white/20 hover:text-white",
+              )}
+            >
+              {cat === "all" ? "全部公告" : cat}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* 公告詳情 Modal */}
-      <Dialog
-        open={!!selected}
-        onOpenChange={(open) => !open && setSelected(null)}
-      >
-        <DialogContent
-          aria-describedby={undefined}
-          className="w-[calc(100%-1.25rem)] sm:w-full sm:max-w-4xl max-h-[calc(100svh-5rem)] sm:max-h-[85vh] overflow-y-auto bg-[#2d2a33] border-white/10 text-white p-0"
-        >
-          {selected && (
-            <>
-              {/* Header */}
-              <div className="sticky top-0 bg-[#2d2a33] border-b border-white/10 p-6 pb-4 z-10">
-                <DialogTitle className="text-xl font-bold text-white pr-8">
-                  {selected.title}
-                </DialogTitle>
-                <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
-                  {selected.category && (
+      {/* 公告列表網格 (Hub Cards Grid) */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div
+              key={i}
+              className="h-44 rounded-xl bg-white/[0.02] border border-white/10 animate-pulse p-5 space-y-3"
+            >
+              <div className="h-4 bg-white/10 rounded-sm w-1/3" />
+              <div className="h-6 bg-white/10 rounded-sm w-3/4" />
+              <div className="h-12 bg-white/5 rounded-sm w-full" />
+            </div>
+          ))}
+        </div>
+      ) : filteredAnnouncements.length === 0 ? (
+        <div className="p-12 text-center rounded-2xl bg-white/[0.02] border border-white/10 text-slate-400">
+          <Megaphone className="w-8 h-8 text-slate-500 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">目前尚無相關公告訊息</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          {filteredAnnouncements.map((item) => {
+            const hasAttachments = item.attachments && item.attachments.length > 0;
+            const imageAtt = item.attachments?.find((att) =>
+              isImageAttachment(att),
+            );
+
+            return (
+              <div
+                key={item.id}
+                onClick={() => setSelectedAnnouncement(item)}
+                className="group relative p-5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-[#ffc000]/30 transition-all duration-300 cursor-pointer flex flex-col justify-between hover:-translate-y-1 hover:shadow-lg hover:shadow-black/40"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedAnnouncement(item);
+                  }
+                }}
+              >
+                {/* 卡片頂部：分類與日期 */}
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
                     <Badge
-                      variant="secondary"
+                      variant="outline"
                       className={cn(
-                        "text-xs px-2 py-0.5 border-none",
-                        categoryColor[selected.category] ||
-                          "bg-slate-500/20 text-slate-300",
+                        "text-[10px] px-2 py-0.5 font-medium border",
+                        categoryColor[item.category] ||
+                          "bg-white/10 text-slate-300 border-white/10",
                       )}
                     >
-                      {selected.category}
+                      {item.category}
                     </Badge>
-                  )}
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {selected.publishTime}
+
+                    <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono">
+                      <Clock className="w-3 h-3" />
+                      <span>{(item.publishTime || "").split(" ")[0]}</span>
+                    </div>
+                  </div>
+
+                  {/* 標題 */}
+                  <h3 className="text-base font-bold text-white mb-2 line-clamp-2 group-hover:text-[#ffc000] transition-colors leading-snug">
+                    {item.title}
+                  </h3>
+
+                  {/* 內文摘要 */}
+                  <p className="text-xs sm:text-sm text-slate-400 line-clamp-3 leading-relaxed mb-4">
+                    {item.content}
+                  </p>
+                </div>
+
+                {/* 卡片底部：附件狀態與點擊提示 */}
+                <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
+                  <div className="flex items-center gap-2">
+                    {hasAttachments && (
+                      <span className="inline-flex items-center gap-1 text-slate-300 text-[11px]">
+                        <Paperclip className="w-3 h-3 text-[#ffc000]" />
+                        {item.attachments.length} 個附件
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-[#ffc000] font-medium group-hover:underline flex items-center gap-1">
+                    閱讀完整公告
+                    <ExternalLink className="w-3 h-3" />
                   </span>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      )}
 
-              {/* Body */}
-              <div className="p-6 pt-4 space-y-6">
-                {/* 內容 */}
-                <div className="text-slate-300 leading-relaxed whitespace-pre-wrap text-sm">
-                  {selected.content}
+      {/* 公告詳情彈窗 (與資源管理系統 Modal 排版一致) */}
+      <Dialog
+        open={Boolean(selectedAnnouncement)}
+        onOpenChange={(open) => !open && setSelectedAnnouncement(null)}
+      >
+        <DialogContent
+          aria-describedby={undefined}
+          className="max-w-2xl max-h-[85vh] bg-[#1e1c24] border-white/10 text-white p-6"
+        >
+          {selectedAnnouncement && (
+            <>
+              <DialogHeader className="pr-8">
+                <DialogTitle className="text-xl font-bold text-white text-left leading-snug pr-6">
+                  {selectedAnnouncement.title}
+                </DialogTitle>
+                <div className="flex items-center gap-2 pt-1">
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "text-xs px-2 py-0.5",
+                      categoryColor[selectedAnnouncement.category] ||
+                        "bg-white/10 text-slate-300",
+                    )}
+                  >
+                    {selectedAnnouncement.category}
+                  </Badge>
+                  <span className="text-xs text-slate-400 font-mono">
+                    {selectedAnnouncement.publishTime || ""}
+                  </span>
                 </div>
+              </DialogHeader>
 
-                {/* 附件 */}
-                {selected.attachments?.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-slate-400 flex items-center gap-2">
-                      <Paperclip className="w-4 h-4" />
-                      附件 ({selected.attachments.length})
-                    </h4>
-
-                    {/* 圖片附件：直接顯示 */}
-                    {selected.attachments
-                      .filter((att) => isImageAttachment(att))
-                      .map((att, i) => {
-                        const imgSrc = getAttachmentImageSrc(att);
-                        if (!imgSrc) return null;
-
-                        return (
-                          <div
-                            key={`img-${i}`}
-                            className="rounded-lg overflow-hidden border border-white/10"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={imgSrc}
-                              alt={att.title || "附件圖片"}
-                              className="w-full h-auto object-cover"
-                              onError={(e) => {
-                                const target = e.currentTarget;
-                                if (att.fileId && !target.dataset.fallback) {
-                                  target.dataset.fallback = "1";
-                                  target.src = `https://drive.google.com/thumbnail?id=${att.fileId}&sz=w1200`;
-                                }
-                              }}
-                            />
-                            {att.title && (
-                              <p className="p-3 text-xs text-slate-400">
-                                {att.title}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
-
-                    {/* 非圖片附件（有 link 但沒 fileId） */}
-                    {selected.attachments
-                      .filter((att) => !isImageAttachment(att))
-                      .map((att, i) => {
-                        const link = getAttachmentLink(att);
-                        if (!link) return null;
-
-                        return (
-                          <a
-                            key={`file-${i}`}
-                            href={link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-lg p-3 transition-colors text-sm text-slate-300 hover:text-white"
-                          >
-                            <Paperclip className="w-4 h-4 text-[#ffc000] shrink-0" />
-                            <span className="truncate">
-                              {att.title || link}
-                            </span>
-                          </a>
-                        );
-                      })}
+              <ScrollArea className="max-h-[55vh] pr-4 scrollbar-dark">
+                <div className="space-y-4">
+                  {/* 內容 */}
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
+                    {selectedAnnouncement.content}
                   </div>
-                )}
-              </div>
+
+                  {/* 附件 */}
+                  {selectedAnnouncement.attachments &&
+                    selectedAnnouncement.attachments.length > 0 && (
+                      <div className="pt-4 border-t border-white/10 space-y-3">
+                        <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5 text-white">
+                          <Paperclip className="h-4 w-4 text-[#ffc000]" />
+                          附件 ({selectedAnnouncement.attachments.length})
+                        </h4>
+
+                        {/* 圖片附件：直接顯示 */}
+                        {selectedAnnouncement.attachments
+                          .filter((att) => isImageAttachment(att))
+                          .map((att, i) => {
+                            const imgSrc = getAttachmentImageSrc(att);
+                            if (!imgSrc) return null;
+
+                            return (
+                              <div
+                                key={`img-${i}`}
+                                className="rounded-lg overflow-hidden border border-white/10 bg-black/40"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={imgSrc}
+                                  alt={att.title || "附件圖片"}
+                                  className="w-full h-auto object-cover max-h-[420px]"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    if (att.fileId && !target.dataset.fallback) {
+                                      target.dataset.fallback = "1";
+                                      target.src = `https://drive.google.com/thumbnail?id=${att.fileId}&sz=w1200`;
+                                    }
+                                  }}
+                                />
+                                {att.title && (
+                                  <p className="p-3 text-xs text-slate-400 border-t border-white/5">
+                                    {att.title}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+
+                        {/* 非圖片附件 */}
+                        <div className="space-y-1.5">
+                          {selectedAnnouncement.attachments
+                            .filter((att) => !isImageAttachment(att))
+                            .map((att, i) => {
+                              const link = getAttachmentLink(att);
+                              if (!link) return null;
+
+                              return (
+                                <a
+                                  key={`file-${i}`}
+                                  href={link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 text-sm text-[#ffc000] hover:underline"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                                  {att.title || link}
+                                </a>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              </ScrollArea>
             </>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </section>
   );
 }

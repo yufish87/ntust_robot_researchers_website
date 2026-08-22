@@ -195,7 +195,7 @@ function LoginForm({
       onSuccess();
       toast({ title: "登入成功", description: "歡迎回到機器人研究社" });
       if (pathname.startsWith("/auth/")) {
-        router.push("/dashboard");
+        router.push("/dashboard/announcements");
       }
     } catch (err: any) {
       const msg = err.message || "";

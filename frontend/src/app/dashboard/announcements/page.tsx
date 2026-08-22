@@ -23,6 +23,7 @@ import {
   type Announcement,
 } from "@/lib/types/announcement";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { isGoogleDriveOrCdnUrl } from "@/lib/utils";
 
 const categoryColor: Record<string, string> = {
   一般公告: "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30",
@@ -44,6 +45,13 @@ function isImageAttachment(att: {
 
   if (imageAttachmentPattern.test(title) || imageAttachmentPattern.test(link)) {
     return true;
+  }
+
+  if (att.fileId || isGoogleDriveOrCdnUrl(link)) {
+    const nonImagePattern = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|7z|txt|csv|json)$/i;
+    if (!nonImagePattern.test(title)) {
+      return true;
+    }
   }
 
   return Boolean(att.fileId && !att.link);
@@ -179,8 +187,8 @@ export default function AnnouncementsPage() {
           aria-describedby={undefined}
           className="max-w-2xl max-h-[80vh]"
         >
-          <DialogHeader>
-            <DialogTitle className="text-xl">{selected?.title}</DialogTitle>
+          <DialogHeader className="pr-8">
+            <DialogTitle className="text-xl pr-6">{selected?.title}</DialogTitle>
             <div className="flex items-center gap-2 pt-1">
               {selected && (
                 <Badge

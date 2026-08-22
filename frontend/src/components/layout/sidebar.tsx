@@ -24,19 +24,13 @@ import { Button } from "@/components/ui/button";
 
 export const dashboardNavItems = [
   {
-    title: "首頁",
-    href: "/dashboard",
-    icon: Home,
-    expiredAllowed: true,
-  },
-  {
-    title: "公告",
+    title: "最新公告",
     href: "/dashboard/announcements",
     icon: Megaphone,
     expiredAllowed: true,
   },
   {
-    title: "課程",
+    title: "社課資源",
     href: "/dashboard/courses",
     icon: BookOpen,
     expiredAllowed: true,
@@ -133,9 +127,7 @@ export function AppSidebar() {
           const isDisabled = isExpiredUser && !item.expiredAllowed;
           const isActive =
             !isDisabled &&
-            (item.href === "/dashboard"
-              ? pathname === "/dashboard" || pathname === "/"
-              : pathname === item.href || pathname.startsWith(item.href + "/"));
+            (pathname === item.href || pathname.startsWith(item.href + "/"));
           if (isDisabled) {
             return (
               <div key={item.href} title="社員資格已過期">

@@ -1,5 +1,4 @@
-import { PublicSidebar } from "@/components/layout/public-sidebar";
-import { MobileNav } from "@/components/layout/mobile-nav";
+import { SiteHeader } from "@/components/layout/site-header";
 import { HomeHero } from "@/components/home/home-hero";
 import { AboutSection } from "@/components/home/home-info-section";
 import { AnnouncementSection } from "@/components/home/home-announcement-section";
@@ -11,27 +10,6 @@ import fs from "fs/promises";
 import path from "path";
 
 export default async function Home() {
-  // 讀取競賽成果圖片
-  const competitionDir = path.join(
-    process.cwd(),
-    "public",
-    "image",
-    "Competition",
-  );
-  let awardImages: { src: string; text: string }[] = [];
-
-  try {
-    const files = await fs.readdir(competitionDir);
-    awardImages = files
-      .filter((file) => /\.(jpg|jpeg|png|webp)$/i.test(file))
-      .map((file) => ({
-        src: `/image/Competition/${encodeURIComponent(file)}`,
-        text: path.parse(file).name,
-      }));
-  } catch (err) {
-    console.error("Failed to read competition images", err);
-  }
-
   // 讀取 Hero 拼圖底圖
   const mosaicDir = path.join(process.cwd(), "public", "image", "Mosaic");
   let mosaicImages: string[] = [];
@@ -46,56 +24,35 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex bg-[#34313c] min-h-screen selection:bg-[#ffc000] selection:text-[#34313c]">
-      {/* Sidebar - Visible on Desktop */}
-      <PublicSidebar />
+    <div className="min-h-screen bg-[#1e1c24] text-white selection:bg-[#ffc000] selection:text-[#1e1c24] flex flex-col justify-between">
+      {/* 頂部固定滿版導覽列 (Solid Fixed Header) */}
+      <SiteHeader />
 
-      {/* Mobile Nav */}
-      <MobileNav variant="public" />
+      {/* 首頁主體內容 (Full-width Content) */}
+      <main className="w-full flex-1 flex flex-col">
+        {/* 1. 英雄區塊：科技拼圖矩陣 (Cyber Mosaic Matrix) */}
+        <section id="hero" className="w-full">
+          <HomeHero mosaicImages={mosaicImages} />
+        </section>
 
-      {/* Main Content */}
-      <main className="flex-1 lg:ml-64 w-full h-dvh overflow-y-auto scroll-smooth pt-14 lg:pt-0 pb-[env(safe-area-inset-bottom)] scrollbar-dark flex flex-col justify-between">
-        <div className="flex-1">
-          {/* 1. Hero Section */}
-          <section
-            id="hero"
-            className="min-h-dvh flex items-center justify-center relative"
-          >
-            <HomeHero mosaicImages={mosaicImages} />
-          </section>
+        {/* 2. 創客儀表板整合網格主容器 (Robotics Hub Grid Container) */}
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 space-y-20 sm:space-y-28">
+          {/* 社團簡介與歷年競賽榮譽榜 */}
+          <AboutSection />
 
-          <div className="max-w-7xl mx-auto flex flex-col">
-            {/* 2. About Section */}
-            <section
-              id="about"
-              className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
-            >
-              <AboutSection awardImages={awardImages} />
-            </section>
+          {/* 最新消息與社團公告 */}
+          <AnnouncementSection />
 
-            {/* 3. News Section */}
-            <section
-              id="news"
-              className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20"
-            >
-              <AnnouncementSection />
-            </section>
+          {/* 社課資訊與教學資源 */}
+          <CourseSection />
 
-            {/* 4. Course Section */}
-            <section
-              id="courses"
-              className="px-4 md:px-8 lg:px-12 py-12 scroll-mt-20 bg-black/20"
-            >
-              <CourseSection />
-            </section>
-
-            <ScrollIndicator />
-          </div>
+          {/* 滾動進度提示器 */}
+          <ScrollIndicator />
         </div>
-
-        {/* Full-width Footer */}
-        <SiteFooter className="w-full" />
       </main>
+
+      {/* 沉浸式頁尾 */}
+      <SiteFooter />
     </div>
   );
 }

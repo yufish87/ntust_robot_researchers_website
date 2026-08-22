@@ -167,7 +167,7 @@ export function AdminSidebar() {
 
         {/* 返回使用者介面 */}
         <div className="border-t border-white/10 my-2" />
-        <Link href="/dashboard">
+        <Link href="/dashboard/announcements">
           <Button
             variant="ghost"
             className="w-full justify-start mb-2 hover:bg-white/10"
