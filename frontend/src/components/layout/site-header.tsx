@@ -109,13 +109,14 @@ export function SiteHeader() {
           className="flex items-center gap-3 cursor-pointer group text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#ffc000] rounded-md p-1 -ml-1 transition-transform hover:scale-[1.02]"
           aria-label="回首頁"
         >
-          <div className="relative w-36 sm:w-44 h-9">
+          <div className="relative w-36 sm:w-44 h-9 select-none">
             <Image
               src="/image/Bar_Logo_Yellow.png"
               alt="NTUST RRC Logo"
               fill
               priority
-              className="object-contain object-left"
+              draggable={false}
+              className="object-contain object-left select-none pointer-events-none"
               sizes="(max-width: 640px) 150px, 180px"
             />
           </div>
@@ -237,12 +238,13 @@ export function SiteHeader() {
         >
           <div>
             <SheetHeader className="p-5 border-b border-white/10 flex flex-col items-center">
-              <div className="relative w-40 h-10">
+              <div className="relative w-40 h-10 select-none">
                 <Image
                   src="/image/Bar_Logo_Yellow.png"
                   alt="NTUST RRC Logo"
                   fill
-                  className="object-contain"
+                  draggable={false}
+                  className="object-contain select-none pointer-events-none"
                   sizes="160px"
                 />
               </div>

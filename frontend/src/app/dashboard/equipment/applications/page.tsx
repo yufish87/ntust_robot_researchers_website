@@ -585,7 +585,7 @@ export default function ApplicationsPage() {
               size="sm"
               onClick={() => handleViewModeChange("grid")}
               className={cn(
-                "h-8 px-3 rounded-md cursor-pointer text-sm flex items-center gap-1.5 transition-all",
+                "h-8 px-2.5 rounded-md cursor-pointer text-sm flex items-center transition-all",
                 viewMode === "grid"
                   ? "bg-white dark:bg-[#34313d] text-slate-900 dark:text-white shadow-xs font-semibold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
@@ -594,7 +594,6 @@ export default function ApplicationsPage() {
               aria-pressed={viewMode === "grid"}
             >
               <LayoutGrid className="w-4 h-4" />
-              <span className="hidden sm:inline">格狀</span>
             </Button>
             <Button
               type="button"
@@ -602,7 +601,7 @@ export default function ApplicationsPage() {
               size="sm"
               onClick={() => handleViewModeChange("table")}
               className={cn(
-                "h-8 px-3 rounded-md cursor-pointer text-sm flex items-center gap-1.5 transition-all",
+                "h-8 px-2.5 rounded-md cursor-pointer text-sm flex items-center transition-all",
                 viewMode === "table"
                   ? "bg-white dark:bg-[#34313d] text-slate-900 dark:text-white shadow-xs font-semibold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
@@ -611,7 +610,6 @@ export default function ApplicationsPage() {
               aria-pressed={viewMode === "table"}
             >
               <List className="w-4 h-4" />
-              <span className="hidden sm:inline">表格</span>
             </Button>
           </div>
         </div>

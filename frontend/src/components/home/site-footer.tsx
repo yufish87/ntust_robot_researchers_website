@@ -21,8 +21,8 @@ export function SiteFooter({ className }: { className?: string }) {
             <div className="flex items-center gap-3">
               <div className="relative w-10 h-10 shrink-0">
                 <Image
-                  src="/image/Icon.png"
-                  alt="NTUST RRC"
+                  src="/image/icon.png"
+                  alt="Icon"
                   fill
                   className="object-contain"
                   sizes="40px"
@@ -84,8 +84,10 @@ export function SiteFooter({ className }: { className?: string }) {
             </h4>
             <div className="space-y-2 text-xs text-slate-300">
               <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-[#ffc000] shrink-0 mt-0.5" />
-                <span>台北市大安區基隆路四段43號（研揚大樓）</span>
+                <MapPin className="w-4 h-4 text-[#ffc000] shrink-0" />
+                <a href="https://maps.app.goo.gl/H5yPBJSKp45tRefC9" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  台北市大安區基隆路四段43號<br />臺科大校本部 社團大樓2樓 S205室
+                </a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-[#ffc000] shrink-0" />
