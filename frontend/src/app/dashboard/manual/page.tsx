@@ -41,6 +41,7 @@ export default function MemberManualPage() {
   const docEquipment = loadDoc("equipment.md");
   const docMachine = loadDoc("machine.md");
   const docFinance = loadDoc("finance.md");
+  const docWishlist = loadDoc("wishlist.md");
   const docFaq = loadDoc("faq.md");
 
   const tabs: ManualTabItem[] = [
@@ -75,6 +76,14 @@ export default function MemberManualPage() {
       content: docFinance.content,
       updatedAt: docFinance.updatedAt,
       description: "四大報帳類別、統編開立規範、繳交實體發票回報與撥款進度",
+    },
+    {
+      id: "wishlist",
+      label: "社團許願池",
+      iconName: "wishlist",
+      content: docWishlist.content,
+      updatedAt: docWishlist.updatedAt,
+      description: "電子乖乖擬真祈福、器材採購與社課主題建議、每日限制與集氣評估",
     },
     {
       id: "faq",
