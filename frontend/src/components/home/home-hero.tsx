@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { ArrowRight, Sparkles, Cpu, Wrench, Trophy } from "lucide-react";
+import { ArrowRight, Cpu } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface HomeHeroProps {
@@ -81,13 +81,14 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center flex flex-col items-center pointer-events-auto">
 
         {/* 社團大標 Logo */}
-        <div className="relative w-[320px] sm:w-[480px] md:w-[620px] h-[80px] sm:h-[110px] md:h-[140px] mb-6 drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)]">
+        <div className="relative w-[320px] sm:w-[480px] md:w-[620px] h-[80px] sm:h-[110px] md:h-[140px] mb-6 drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)] select-none pointer-events-none">
           <Image
             src="/image/Bar_Logo_Yellow.png"
             alt="臺科大機器人研究社"
             fill
             priority
-            className="object-contain"
+            draggable={false}
+            className="object-contain select-none pointer-events-none"
             sizes="(max-width: 640px) 320px, (max-width: 768px) 480px, 620px"
           />
         </div>
@@ -124,36 +125,50 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
           </Button>
         </div>
 
-        {/* 5. 核心指標牌 (Tabular Metric Badges) */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-6 w-full max-w-xl p-3 sm:p-4 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md shadow-xl">
-          <div className="flex flex-col items-center text-center p-2 group/metric hover:bg-white/[0.03] rounded-xl transition-colors">
-            <div className="flex items-center gap-1 text-[#ffc000] mb-0.5">
-              <Trophy className="w-3.5 h-3.5 hidden sm:inline" />
-              <span className="text-xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight">
-                10+
+        {/* 5. 核心指標數據列 (Clean Engineering Metric Strip) */}
+        <div className="w-full max-w-2xl pt-8 border-t border-white/10">
+          <div className="grid grid-cols-3 divide-x divide-white/10">
+            {/* 指標 1 */}
+            <div className="flex flex-col items-center px-2 sm:px-4 text-center">
+              <div className="flex items-baseline justify-center gap-0.5 mb-1">
+                <span className="text-2xl sm:text-4xl font-extrabold font-mono tabular-nums tracking-tight text-white">
+                  10
+                </span>
+                <span className="text-base sm:text-xl font-bold font-mono text-[#ffc000]">
+                  +
+                </span>
+              </div>
+              <span className="text-[11px] sm:text-xs font-mono tracking-wider text-slate-400 font-medium uppercase">
+                競賽歷練經驗
               </span>
             </div>
-            <span className="text-xs text-slate-400 font-medium">競賽歷練經驗</span>
-          </div>
 
-          <div className="flex flex-col items-center text-center p-2 border-x border-white/10 group/metric hover:bg-white/[0.03] rounded-xl transition-colors">
-            <div className="flex items-center gap-1 text-[#ffc000] mb-0.5">
-              <Wrench className="w-3.5 h-3.5 hidden sm:inline" />
-              <span className="text-xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight">
-                50+
+            {/* 指標 2 */}
+            <div className="flex flex-col items-center px-2 sm:px-4 text-center">
+              <div className="flex items-baseline justify-center gap-0.5 mb-1">
+                <span className="text-2xl sm:text-4xl font-extrabold font-mono tabular-nums tracking-tight text-white">
+                  50
+                </span>
+                <span className="text-base sm:text-xl font-bold font-mono text-[#ffc000]">
+                  +
+                </span>
+              </div>
+              <span className="text-[11px] sm:text-xs font-mono tracking-wider text-slate-400 font-medium uppercase">
+                年度社課時數
               </span>
             </div>
-            <span className="text-xs text-slate-400 font-medium">年度社課時數</span>
-          </div>
 
-          <div className="flex flex-col items-center text-center p-2 group/metric hover:bg-white/[0.03] rounded-xl transition-colors">
-            <div className="flex items-center gap-1 text-[#ffc000] mb-0.5">
-              <Cpu className="w-3.5 h-3.5 hidden sm:inline" />
-              <span className="text-xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight">
-                NTUST
+            {/* 指標 3 */}
+            <div className="flex flex-col items-center px-2 sm:px-4 text-center">
+              <div className="flex items-baseline justify-center gap-0.5 mb-1">
+                <span className="text-xl sm:text-3xl font-extrabold font-mono tracking-tight text-[#ffc000]">
+                  NTUST
+                </span>
+              </div>
+              <span className="text-[11px] sm:text-xs font-mono tracking-wider text-slate-400 font-medium uppercase">
+                頂尖創客基地
               </span>
             </div>
-            <span className="text-xs text-slate-400 font-medium">頂尖創客基地</span>
           </div>
         </div>
       </div>

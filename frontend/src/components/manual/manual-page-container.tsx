@@ -19,6 +19,7 @@ import {
   Calendar,
   ListTree,
   CornerDownRight,
+  Sparkles,
 } from "lucide-react";
 import { MarkdownViewer, slugify } from "./markdown-viewer";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   equipment: Wrench,
   machine: Printer,
   finance: CreditCard,
+  wishlist: Sparkles,
   faq: HelpCircle,
   users: Users,
   admin_overview: ShieldCheck,
