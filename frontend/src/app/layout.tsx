@@ -77,6 +77,9 @@ export const metadata: Metadata = {
     description: "國立臺灣科技大學 機器人研究社（NTUST Robot Researchers Club）社團官網",
     images: ["/image/Bar_Logo_Yellow.png"],
   },
+  alternates: {
+    canonical: "./",
+  },
   verification: {
     google: "6ohWJUh6HtS-jw5dKoELpnViGjB1xx_aGiZq7dT9CTQ",
   },

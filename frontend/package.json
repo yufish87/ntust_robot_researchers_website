@@ -63,5 +63,11 @@
     "edge >= 107",
     "firefox >= 104",
     "safari >= 15.4"
-  ]
+  ],
+  "lavamoat": {
+    "allowScripts": {
+      "eslint-config-next>eslint-import-resolver-typescript>unrs-resolver#1.11.1": true,
+      "next>sharp#0.34.5": true
+    }
+  }
 }
