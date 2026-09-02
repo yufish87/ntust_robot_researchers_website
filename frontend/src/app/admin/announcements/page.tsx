@@ -58,9 +58,12 @@ import {
   RefreshCw,
   Trophy,
   Sparkles,
+  Bell,
+  MessageSquare,
 } from "lucide-react";
 import axios from "axios";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -249,24 +252,26 @@ function AttachmentItem({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Form State
-// ---------------------------------------------------------------------------
-
 interface FormData {
   title: string;
   content: string;
   category: string;
   status: string;
   attachments: AttachmentFormItem[];
+  broadcastEmail?: boolean;
+  broadcastLinePersonal?: boolean;
+  broadcastToLineGroup?: boolean;
 }
 
 const emptyForm: FormData = {
   title: "",
   content: "",
   category: "一般公告",
-  status: "未發布",
+  status: "顯示中",
   attachments: [],
+  broadcastEmail: true,
+  broadcastLinePersonal: true,
+  broadcastToLineGroup: true,
 };
 
 // ---------------------------------------------------------------------------
@@ -303,13 +308,16 @@ export default function AdminAnnouncementsPage() {
     );
   }, [form]);
 
+  const isDirty = isFormOpen && isFormDirty();
+  const { confirmDiscard } = useUnsavedChangesWarning(isDirty, {
+    message:
+      "您有尚未儲存的公告內容，確定要放棄編輯並關閉視窗嗎？\n\nAre you sure you want to discard your changes and close this window?",
+  });
+
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (!open && isFormDirty()) {
-        const confirmClose = window.confirm(
-          "您有尚未儲存的公告內容，確定要放棄編輯並關閉視窗嗎？\n\nAre you sure you want to discard your changes and close this window?"
-        );
-        if (!confirmClose) return;
+        if (!confirmDiscard()) return;
       }
       setIsFormOpen(open);
       if (!open) {
@@ -318,7 +326,7 @@ export default function AdminAnnouncementsPage() {
         pendingDeletionsRef.current.clear();
       }
     },
-    [isFormDirty]
+    [isFormDirty, confirmDiscard]
   );
 
   const setPendingFile = useCallback((key: string, file: File | null) => {
@@ -370,6 +378,9 @@ export default function AdminAnnouncementsPage() {
         link: att.link || "",
         fileId: (att as AttachmentFormItem).fileId || "",
       })),
+      broadcastEmail: false,
+      broadcastLinePersonal: false,
+      broadcastToLineGroup: false,
     };
     setForm(formData);
     initialFormRef.current = JSON.stringify(formData);
@@ -772,6 +783,147 @@ export default function AdminAnnouncementsPage() {
                     onOldFileDeletion={addPendingDeletion}
                   />
                 ))}
+              </div>
+            </div>
+
+            {/* 同步推播設定 */}
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] overflow-hidden">
+              <div className="px-4 py-3 bg-slate-100/60 dark:bg-white/[0.03] border-b border-slate-200/70 dark:border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-[#ffc000]" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                    公告推播與通知設定
+                  </span>
+                </div>
+                <span className="text-[11px] text-muted-foreground">顯示中時觸發</span>
+              </div>
+
+              <div className="divide-y divide-slate-200/60 dark:divide-white/5">
+                {/* 1. Email 全體社員 */}
+                <label
+                  htmlFor="ann-broadcast-email"
+                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none group"
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                        Email 全體社員
+                      </span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-400 shrink-0">
+                        學校信箱
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
+                      發送公告通知信至全體活躍社員之學校信箱 (@mail.ntust.edu.tw)
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <input
+                      id="ann-broadcast-email"
+                      type="checkbox"
+                      checked={!!form.broadcastEmail}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, broadcastEmail: e.target.checked }))
+                      }
+                      className="sr-only"
+                    />
+                    <div
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ${
+                        form.broadcastEmail ? "bg-[#ffc000]" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transform transition duration-200 ease-in-out ${
+                          form.broadcastEmail ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </label>
+
+                {/* 2. LINE 個人官方帳號 */}
+                <label
+                  htmlFor="ann-broadcast-line-personal"
+                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none group"
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                        LINE 個人官方帳號
+                      </span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 shrink-0">
+                        個人推播
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
+                      向所有已綁定官方帳號之社員個別推送專屬公告圖文卡片
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <input
+                      id="ann-broadcast-line-personal"
+                      type="checkbox"
+                      checked={!!form.broadcastLinePersonal}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, broadcastLinePersonal: e.target.checked }))
+                      }
+                      className="sr-only"
+                    />
+                    <div
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ${
+                        form.broadcastLinePersonal ? "bg-[#ffc000]" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transform transition duration-200 ease-in-out ${
+                          form.broadcastLinePersonal ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </label>
+
+                {/* 3. LINE 社員大群 */}
+                <label
+                  htmlFor="ann-broadcast-line-group"
+                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none group"
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                        LINE 社員大群群播
+                      </span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/15 text-green-700 dark:text-green-400 shrink-0">
+                        群組廣播
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
+                      同步發送重要公告通知至社團成員交流 LINE 大群
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <input
+                      id="ann-broadcast-line-group"
+                      type="checkbox"
+                      checked={!!form.broadcastToLineGroup}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, broadcastToLineGroup: e.target.checked }))
+                      }
+                      className="sr-only"
+                    />
+                    <div
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ${
+                        form.broadcastToLineGroup ? "bg-[#ffc000]" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transform transition duration-200 ease-in-out ${
+                          form.broadcastToLineGroup ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </label>
               </div>
             </div>
 

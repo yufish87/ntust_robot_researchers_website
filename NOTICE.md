@@ -94,6 +94,24 @@
 - License: MIT
 - https://github.com/js-cookie/js-cookie
 
+### qrcode.react
+
+- Copyright (c) 2015 Paul O’Shannessy
+- License: ISC
+- https://github.com/zpao/qrcode.react
+
+### React Markdown
+
+- Copyright (c) 2015 Espen Hovlandsdal
+- License: MIT
+- https://github.com/remarkjs/react-markdown
+
+### Remark GFM
+
+- Copyright (c) 2020 Titus Wormer
+- License: MIT
+- https://github.com/remarkjs/remark-gfm
+
 ### 其他工具
 
 - ESLint: MIT License

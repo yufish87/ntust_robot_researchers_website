@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { FileUpload, FileUploadRef } from "@/components/ui/file-upload";
 import { FinanceAPI } from "@/lib/api/finance";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes";
 
 // --- Schema Definitions (Aligned with process.txt) ---
 
@@ -116,6 +117,18 @@ export default function NewFinanceApplicationPage() {
     return sum + (q * p);
   }, 0);
 
+  const isDirty =
+    (form.formState.isDirty ||
+      Boolean(form.watch("description")?.trim()) ||
+      Boolean(form.watch("fileId")) ||
+      totalAmount > 0) &&
+    !isSubmitting;
+
+  const { confirmDiscard } = useUnsavedChangesWarning(isDirty, {
+    message:
+      "您有尚未提交的經費報帳申請資料，確定要離開嗎？\n\nAre you sure you want to leave? Your application has not been submitted.",
+  });
+
   const onSubmit: SubmitHandler<FormInputValues> = async (data) => {
     setIsSubmitting(true);
     try {
@@ -182,7 +195,10 @@ export default function NewFinanceApplicationPage() {
       >
         <Button
           variant="outline"
-          onClick={() => router.push('/dashboard/finance')}
+          onClick={() => {
+            if (!confirmDiscard()) return;
+            router.push('/dashboard/finance');
+          }}
           className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
         >
           <ArrowLeft className="mr-1.5 h-4 w-4" />

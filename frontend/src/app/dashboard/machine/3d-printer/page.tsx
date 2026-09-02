@@ -9,6 +9,7 @@ import * as z from "zod";
 import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,6 +119,20 @@ export default function ThreeDPrinterApplicationPage() {
 
   const watchedUseTime = form.watch("useTime") || "";
   const watchedEstimateTime = form.watch("estimateTime") || "";
+  const watchedPurpose = form.watch("purpose") || "";
+
+  const isFormDirty =
+    (form.formState.isDirty ||
+      Boolean(watchedPurpose.trim()) ||
+      Boolean(watchedUseTime) ||
+      Boolean(form.watch("fileId")) ||
+      Boolean(form.watch("screenshotFileId"))) &&
+    !isSubmitting;
+
+  const { confirmDiscard } = useUnsavedChangesWarning(isFormDirty, {
+    message:
+      "您有尚未提交的 3D 列印機借用申請資料，確定要離開嗎？\n\nAre you sure you want to leave? Your application has not been submitted.",
+  });
 
   const expectedEndTime = useMemo(
     () => computeExpectedEndTime(watchedUseTime, watchedEstimateTime),
@@ -304,7 +319,13 @@ export default function ThreeDPrinterApplicationPage() {
         title="3D 列印機借用申請"
         description="填寫切片參數（填充率、預估時間、耗材重量）並上傳 .gcode 檔案與切片截圖。"
       >
-        <Link href="/dashboard/machine" className="w-full sm:w-auto">
+        <Link
+          href="/dashboard/machine"
+          className="w-full sm:w-auto"
+          onClick={(e) => {
+            if (!confirmDiscard()) e.preventDefault();
+          }}
+        >
           <Button
             variant="outline"
             className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"

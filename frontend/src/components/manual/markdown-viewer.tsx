@@ -74,6 +74,19 @@ export function MarkdownViewer({ content, className }: MarkdownViewerProps) {
               </h3>
             );
           },
+          h4: ({ node, children, ...props }) => {
+            const text = React.Children.toArray(children).join("");
+            const id = slugify(text);
+            return (
+              <h4
+                id={id}
+                className="scroll-mt-28 text-[15px] sm:text-base font-bold text-slate-900 dark:text-slate-100 mt-6 mb-2.5 flex items-center gap-2"
+                {...props}
+              >
+                <span>{children}</span>
+              </h4>
+            );
+          },
           p: ({ node, children, ...props }) => {
             const hasImage = node?.children?.some(
               (child: any) =>
@@ -84,19 +97,19 @@ export function MarkdownViewer({ content, className }: MarkdownViewerProps) {
               return <div className="mb-4">{children}</div>;
             }
             return (
-              <p className="mb-4 leading-7 text-slate-700 dark:text-slate-300 text-[15px]" {...props}>
+              <p className="mb-3.5 leading-7 text-slate-700 dark:text-slate-300 text-[15px] last:mb-0" {...props}>
                 {children}
               </p>
             );
           },
           ul: ({ node, ...props }) => (
-            <ul className="list-disc list-outside pl-5 mb-5 space-y-2 text-slate-700 dark:text-slate-300 text-[15px]" {...props} />
+            <ul className="list-disc list-outside pl-5 mb-5 space-y-1.5 text-slate-700 dark:text-slate-300 text-[15px] [&_p]:mb-0 [&_p]:leading-7" {...props} />
           ),
           ol: ({ node, ...props }) => (
-            <ol className="list-decimal list-outside pl-5 mb-5 space-y-2 text-slate-700 dark:text-slate-300 text-[15px] font-normal" {...props} />
+            <ol className="list-decimal list-outside pl-5 mb-5 space-y-1.5 text-slate-700 dark:text-slate-300 text-[15px] font-normal [&_p]:mb-0 [&_p]:leading-7" {...props} />
           ),
           li: ({ node, ...props }) => (
-            <li className="leading-7 pl-1" {...props} />
+            <li className="leading-7 pl-1 [&>p]:mb-0" {...props} />
           ),
           blockquote: ({ node, children, ...props }) => {
             const textContent = React.Children.toArray(children).reduce((acc: string, child: any) => {
@@ -201,7 +214,7 @@ export function MarkdownViewer({ content, className }: MarkdownViewerProps) {
             <th className="px-4 py-3 font-semibold whitespace-nowrap" {...props} />
           ),
           td: ({ node, ...props }) => (
-            <td className="px-4 py-3.5 border-t border-slate-100 dark:border-slate-800/60 font-normal align-top leading-relaxed text-sm" {...props} />
+            <td className="px-4 py-3.5 border-t border-slate-100 dark:border-slate-800/60 font-normal align-top leading-relaxed text-sm first:whitespace-nowrap" {...props} />
           ),
           code: ({ node, className, children, ...props }: any) => {
             const isInline = !className && typeof children === "string" && !children.includes("\n");

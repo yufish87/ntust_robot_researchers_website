@@ -17,6 +17,7 @@ interface SessionUser {
   role: string;
   department: string;
   grade?: string;
+  email?: string;
 }
 
 function sanitizeUser(raw: unknown): SessionUser | null {
@@ -35,6 +36,7 @@ function sanitizeUser(raw: unknown): SessionUser | null {
     role: String(user.role),
     department: String(user.department),
     grade: user.grade ? String(user.grade) : undefined,
+    email: user.email ? String(user.email) : undefined,
   };
 }
 

@@ -88,7 +88,7 @@ export function AdminSidebar() {
         <div className="relative w-full h-12">
           <Image
             src="/image/Bar_Logo_Yellow.png"
-            alt="RRC Logo"
+            alt="臺科大機器人研究社標誌"
             fill
             className="object-contain"
             sizes="20vw"

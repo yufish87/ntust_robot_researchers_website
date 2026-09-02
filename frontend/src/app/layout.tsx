@@ -22,15 +22,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://ntust-robotresearchers.vercel.app"),
   title: {
-    default: "臺科大機器人研究社 社團網站 | NTUST Robot Researchers Club Website",
+    default: "臺科大機器人研究社 | NTUST Robot Researchers Club",
     template: "%s | 臺科大機器人研究社",
   },
-  description: "國立臺灣科技大學 機器人研究社（NTUST Robot Researchers Club）社團官網",
+  description: "國立臺灣科技大學 機器人研究社 社團網站",
   keywords: [
     "臺科大",
     "臺灣科技大學",
     "NTUST",
     "機器人研究社",
+    "臺科大機器人研究社",
     "機器人",
     "創客",
     "程式",
@@ -59,22 +60,22 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "zh_TW",
-    siteName: "NTUST Robot Researchers Club 臺科大機器人研究社",
-    title: "臺科大機器人研究社 社團官網",
-    description: "國立臺灣科技大學 機器人研究社（NTUST Robot Researchers Club）社團官網",
+    siteName: "臺科大機器人研究社",
+    title: "臺科大機器人研究社 | NTUST Robot Researchers Club",
+    description: "國立臺灣科技大學 機器人研究社 社團網站",
     images: [
       {
         url: "/image/Bar_Logo_Yellow.png",
         width: 1200,
         height: 630,
-        alt: "臺科大機器人研究社 NTUST RRC",
+        alt: "臺科大機器人研究社",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "臺科大機器人研究社 社團官網",
-    description: "國立臺灣科技大學 機器人研究社（NTUST Robot Researchers Club）社團官網",
+    title: "臺科大機器人研究社 | NTUST Robot Researchers Club",
+    description: "國立臺灣科技大學 機器人研究社 社團網站",
     images: ["/image/Bar_Logo_Yellow.png"],
   },
   alternates: {
@@ -89,13 +90,31 @@ export const viewport = {
   viewportFit: "cover",
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "臺科大機器人研究社",
+  alternateName: [
+    "NTUST Robot Researchers Club",
+    "NTUST RRC",
+    "臺科大機器人研究社 | NTUST Robot Researchers Club",
+  ],
+  url: "https://ntust-robotresearchers.vercel.app/",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-TW">
+    <html lang="zh-TW" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${notoSansTC.variable} ${geistMono.variable} font-sans antialiased overscroll-none`}
         style={{ fontFamily: "var(--font-noto-sans-tc), sans-serif" }}

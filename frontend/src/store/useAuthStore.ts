@@ -9,6 +9,7 @@ interface User {
   role: string;
   department: string;
   grade?: string;
+  email?: string;
   membershipHistory?: MembershipRecord[]; // 歷年身份組
   activeUntilYear?: string;              // 有效截止學年，如 "115"
 }

@@ -112,7 +112,7 @@ export function SiteHeader() {
           <div className="relative w-36 sm:w-44 h-9 select-none">
             <Image
               src="/image/Bar_Logo_Yellow.png"
-              alt="NTUST RRC Logo"
+              alt="臺科大機器人研究社標誌"
               fill
               priority
               draggable={false}
@@ -241,7 +241,7 @@ export function SiteHeader() {
               <div className="relative w-40 h-10 select-none">
                 <Image
                   src="/image/Bar_Logo_Yellow.png"
-                  alt="NTUST RRC Logo"
+                  alt="臺科大機器人研究社標誌"
                   fill
                   draggable={false}
                   className="object-contain select-none pointer-events-none"

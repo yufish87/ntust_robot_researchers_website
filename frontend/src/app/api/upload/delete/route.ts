@@ -25,10 +25,14 @@ export async function POST(req: NextRequest) {
       fileId,
     };
 
-    const res = await fetch(gasUrl, {
+    const targetUrl = new URL(gasUrl);
+    targetUrl.searchParams.set("route", "upload/delete");
+
+    const res = await fetch(targetUrl.toString(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      redirect: "follow",
       cache: "no-store",
     });
 

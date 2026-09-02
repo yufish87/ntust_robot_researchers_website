@@ -1083,7 +1083,12 @@ export default function ApplicationsPage() {
       {/* 申請單詳細資訊 Modal */}
       <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {selectedApp && (
+          {!selectedApp ? (
+            <DialogHeader className="sr-only">
+              <DialogTitle>申請單詳情</DialogTitle>
+              <DialogDescription>載入詳細資訊中</DialogDescription>
+            </DialogHeader>
+          ) : (
             <div className="space-y-5">
               <DialogHeader>
                 <div className="flex items-center justify-between gap-3 pr-6">
