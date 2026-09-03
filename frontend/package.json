@@ -64,6 +64,10 @@
     "firefox >= 104",
     "safari >= 15.4"
   ],
+  "allowScripts": {
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.11.1": true
+  },
   "lavamoat": {
     "allowScripts": {
       "eslint-config-next>eslint-import-resolver-typescript>unrs-resolver#1.11.1": true,
