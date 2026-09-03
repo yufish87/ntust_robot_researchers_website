@@ -15,20 +15,18 @@ export interface MembershipRecord {
   positions: string;  // 職位（社員為空字串）
 }
 
+/** 各渠道通知開關項目 */
+export interface NotificationChannel {
+  equipment: boolean;
+  machine: boolean;
+  finance: boolean;
+  announcements: boolean;
+}
+
 /** 通知偏好設定結構 */
 export interface NotificationPreferences {
-  email: {
-    equipment: boolean;
-    machine: boolean;
-    finance: boolean;
-    announcements: boolean;
-  };
-  line: {
-    equipment: boolean;
-    machine: boolean;
-    finance: boolean;
-    announcements: boolean;
-  };
+  email: NotificationChannel;
+  line: NotificationChannel;
 }
 
 /** LINE 綁定狀態資訊 */
