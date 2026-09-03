@@ -22,7 +22,7 @@ export function SiteFooter({ className }: { className?: string }) {
               <div className="relative w-10 h-10 shrink-0">
                 <Image
                   src="/image/icon.png"
-                  alt="Icon"
+                  alt="臺科大機器人研究社圖示"
                   fill
                   className="object-contain"
                   sizes="40px"

@@ -703,9 +703,8 @@ export default function AdminMachinePage() {
                                       {isActioning ? (
                                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                       ) : (
-                                        <Check className="h-3.5 w-3.5 mr-1" />
+                                        <Check className="h-3.5 w-3.5" />
                                       )}
-                                      核准
                                     </Button>
                                     <Button
                                       size="sm"
@@ -716,8 +715,7 @@ export default function AdminMachinePage() {
                                         setRejectReason("");
                                       }}
                                     >
-                                      <X className="h-3.5 w-3.5 mr-1" />
-                                      拒絕
+                                      <X className="h-3.5 w-3.5" />
                                     </Button>
                                   </>
                                 )}

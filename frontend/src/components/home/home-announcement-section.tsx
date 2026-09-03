@@ -11,9 +11,12 @@ import {
   FileText,
   Clock,
   Sparkles,
+  ArrowRight,
+  Lock,
 } from "lucide-react";
 import { cn, isGoogleDriveOrCdnUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +29,9 @@ import {
   type Announcement,
 } from "@/lib/types/announcement";
 import Image from "next/image";
+import Link from "next/link";
+import { LoginModal } from "@/components/auth/login-modal";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const categoryColor: Record<string, string> = {
   一般公告: "bg-blue-500/15 text-blue-300 border-blue-500/30",
@@ -86,6 +92,9 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
   const [selectedAnnouncement, setSelectedAnnouncement] =
     useState<Announcement | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const { user } = useAuthStore();
+
+  const MAX_HOMEPAGE_ANNOUNCEMENTS = 6;
 
   useEffect(() => {
     async function fetchAnnouncements() {
@@ -120,6 +129,14 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
         : 0;
       return timeB - timeA;
     });
+
+  const displayedAnnouncements = filteredAnnouncements.slice(
+    0,
+    MAX_HOMEPAGE_ANNOUNCEMENTS,
+  );
+  const hasMore = filteredAnnouncements.length > MAX_HOMEPAGE_ANNOUNCEMENTS;
+  const remainingCount =
+    filteredAnnouncements.length - MAX_HOMEPAGE_ANNOUNCEMENTS;
 
   const categories = ["all", ...ANNOUNCEMENT_CATEGORIES];
 
@@ -178,7 +195,7 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {filteredAnnouncements.map((item) => {
+          {displayedAnnouncements.map((item) => {
             const hasAttachments = item.attachments && item.attachments.length > 0;
             const imageAtt = item.attachments?.find((att) =>
               isImageAttachment(att),
@@ -249,6 +266,40 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
           })}
         </div>
       )}
+
+      {/* 底部歷史公告引導區 */}
+      <div className="mt-8 p-4 sm:p-5 rounded-xl bg-white/[0.02] border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+        <div className="flex items-center gap-2.5 text-center sm:text-left">
+          <Lock className="w-4 h-4 text-[#ffc000] shrink-0" />
+          <span>
+            {hasMore
+              ? `首頁僅展示最新 ${MAX_HOMEPAGE_ANNOUNCEMENTS} 則公告，尚有 ${remainingCount} 則歷史公告可至公告專區查閱。`
+              : "完整社團公告與歷史發布紀錄，請至會員公告專區查閱。"}
+          </span>
+        </div>
+
+        {user ? (
+          <Link href="/dashboard/announcements" className="shrink-0 w-full sm:w-auto">
+            <Button
+              size="sm"
+              className="w-full sm:w-auto bg-white/10 hover:bg-[#ffc000] hover:text-[#1e1c24] text-white text-xs font-bold gap-1.5 h-9 px-4 cursor-pointer transition-colors"
+            >
+              前往完整公告專區
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          </Link>
+        ) : (
+          <LoginModal>
+            <Button
+              size="sm"
+              className="w-full sm:w-auto bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] text-xs font-bold gap-1.5 h-9 px-4 cursor-pointer"
+            >
+              登入後查看更多公告
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          </LoginModal>
+        )}
+      </div>
 
       {/* 公告詳情彈窗 (與資源管理系統 Modal 排版一致) */}
       <Dialog

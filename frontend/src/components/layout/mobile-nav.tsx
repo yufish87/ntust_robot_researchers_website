@@ -198,7 +198,7 @@ export function MobileNav({ variant }: MobileNavProps) {
             <div className="relative w-full h-12">
               <Image
                 src={cfg.logo}
-                alt="RRC Logo"
+                alt="臺科大機器人研究社標誌"
                 fill
                 className="object-contain"
                 sizes="20vw"

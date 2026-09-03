@@ -112,7 +112,7 @@ export default function LoginPage() {
       await login(values);
       toast({
         title: "登入成功",
-        description: "歡迎回到機器人研究社",
+        description: "歡迎回到臺科大機器人研究社",
       });
       router.push("/dashboard/announcements");
     } catch (err: any) {
@@ -206,7 +206,7 @@ export default function LoginPage() {
           <div className="relative w-full h-12 mb-2">
             <Image
               src="/image/Bar_Logo.png"
-              alt="RRC Logo"
+              alt="臺科大機器人研究社標誌"
               fill
               className="object-contain"
               priority

@@ -23,6 +23,7 @@ import { getGoogleDriveImageUrl } from '@/lib/utils';
 import { ArrowLeft, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes';
 
 // Schema Definition
 const checkoutSchema = z.object({
@@ -74,10 +75,10 @@ export default function CheckoutPage() {
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
-    // Redirect if empty cart is handled by the UI below, but effect is also fine
-    useEffect(() => {
-        // Can add logic here if needed
-    }, []);
+    const isDirty = (form.formState.isDirty || (items.length > 0 && !!form.watch("reason"))) && !submitting;
+    const { confirmDiscard } = useUnsavedChangesWarning(isDirty, {
+        message: "您有尚未提交的器材借用申請內容，確定要離開嗎？\n\nAre you sure you want to leave? Your application has not been submitted.",
+    });
 
     const onSubmit = async (data: CheckoutFormValues) => {
         setSubmitError(null);
@@ -155,7 +156,10 @@ export default function CheckoutPage() {
             >
                 <Button
                     variant="outline"
-                    onClick={() => router.push('/dashboard/equipment')}
+                    onClick={() => {
+                        if (!confirmDiscard()) return;
+                        router.push('/dashboard/equipment');
+                    }}
                     className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
                 >
                     <ArrowLeft className="mr-1.5 h-4 w-4" />

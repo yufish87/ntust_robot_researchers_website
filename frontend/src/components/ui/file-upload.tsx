@@ -40,6 +40,9 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
   const [errorMessage, setErrorMessage] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_AUTO_RETRIES = 3;
+
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
@@ -55,88 +58,107 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
       setStatus("idle");
       setErrorMessage("");
       setProgress(0);
+      setRetryCount(0);
       onFileChange?.(selectedFile);
     }
   };
 
-  // Re-write handleUpload to return ID properly
-  const executeUpload = async (customFileName?: string): Promise<string> => {
-     if (!file) {
-       setErrorMessage("沒有選擇檔案");
-       setStatus("error");
-       throw new Error("No file selected");
-     }
-     
-     setStatus("uploading");
-     const uploadName = customFileName || file.name;
-     const contentType = file.type || "application/octet-stream";
-     
-     try {
-       // 1. Init
-       const initResponse = await axios.post("/api/upload/init", {
-          fileName: uploadName,
-          mimeType: contentType,
-          fileSize: file.size,
-         type: folderType,
-         folderId,
-        });
-        const { sessionUri, fileId: initFileId } = initResponse.data;
-        if (!sessionUri) throw new Error("無法取得上傳連結");
-        
-        // 2. PUT
-        return new Promise<string>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("PUT", sessionUri);
-          // xhr.setRequestHeader("Content-Type", contentType); // 移除以避免 CORS 預檢問題
-          
-          xhr.upload.onprogress = (e) => {
-             if (e.lengthComputable) {
-                setProgress(Math.round((e.loaded / e.total) * 100));
-             }
-          };
-          
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-               setStatus("success");
-               // 優先使用回傳的 ID，若無則使用初始化的 ID
-               let finalId = initFileId;
-               try {
-                  const res = JSON.parse(xhr.responseText);
-                  if (res.id) finalId = res.id;
-               } catch(e) {}
+  // Single upload cycle (Init + PUT)
+  const attemptSingleUpload = async (uploadName: string, contentType: string): Promise<string> => {
+    // 1. Init Session
+    const initResponse = await axios.post("/api/upload/init", {
+      fileName: uploadName,
+      mimeType: contentType,
+      fileSize: file!.size,
+      type: folderType,
+      folderId,
+    });
+    const { sessionUri, fileId: initFileId } = initResponse.data;
+    if (!sessionUri) throw new Error("無法取得上傳連結");
 
-               if (finalId) {
-                 onUploadComplete?.(finalId);
-                 resolve(finalId);
-               } else {
-                 reject(new Error("上傳成功但未回傳 File ID"));
-               }
-            } else {
-               console.error("Upload failed status:", xhr.status, xhr.responseText);
-               reject(new Error(`上傳失敗: ${xhr.status} ${xhr.statusText}`));
-            }
-          };
-          
-          xhr.onerror = () => {
-             // 解決方案：如果我們已經有 initFileId，假設上傳成功，因為 Google 經常封鎖最後的回應
-             if (initFileId) {
-                // console.warn("CORS 封鎖了回應，但因已取得 ID，視為成功。");
-                setStatus("success");
-                onUploadComplete?.(initFileId);
-                resolve(initFileId);
-             } else {
-                console.error("上傳期間發生網路錯誤 (可能是 CORS 問題)。");
-                reject(new Error("網路錯誤 - 請檢查網路連線"));
-             }
-          };
-          xhr.send(file);
-        });
-     } catch (error: any) {
-        console.error("Upload failed:", error);
-        setStatus("error");
-        setErrorMessage(error.response?.data?.error || error.message || "上傳發生錯誤");
-        throw error;
-     }
+    // 2. Direct PUT to Google Drive
+    return new Promise<string>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", sessionUri);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          let finalId = initFileId;
+          try {
+            const res = JSON.parse(xhr.responseText);
+            if (res.id) finalId = res.id;
+          } catch (e) {}
+
+          if (finalId) {
+            resolve(finalId);
+          } else {
+            reject(new Error("上傳成功但未回傳 File ID"));
+          }
+        } else {
+          reject(new Error(`上傳失敗: ${xhr.status} ${xhr.statusText}`));
+        }
+      };
+
+      xhr.onerror = () => {
+        // 解決方案：如果已有 initFileId，視為成功（避免 CORS 封鎖最後回應）
+        if (initFileId) {
+          resolve(initFileId);
+        } else {
+          reject(new Error("網路連線中斷或 CORS 錯誤"));
+        }
+      };
+
+      xhr.send(file);
+    });
+  };
+
+  // Upload with automatic retries
+  const executeUpload = async (customFileName?: string): Promise<string> => {
+    if (!file) {
+      setErrorMessage("沒有選擇檔案");
+      setStatus("error");
+      throw new Error("No file selected");
+    }
+
+    setStatus("uploading");
+    setErrorMessage("");
+    const uploadName = customFileName || file.name;
+    const contentType = file.type || "application/octet-stream";
+
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= MAX_AUTO_RETRIES; attempt++) {
+      setRetryCount(attempt);
+      try {
+        const finalId = await attemptSingleUpload(uploadName, contentType);
+        setStatus("success");
+        setErrorMessage("");
+        onUploadComplete?.(finalId);
+        return finalId;
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[FileUpload] 上傳嘗試 ${attempt}/${MAX_AUTO_RETRIES} 失敗:`, err);
+
+        if (attempt < MAX_AUTO_RETRIES) {
+          // 指數退避延遲：1s, 2s
+          const delayMs = attempt * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+          setProgress(0);
+        }
+      }
+    }
+
+    // 全部重試失敗
+    setStatus("error");
+    const errMsg = lastError?.response?.data?.error || lastError?.message || "上傳發生錯誤";
+    setErrorMessage(`上傳失敗（已自動重試 ${MAX_AUTO_RETRIES} 次）：${errMsg}`);
+    throw lastError;
   };
 
   // Expose method to parent
@@ -146,12 +168,12 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
     hasFile: () => !!file
   }));
 
-
   const clearFile = () => {
     setFile(null);
     setStatus("idle");
     setErrorMessage("");
     setProgress(0);
+    setRetryCount(0);
     if (inputRef.current) {
       inputRef.current.value = "";
     }
@@ -253,16 +275,35 @@ export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({
           {status === "uploading" && (
             <div className="space-y-1">
               <Progress value={progress} className="h-2" />
-              <p className="text-xs text-center text-slate-500">上傳中... {progress}%</p>
+              <p className="text-xs text-center text-slate-500">
+                {retryCount > 1 ? (
+                  <span className="text-amber-600 font-medium">
+                    正在自動重新嘗試上傳（第 {retryCount} / {MAX_AUTO_RETRIES} 次）... {progress}%
+                  </span>
+                ) : (
+                  `上傳中... ${progress}%`
+                )}
+              </p>
             </div>
           )}
 
           {/* Error after select */}
           {status === "error" && errorMessage && (
-             <p className="text-xs text-red-500 mt-2 font-medium flex items-center">
-              <AlertCircle className="w-3 h-3 mr-1" />
-              {errorMessage}
-            </p>
+            <div className="mt-2 pt-2 border-t border-red-100 flex items-center justify-between gap-2">
+              <p className="text-xs text-red-500 font-medium flex items-center min-w-0">
+                <AlertCircle className="w-3.5 h-3.5 mr-1 shrink-0 text-red-500" />
+                <span className="truncate">{errorMessage}</span>
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs border-red-200 text-red-600 hover:bg-red-50 shrink-0"
+                onClick={() => executeUpload()}
+              >
+                重新嘗試上傳
+              </Button>
+            </div>
           )}
         </div>
       )}

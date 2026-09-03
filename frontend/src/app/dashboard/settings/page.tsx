@@ -31,12 +31,21 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, User, Lock, AlertTriangle, CheckCircle2, CreditCard } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { NotificationPrefsCard } from "@/components/settings/notification-prefs-card";
 
 // ─── Zod Schemas ───────────────────────────────────────────
 
 const profileSchema = z.object({
   department: z.string().min(1, "系所不可為空"),
   grade: z.string().min(1, "年級不可為空"),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+      { message: "請輸入有效的電子郵件地址" }
+    ),
 });
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
@@ -118,7 +127,7 @@ export default function SettingsPage() {
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { department: "", grade: "" },
+    defaultValues: { department: "", grade: "", email: "" },
   });
 
   // 使用已同步到 client 的登入者資料初始化表單
@@ -127,6 +136,7 @@ export default function SettingsPage() {
       profileForm.reset({
         department: user.department || "",
         grade: String(user.grade || ""),
+        email: user.email || "",
       });
     }
   }, [user, profileForm]);
@@ -137,7 +147,11 @@ export default function SettingsPage() {
     try {
       await UserAPI.updateProfile(values);
       // 同步更新 Zustand store
-      updateUser({ department: values.department, grade: values.grade });
+      updateUser({
+        department: values.department,
+        grade: values.grade,
+        email: values.email || "",
+      });
       setProfileSuccess(true);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "更新失敗";
@@ -343,6 +357,38 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* 可編輯欄位：通知 Email */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center h-5">
+                <Label htmlFor="email" className="flex items-center gap-1.5">
+                  通知 Email
+                  <span className="text-xs text-muted-foreground font-normal">（留空則預設使用學校信箱）</span>
+                </Label>
+                {profileForm.formState.errors.email && (
+                  <span className="text-destructive text-xs leading-none">
+                    {profileForm.formState.errors.email.message}
+                  </span>
+                )}
+              </div>
+              <Input
+                id="email"
+                type="email"
+                placeholder={
+                  user?.studentId
+                    ? `${user.studentId.toLowerCase()}@mail.ntust.edu.tw`
+                    : "學號@mail.ntust.edu.tw"
+                }
+                {...profileForm.register("email")}
+              />
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                若留空或未設定，通知將發送至學校信箱（
+                {user?.studentId
+                  ? `${user.studentId.toLowerCase()}@mail.ntust.edu.tw`
+                  : "學號@mail.ntust.edu.tw"}
+                ）。
+              </p>
+            </div>
+
             {/* 職位 Badge — 從最新幹部記錄取得 */}
             {(user?.role === "admin" || user?.role === "owner") && (() => {
               const latestPos = [...(user?.membershipHistory ?? [])].reverse()
@@ -495,6 +541,9 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* ─── 自訂通知偏好訂閱中心 Card ─── */}
+      <NotificationPrefsCard />
 
       {/* ─── 修改密碼 Card ─── */}
       <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">

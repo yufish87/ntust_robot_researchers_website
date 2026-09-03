@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Upload, FileText, Loader2 } from "lucide-react";
+import { Plus, Trash2, Upload, FileText, Loader2, MessageSquare, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useRef, useState, useEffect, useCallback } from "react";
 import axios from "axios";
@@ -79,6 +79,10 @@ const courseSchema = z.object({
   semester: z.string().min(1, "學期必填"),
   permission: z.enum(["visitor", "member"]),
   courseDate: z.string().optional(),
+  syncToAnnouncement: z.boolean().optional(),
+  broadcastToLineGroup: z.boolean().optional(),
+  broadcastLinePersonal: z.boolean().optional(),
+  broadcastEmail: z.boolean().optional(),
   handouts: z.array(resourceItemSchema).optional(),
   videos: z.array(resourceItemSchema).optional(),
   others: z.array(resourceItemSchema).optional(),
@@ -97,6 +101,10 @@ interface CourseFormValues {
   semester: string;
   permission: "visitor" | "member";
   courseDate?: string;
+  syncToAnnouncement?: boolean;
+  broadcastToLineGroup?: boolean;
+  broadcastLinePersonal?: boolean;
+  broadcastEmail?: boolean;
   handouts?: ResourceFormItem[];
   videos?: ResourceFormItem[];
   others?: ResourceFormItem[];
@@ -105,6 +113,8 @@ interface CourseFormValues {
 interface CourseFormProps {
   defaultValues?: Partial<CourseFormValues>;
   onSubmit: (data: CourseFormValues) => void;
+  onCancel?: () => void;
+  onDirtyChange?: (isDirty: boolean) => void;
   isLoading?: boolean;
 }
 
@@ -123,6 +133,8 @@ type PendingFilesMap = Map<string, File>;
 export function CourseForm({
   defaultValues,
   onSubmit,
+  onCancel,
+  onDirtyChange,
   isLoading,
 }: CourseFormProps) {
   const form = useForm<CourseFormValues>({
@@ -133,6 +145,10 @@ export function CourseForm({
       semester: getDefaultSemester(),
       permission: "member" as const,
       courseDate: getNextTuesday(),
+      syncToAnnouncement: true,
+      broadcastToLineGroup: true,
+      broadcastLinePersonal: true,
+      broadcastEmail: true,
       handouts: [] as ResourceFormItem[],
       videos: [] as ResourceFormItem[],
       others: [] as ResourceFormItem[],
@@ -145,6 +161,27 @@ export function CourseForm({
   // 暫存待刪除的舊 fileId
   const pendingDeletionsRef = useRef<Set<string>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
+  const initialFormRef = useRef<string>("");
+
+  useEffect(() => {
+    initialFormRef.current = JSON.stringify(form.getValues());
+  }, []);
+
+  const isFormDirty = useCallback(() => {
+    if (!initialFormRef.current) return false;
+    return (
+      JSON.stringify(form.getValues()) !== initialFormRef.current ||
+      pendingFilesRef.current.size > 0 ||
+      pendingDeletionsRef.current.size > 0
+    );
+  }, [form]);
+
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      onDirtyChange?.(isFormDirty());
+    });
+    return () => subscription.unsubscribe();
+  }, [form, isFormDirty, onDirtyChange]);
 
   const setPendingFile = useCallback((key: string, file: File | null) => {
     if (file) {
@@ -152,11 +189,13 @@ export function CourseForm({
     } else {
       pendingFilesRef.current.delete(key);
     }
-  }, []);
+    onDirtyChange?.(isFormDirty());
+  }, [isFormDirty, onDirtyChange]);
 
   const addPendingDeletion = useCallback((fileId: string) => {
     if (fileId) pendingDeletionsRef.current.add(fileId);
-  }, []);
+    onDirtyChange?.(isFormDirty());
+  }, [isFormDirty, onDirtyChange]);
 
   /**
    * 送出前：先上傳所有 pending files → 取得 fileId → 塞回 values → 呼叫 onSubmit
@@ -412,13 +451,237 @@ export function CourseForm({
           onOldFileDeletion={addPendingDeletion}
         />
 
-        <Button
-          type="submit"
-          disabled={isLoading || isUploading}
-          className="w-full"
-        >
-          {isUploading ? "上傳檔案中..." : isLoading ? "處理中..." : "送出"}
-        </Button>
+        {/* 發布與推播通知設定 */}
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] overflow-hidden">
+          <div className="px-4 py-3 bg-slate-100/60 dark:bg-white/[0.03] border-b border-slate-200/70 dark:border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-[#ffc000]" />
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                發布通知與動態聯動
+              </span>
+            </div>
+            <span className="text-[11px] text-muted-foreground">儲存時自動發送</span>
+          </div>
+
+          <div className="divide-y divide-slate-200/60 dark:divide-white/5">
+            {/* 1. 同步首頁公告 */}
+            <FormField
+              control={form.control}
+              name="syncToAnnouncement"
+              render={({ field }) => (
+                <label
+                  htmlFor="crs-sync-announcement"
+                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none group"
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                        同步發布至首頁公告
+                      </span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#ffc000]/15 text-amber-700 dark:text-[#ffc000] shrink-0">
+                        首頁連動
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
+                      於首頁最新消息建立「課程資訊」公告，自動整合時間與課綱
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <input
+                      id="crs-sync-announcement"
+                      type="checkbox"
+                      checked={!!field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ${
+                        field.value ? "bg-[#ffc000]" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transform transition duration-200 ease-in-out ${
+                          field.value ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </label>
+              )}
+            />
+
+            {/* 2. Email 全體社員 */}
+            <FormField
+              control={form.control}
+              name="broadcastEmail"
+              render={({ field }) => (
+                <label
+                  htmlFor="crs-broadcast-email"
+                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none group"
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                        寄送 Email 全體社員
+                      </span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-400 shrink-0">
+                        學校信箱
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
+                      發送社課通知信至全體活躍社員學校信箱 (@mail.ntust.edu.tw)
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <input
+                      id="crs-broadcast-email"
+                      type="checkbox"
+                      checked={!!field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ${
+                        field.value ? "bg-[#ffc000]" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transform transition duration-200 ease-in-out ${
+                          field.value ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </label>
+              )}
+            />
+
+            {/* 3. LINE 個人官方帳號 */}
+            <FormField
+              control={form.control}
+              name="broadcastLinePersonal"
+              render={({ field }) => (
+                <label
+                  htmlFor="crs-broadcast-line-personal"
+                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none group"
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                        LINE 個人官方帳號
+                      </span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 shrink-0">
+                        個人推播
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
+                      向所有已綁定官方帳號之社員個別推送專屬社課圖文卡片
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <input
+                      id="crs-broadcast-line-personal"
+                      type="checkbox"
+                      checked={!!field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ${
+                        field.value ? "bg-[#ffc000]" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transform transition duration-200 ease-in-out ${
+                          field.value ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </label>
+              )}
+            />
+
+            {/* 4. LINE 社員大群群播 */}
+            <FormField
+              control={form.control}
+              name="broadcastToLineGroup"
+              render={({ field }) => (
+                <label
+                  htmlFor="crs-broadcast-line-group"
+                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none group"
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                        LINE 社員大群群播
+                      </span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/15 text-green-700 dark:text-green-400 shrink-0">
+                        群組廣播
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
+                      同步發送最新開課通知至社團成員交流 LINE 大群
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <input
+                      id="crs-broadcast-line-group"
+                      type="checkbox"
+                      checked={!!field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ${
+                        field.value ? "bg-[#ffc000]" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transform transition duration-200 ease-in-out ${
+                          field.value ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </label>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* 送出與取消按鈕 */}
+        <div className="flex justify-end gap-2 pt-2">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading || isUploading}
+            >
+              取消
+            </Button>
+          )}
+          <Button
+            type="submit"
+            disabled={isLoading || isUploading}
+            className="bg-[#ffc000] hover:bg-[#e6ad00] text-black font-semibold"
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                上傳檔案中...
+              </>
+            ) : isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                處理中...
+              </>
+            ) : (
+              "送出"
+            )}
+          </Button>
+        </div>
       </form>
     </Form>
   );

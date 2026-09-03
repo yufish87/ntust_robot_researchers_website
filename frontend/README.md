@@ -94,8 +94,9 @@ frontend/
 │   │   │   ├── courses/        # 課程教材接口
 │   │   │   ├── applications/   # 器材/財務申請接口
 │   │   │   ├── machine/        # 機臺預約與檔案接口
+│   │   │   ├── notification/   # LINE Webhook 與推播接口
 │   │   │   ├── storage/        # 檔案下載安全代理
-│   │   │   └── upload/         # 檔案上傳初始化與清除
+│   │   │   └── upload/         # 檔案上傳初始化與清除 (支援重試)
 │   │   │
 │   │   ├── auth/               # 登入與註冊頁面 (/auth/login, /auth/register)
 │   │   │
@@ -114,14 +115,14 @@ frontend/
 │   │   │   │   ├── 3d-printer/ # 借用 3D 列印機
 │   │   │   │   └── laser-cutter/# 借用雷射切割機
 │   │   │   ├── manual/         # 社員操作使用手冊
-│   │   │   ├── settings/       # 個人設定與社費啟用
+│   │   │   ├── settings/       # 個人設定、通知信箱與偏好中心
 │   │   │   └── wishlist/       # 許願池專區
 │   │   │
 │   │   └── admin/              # 管理幹部後台 (/admin)
 │   │       ├── page.tsx        # 後台概覽儀表板
 │   │       ├── layout.tsx      # 管理員側邊欄佈局
-│   │       ├── announcements/  # 公告發布與管理
-│   │       ├── courses/        # 社課內容與教材維護
+│   │       ├── announcements/  # 公告發布與三軌推播管理
+│   │       ├── courses/        # 社課內容維護與開課推播
 │   │       ├── equipment/      # 器材借用審核與簽出歸還
 │   │       │   └── inventory/  # 器材總表與入庫盤點
 │   │       ├── finance/        # 財務報帳初審與撥款核銷
@@ -139,18 +140,19 @@ frontend/
 │   │   ├── home/               # 公開首頁區塊 (Hero, Features, Footer)
 │   │   ├── layout/             # 導覽列、側邊欄 (Sidebar, MobileNav)
 │   │   ├── manual/             # 使用手冊容器與 MarkdownViewer
+│   │   ├── settings/           # 個人設定與自訂通知偏好卡片 (NotificationPrefsCard)
 │   │   └── admin/              # 後台標準標題列 (AdminPageHeader)
 │   │
 │   ├── content/                # 使用說明 Markdown 文件庫
 │   │   └── manual/
-│   │       ├── member/         # 社員使用指南 (overview, equipment, machine, finance, faq)
+│   │       ├── member/         # 社員使用指南 (overview, equipment, machine, finance, faq, wishlist)
 │   │       └── admin/          # 管理員審核指引 (overview, users, equipment, machine, finance)
 │   │
 │   ├── lib/                    # 核心工具函式庫
 │   │   ├── api.ts              # Axios 實例與全域錯誤攔截
 │   │   ├── session.ts          # AES-256-GCM Session Cookie 加解密
 │   │   ├── utils.ts            # 通用輔助函式 (cn, date 格式化)
-│   │   ├── api/                # 各功能模組 API 封裝 (auth, equipment, machine, finance 等)
+│   │   ├── api/                # 各功能模組 API 封裝 (auth, equipment, machine, finance, user 等)
 │   │   └── types/              # 全域 TypeScript 型別定義
 │   │
 │   ├── store/                  # Zustand 狀態管理庫
@@ -176,38 +178,57 @@ frontend/
 
 ### 1. 認證與身份組體系 (Authentication & RBAC)
 
-- 支援 6 碼驗證碼入社註冊、學號登入。
-- 支援忘記密碼透過臺科大學生信箱（`學號@mail.ntust.edu.tw`）接收 6 位數 OTP 驗證碼自助重設。
+- 支援 6 碼驗證碼入社註冊、學號密碼登入。
+- 支援忘記密碼透過臺科大學生信箱（`學號@mail.ntust.edu.tw`）接收 6 位數 OTP 驗證碼自助重設（安全強制錨定學校官方信箱）。
+- 支援個人設定中填寫「自訂通知信箱（通知 Email）」，社務通知信件優先發送至個人常用信箱。
 - 完整實作身份組生命週期（正式社員、資格過期、管理員），支援「重新加入社團」驗證碼啟用。
 - Session Cookie 採用 AES-256-GCM 加密儲存於 HttpOnly Cookie，Token 由 BFF Proxy 反向代理攔截，前端不持有明文 Token。
 
-### 2. 系統使用說明中心 (Documentation & Manual)
+### 2. 自訂通知偏好訂閱中心與 LINE 官方帳號綁定 (Notification Preferences & LINE Bot)
+
+- **LINE 官方帳號綁定**：動態產出 15 分鐘時效之 6 碼英數綁定碼與 QR Code，聊天室回傳驗證碼即透過 Webhook 自動完成雙向綁定，支援一鍵解除。
+- **四大社務事件雙軌開關**：社課與重要公告、器材借用、機臺設備預約、財務報帳與請款，各事件均可獨立開啟或關閉 Email 與 LINE 推播。
+- **動態智慧預設機制**：
+  - **已綁定 LINE**：LINE 推播全開，Email 預設僅保留「財務報帳與請款」（保留重要單據憑證不洗版）。
+  - **未綁定 LINE**：Email 通知全開（防止漏接重要訊息）。
+  - 提供「恢復預設值」按鈕一鍵還原系統推薦配置。
+
+### 3. 檔案上傳與自動重試機制 (Resilient File Upload)
+
+- 針對 Next.js BFF Proxy 與 Google Apps Script 之間 302 重導向可能遺失 Body 之問題，實作自動重定向跟隨與備援參數解析。
+- 前端 `file-upload.tsx` 實作 3 次客戶端指數退避自動重試（動態顯示第幾次嘗試中）與手動重試按鈕。
+- BFF 伺服器端實作 3 次指數退避重試，確保發票照片、Gcode 切片檔案等大檔案能穩定上傳。
+
+### 4. 系統使用說明中心 (Documentation & Manual)
 
 - 支援全文關鍵字搜尋、即時目錄索引（TOC）與章節切換。
-- Markdown 文件解析支援 GitHub Alert 語法、自適應表格防折行最佳化與圖片無錯誤渲染。
-- 涵蓋系統概覽、器材借用、機臺借用、財務報帳與常見問答 FAQ。
+- Markdown 文件解析支援 GitHub Alert 語法。
+- 雷射切割可切材質清單重構為結構化三欄對照表（材料類別、允許切削材質、加工特性與防焰注意事項）。
+- 涵蓋系統概覽、器材借用、機臺借用、財務報帳、許願池與常見問答 FAQ。
 
-### 3. 器材借用系統 (Equipment Management)
+### 5. 器材借用系統 (Equipment Management)
 
 - 即時庫存狀態標籤（「剩餘: N」、「已借完」、「可直接取用」）。
 - 整合購物車機制與自動預分配最小序號可用實體編號。
 - 完整支援借用審核、社辦現場領取點收與實體歸還結案作業。
 
-### 4. 機臺設備借用系統 (Machine Reservation)
+### 6. 機臺設備借用系統 (Machine Reservation)
 
 - **3D 列印（Creality Ender 3 S1 Pro 等）**：支援 30MB Gcode 上傳、預覽圖、PETG 耗材規範、時長乘算與新手教學勾選。
-- **雷射切割（FLUX Ador 等）**：9 大可切材質規範、禁切劇毒材質、專用桌推至室外走廊開放空間與排煙操作守則。
+- **雷射切割（FLUX Ador 等）**：結構化材質對照、禁切劇毒材質、專用桌推至室外走廊開放空間與排煙操作守則。
 - 提供機臺時段日曆排程檢視器，防撞期排程與一鍵重新整理。
 
-### 5. 財務報帳系統 (Finance & Reimbursement)
+### 7. 財務報帳系統 (Finance & Reimbursement)
 
 - 四大報帳類別（一般報銷、社團內部競賽報銷、上銀競賽報銷、暑期營隊報銷）。
 - 嚴格校驗臺科大統編 `04126516` 與抬頭 `國立臺灣科技大學`。
 - 多圖憑證上傳、品項明細動態加總與「回報已投遞發票」核銷確認機制。
 
-### 6. 後台管理系統 (Admin Dashboard)
+### 8. 後台管理系統 (Admin Dashboard)
 
-- 標準化 `AdminPageHeader` 統一風格與跨裝置排版（桌面、平板、手機自適應）。
+- 標準化 `AdminPageHeader` 統一風格與跨裝置排版。
+- **發布三軌推播系統**：發布公告與社課時支援勾選「Email 全體社員」、「LINE 個人推播」與「LINE 社員大群群播」。
+- **社員通知偏好自動過濾**：發送個人推播時系統自動依每位社員的個人通知偏好進行過濾，不重複打擾已關閉的成員。
 - 提供器材庫存盤點、機臺審核、財務撥款標記與人員驗證碼管理。
 
 ## 常用指令

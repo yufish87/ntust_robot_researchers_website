@@ -97,7 +97,7 @@ export default function RegisterPage() {
           <div className="relative w-full h-12 mb-2">
             <Image
               src="/image/Bar_Logo.png"
-              alt="RRC Logo"
+              alt="臺科大機器人研究社標誌"
               fill
               className="object-contain"
               priority

@@ -271,99 +271,207 @@ export default function FinanceDashboardPage() {
               )}
             </div>
           ) : (
-            <Table className="min-w-[750px]">
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>單號</TableHead>
-                  <TableHead>類別</TableHead>
-                  <TableHead className="w-[300px]">說明</TableHead>
-                  <TableHead>申請日期</TableHead>
-                  <TableHead className="w-[120px]">金額</TableHead>
-                  <TableHead>狀態</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* 行動端卡片清單 (sm:hidden) */}
+              <div className="sm:hidden divide-y divide-slate-100 dark:divide-white/5">
                 {currentList.map((app) => (
-                  <TableRow key={app.id}>
-                    <TableCell className="font-mono text-xs">
-                      {app.id}
-                    </TableCell>
-                    <TableCell>{getCategoryName(app.category)}</TableCell>
-                    <TableCell
-                      className="truncate max-w-[300px]"
-                      title={app.description}
-                    >
-                      {app.description}
-                    </TableCell>
-                    <TableCell>
-                      {app.createdAt
-                        ? format(new Date(app.createdAt), "yyyy/MM/dd")
-                        : "-"}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      NT$ {Number(app.totalAmount).toLocaleString()}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(app)}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleViewDetails(app)}
-                          >
-                            查看詳情
-                          </DropdownMenuItem>
-                          {app.status === "已通過" &&
-                            app.invoiceSubmitStatus === "未提交" && (
+                  <div
+                    key={app.id}
+                    className="p-4 space-y-2.5 transition-colors hover:bg-slate-50/50 dark:hover:bg-white/[0.02]"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          {app.id}
+                        </span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                          {getCategoryName(app.category)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {getStatusBadge(app)}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-7 w-7 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleViewDetails(app)}
+                            >
+                              查看詳情
+                            </DropdownMenuItem>
+                            {app.status === "已通過" &&
+                              app.invoiceSubmitStatus === "未提交" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      try {
+                                        await FinanceAPI.submitInvoice(app.id);
+                                        toast({
+                                          title: "回報成功",
+                                          description:
+                                            "已回報發票投遞，請等待管理員確認。",
+                                        });
+                                        queryClient.invalidateQueries({
+                                          queryKey: ["my-finance-apps"],
+                                        });
+                                      } catch (err: any) {
+                                        toast({
+                                          variant: "destructive",
+                                          title: "操作失敗",
+                                          description: err.message || "未知錯誤",
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    回報已投遞發票
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            {app.status === "審核中" && (
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  onClick={async () => {
-                                    try {
-                                      await FinanceAPI.submitInvoice(app.id);
-                                      toast({
-                                        title: "回報成功",
-                                        description:
-                                          "已回報發票投遞，請等待管理員確認。",
-                                      });
-                                      queryClient.invalidateQueries({ queryKey: ["my-finance-apps"] });
-                                    } catch (err: any) {
-                                      toast({
-                                        variant: "destructive",
-                                        title: "操作失敗",
-                                        description: err.message || "未知錯誤",
-                                      });
-                                    }
-                                  }}
+                                  className="text-red-600 focus:text-red-600"
+                                  onClick={() => confirmCancel(app.id)}
                                 >
-                                  回報已投遞發票
+                                  取消申請
                                 </DropdownMenuItem>
                               </>
                             )}
-                          {app.status === "審核中" && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-red-600 focus:text-red-600"
-                                onClick={() => confirmCancel(app.id)}
-                              >
-                                取消申請
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => handleViewDetails(app)}
+                    >
+                      <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                        {app.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1.5 text-xs text-muted-foreground border-t border-slate-100 dark:border-white/5">
+                      <span>
+                        申請日期：
+                        {app.createdAt
+                          ? format(new Date(app.createdAt), "yyyy/MM/dd")
+                          : "-"}
+                      </span>
+                      <span className="font-bold text-sm text-amber-600 dark:text-[#ffc000]">
+                        NT$ {Number(app.totalAmount).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* 桌面端表格 (hidden sm:block) */}
+              <div className="hidden sm:block overflow-x-auto">
+                <Table className="min-w-[750px]">
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>單號</TableHead>
+                      <TableHead>類別</TableHead>
+                      <TableHead className="w-[300px]">說明</TableHead>
+                      <TableHead>申請日期</TableHead>
+                      <TableHead className="w-[120px]">金額</TableHead>
+                      <TableHead>狀態</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentList.map((app) => (
+                      <TableRow key={app.id}>
+                        <TableCell className="font-mono text-xs">
+                          {app.id}
+                        </TableCell>
+                        <TableCell>{getCategoryName(app.category)}</TableCell>
+                        <TableCell
+                          className="truncate max-w-[300px]"
+                          title={app.description}
+                        >
+                          {app.description}
+                        </TableCell>
+                        <TableCell>
+                          {app.createdAt
+                            ? format(new Date(app.createdAt), "yyyy/MM/dd")
+                            : "-"}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          NT$ {Number(app.totalAmount).toLocaleString()}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(app)}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleViewDetails(app)}
+                              >
+                                查看詳情
+                              </DropdownMenuItem>
+                              {app.status === "已通過" &&
+                                app.invoiceSubmitStatus === "未提交" && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={async () => {
+                                        try {
+                                          await FinanceAPI.submitInvoice(app.id);
+                                          toast({
+                                            title: "回報成功",
+                                            description:
+                                              "已回報發票投遞，請等待管理員確認。",
+                                          });
+                                          queryClient.invalidateQueries({
+                                            queryKey: ["my-finance-apps"],
+                                          });
+                                        } catch (err: any) {
+                                          toast({
+                                            variant: "destructive",
+                                            title: "操作失敗",
+                                            description:
+                                              err.message || "未知錯誤",
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      回報已投遞發票
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              {app.status === "審核中" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-red-600 focus:text-red-600"
+                                    onClick={() => confirmCancel(app.id)}
+                                  >
+                                    取消申請
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </div>
       </div>

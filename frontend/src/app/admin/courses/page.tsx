@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CourseForm } from '@/components/admin/courses/CourseForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes";
 
 export default function AdminCoursesPage() {
     const queryClient = useQueryClient();
@@ -21,6 +22,22 @@ export default function AdminCoursesPage() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingCourse, setEditingCourse] = useState<Course | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCourseFormDirty, setIsCourseFormDirty] = useState(false);
+
+    const { confirmDiscard } = useUnsavedChangesWarning(isFormOpen && isCourseFormDirty, {
+        message: "您有尚未儲存的課程內容，確定要放棄編輯並關閉視窗嗎？\n\nAre you sure you want to discard your changes and close this window?",
+    });
+
+    const handleCourseModalOpenChange = (open: boolean) => {
+        if (!open && isCourseFormDirty) {
+            if (!confirmDiscard()) return;
+        }
+        setIsFormOpen(open);
+        if (!open) {
+            setIsCourseFormDirty(false);
+            setEditingCourse(null);
+        }
+    };
 
     // Alert Dialog State
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -66,6 +83,7 @@ export default function AdminCoursesPage() {
                     title: editingCourse ? "更新成功" : "新增成功",
                     description: `課程已${editingCourse ? "更新" : "建立"}。`
                 });
+                setIsCourseFormDirty(false);
                 setIsFormOpen(false);
                 setEditingCourse(null);
                 queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
@@ -249,7 +267,7 @@ export default function AdminCoursesPage() {
             </div>
 
             {/* Form Dialog */}
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <Dialog open={isFormOpen} onOpenChange={handleCourseModalOpenChange}>
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{editingCourse ? "編輯課程" : "新增課程"}</DialogTitle>
@@ -257,6 +275,8 @@ export default function AdminCoursesPage() {
                     <CourseForm 
                         defaultValues={editingCourse || {}} 
                         onSubmit={handleSubmit} 
+                        onCancel={() => handleCourseModalOpenChange(false)}
+                        onDirtyChange={setIsCourseFormDirty}
                         isLoading={isSubmitting} 
                     />
                 </DialogContent>

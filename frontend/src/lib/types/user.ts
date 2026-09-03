@@ -15,6 +15,30 @@ export interface MembershipRecord {
   positions: string;  // 職位（社員為空字串）
 }
 
+/** 通知偏好設定結構 */
+export interface NotificationPreferences {
+  email: {
+    equipment: boolean;
+    machine: boolean;
+    finance: boolean;
+    announcements: boolean;
+  };
+  line: {
+    equipment: boolean;
+    machine: boolean;
+    finance: boolean;
+    announcements: boolean;
+  };
+}
+
+/** LINE 綁定狀態資訊 */
+export interface LineBindingInfo {
+  isLineBound: boolean;
+  lineUserId?: string;
+  bindCode?: string;
+  expiresInSeconds?: number;
+}
+
 /** 使用者個人資料 (不含敏感欄位) */
 export interface UserProfile {
   studentId: string;
@@ -28,12 +52,16 @@ export interface UserProfile {
   lastLoginTime: string;
   membershipHistory: MembershipRecord[];  // 歷年身份組
   activeUntilYear: string;               // 有效截止學年，如 "115"
+  lineUserId?: string;                   // LINE User ID
+  notificationPreferences?: NotificationPreferences | string; // 通知偏好
+  email?: string;                        // 自訂通知信箱 (未設定時預設學校信箱)
 }
 
 /** 更新個人資料 Request */
 export interface UpdateProfileRequest {
   department: string;
   grade: string;
+  email?: string;
 }
 
 /** 修改密碼 Request */

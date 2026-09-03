@@ -279,7 +279,7 @@ export function AboutSection({ className }: AboutSectionProps) {
 
   return (
     <div className={cn("w-full space-y-16", className)}>
-      {/* ===== 1. 社團簡介與三大核心 (About NTUST RRC) ===== */}
+      {/* ===== 1. 社團簡介與三大核心 (About 臺科大機器人研究社) ===== */}
       <section id="about" className="scroll-mt-24">
         {/* 區塊標題 */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 pb-4 border-b border-white/10 gap-2">

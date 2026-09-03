@@ -126,4 +126,59 @@ export const UserAPI = {
     if (!res.data.success) throw new Error(res.data.message || "社費學年更新失敗");
     return res.data;
   },
+
+  // ─── 通知偏好設定 ───────────────────────────────────────────
+
+  /** 取得通知偏好設定與 LINE 綁定狀態 */
+  getNotificationPrefs: async (): Promise<{
+    preferences: NotificationPreferences;
+    lineBindStatus: { bound: boolean; lineUserId?: string };
+  }> => {
+    const res = await api.post("/notification/preferences", { _method: "GET" });
+    if (!res.data.success) throw new Error(res.data.message || "取得通知偏好失敗");
+    return res.data.data;
+  },
+
+  /** 更新通知偏好設定 */
+  updateNotificationPrefs: async (preferences: Partial<NotificationPreferences>) => {
+    const res = await api.post("/notification/preferences", { preferences, _method: "POST" });
+    if (!res.data.success) throw new Error(res.data.message || "更新通知偏好失敗");
+    return res.data.data as { preferences: NotificationPreferences };
+  },
+
+  /** 產生 LINE 綁定碼 */
+  requestLineBindCode: async (): Promise<{ bindCode: string; ttlSeconds: number }> => {
+    const res = await api.post("/notification/line-bind", {});
+    if (!res.data.success) throw new Error(res.data.message || "產生 LINE 綁定碼失敗");
+    return res.data.data;
+  },
+
+  /** 解除 LINE 綁定 */
+  unbindLine: async () => {
+    const res = await api.post("/notification/line-bind/unbind", {});
+    if (!res.data.success) throw new Error(res.data.message || "解除 LINE 綁定失敗");
+    return res.data;
+  },
+
+  /** 管理員 — 手動廣播推播至 LINE 社員群組 */
+  broadcastNotification: async (type: "course" | "announcement", data: any, options?: { broadcastToLineGroup?: boolean; broadcastEmail?: boolean }) => {
+    const res = await api.post("/admin/notification/broadcast", { type, payload: data, options });
+    if (!res.data.success) throw new Error(res.data.message || "群播失敗");
+    return res.data;
+  },
 };
+
+// ─── 通知偏好設定類型 ──────────────────────────────────────────────
+export interface NotificationChannel {
+  equipment: boolean;
+  machine: boolean;
+  finance: boolean;
+  announcements: boolean;
+  wishlist?: boolean;
+}
+
+export interface NotificationPreferences {
+  email: NotificationChannel;
+  line: NotificationChannel;
+}
+
