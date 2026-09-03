@@ -11,7 +11,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
     }
 
-    const rawBody = await req.text();
+    const arrayBuffer = await req.arrayBuffer();
+    const rawBuffer = Buffer.from(arrayBuffer);
+    const rawBody = rawBuffer.toString("utf-8");
 
     // 簽章驗證 (若環境有設定 LINE_CHANNEL_SECRET，強制執行 HMAC-SHA256 驗證)
     const channelSecret = process.env.LINE_CHANNEL_SECRET;
@@ -22,12 +24,19 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Missing signature" }, { status: 401 });
       }
 
-      const hash = crypto
+      const calculatedSignature = crypto
         .createHmac("sha256", channelSecret)
-        .update(rawBody)
+        .update(rawBuffer)
         .digest("base64");
 
-      if (hash !== signature) {
+      const sigBuffer = Buffer.from(signature, "utf8");
+      const calcBuffer = Buffer.from(calculatedSignature, "utf8");
+
+      // 使用常數時間比對（timingSafeEqual）防止時序攻擊（Timing Attack）
+      if (
+        sigBuffer.length !== calcBuffer.length ||
+        !crypto.timingSafeEqual(sigBuffer, calcBuffer)
+      ) {
         console.warn("[LINE Webhook] X-Line-Signature 簽章驗證失敗");
         return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
       }

@@ -162,8 +162,16 @@ export function CourseForm({
   const pendingDeletionsRef = useRef<Set<string>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
   const initialFormRef = useRef<string>("");
+  const lastDefaultValuesRef = useRef<string>("");
 
   useEffect(() => {
+    const serialized = JSON.stringify(defaultValues || {});
+    // 只有當傳入的 defaultValues 內容實質改變時（例如切換不同課程）才重設表單，防止父層 re-render 傳遞新物件參考時誤重置
+    if (serialized === lastDefaultValuesRef.current) {
+      return;
+    }
+    lastDefaultValuesRef.current = serialized;
+
     const currentDefaults = {
       title: "",
       description: "",
