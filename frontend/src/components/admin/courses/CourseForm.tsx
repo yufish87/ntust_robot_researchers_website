@@ -164,8 +164,27 @@ export function CourseForm({
   const initialFormRef = useRef<string>("");
 
   useEffect(() => {
+    const currentDefaults = {
+      title: "",
+      description: "",
+      semester: getDefaultSemester(),
+      permission: "member" as const,
+      courseDate: getNextTuesday(),
+      syncToAnnouncement: true,
+      broadcastToLineGroup: true,
+      broadcastLinePersonal: true,
+      broadcastEmail: true,
+      handouts: [] as ResourceFormItem[],
+      videos: [] as ResourceFormItem[],
+      others: [] as ResourceFormItem[],
+      ...defaultValues,
+    };
+    form.reset(currentDefaults);
     initialFormRef.current = JSON.stringify(form.getValues());
-  }, []);
+    pendingFilesRef.current.clear();
+    pendingDeletionsRef.current.clear();
+    onDirtyChange?.(false);
+  }, [defaultValues, form, onDirtyChange]);
 
   const isFormDirty = useCallback(() => {
     if (!initialFormRef.current) return false;

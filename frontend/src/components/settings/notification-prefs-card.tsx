@@ -342,12 +342,12 @@ export function NotificationPrefsCard() {
     <>
       <Card className="bg-white dark:bg-[#201e26] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
         {/* 卡片標題區 */}
-        <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/5">
+        <CardHeader className="p-4 sm:p-6 pb-4 sm:pb-4 border-b border-slate-100 dark:border-white/5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <Bell className="h-5 w-5 text-[#ffc000]" />
-                <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                <CardTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
                   自訂通知偏好訂閱中心
                 </CardTitle>
                 {hasChanges && (
@@ -400,7 +400,7 @@ export function NotificationPrefsCard() {
           </div>
         </CardHeader>
 
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-[#ffc000]" />
@@ -410,7 +410,7 @@ export function NotificationPrefsCard() {
             <div className="space-y-6">
               {/* LINE 未綁定提示橫幅 */}
               {!isLineBound && (
-                <div className="rounded-xl bg-slate-900/90 dark:bg-[#15141c] border border-slate-700/60 dark:border-white/10 p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+                <div className="rounded-xl bg-slate-900/90 dark:bg-[#15141c] border border-slate-700/60 dark:border-white/10 p-3.5 sm:p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-[#06c755]/15 border border-[#06c755]/25 text-[#06c755] shrink-0 mt-0.5 sm:mt-0">
                       <MessageSquare className="h-4 w-4" />
@@ -426,7 +426,7 @@ export function NotificationPrefsCard() {
                     size="sm"
                     onClick={handleRequestBindCode}
                     disabled={generatingCode}
-                    className="bg-[#06c755] hover:bg-[#05b34c] text-white font-medium text-xs shrink-0 cursor-pointer shadow-sm"
+                    className="bg-[#06c755] hover:bg-[#05b34c] text-white font-medium text-xs shrink-0 cursor-pointer shadow-sm w-full sm:w-auto"
                   >
                     立即取得綁定碼
                   </Button>
@@ -434,15 +434,19 @@ export function NotificationPrefsCard() {
               )}
 
               {/* 通知欄位標題 */}
-              <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-slate-400 pb-2.5 border-b border-slate-100 dark:border-white/5 px-2 items-center">
-                <div className="col-span-6 sm:col-span-8">事件通知類別</div>
-                <div className="col-span-3 sm:col-span-2 flex items-center justify-center gap-1.5 whitespace-nowrap">
-                  <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span className="whitespace-nowrap">Email 通知</span>
-                </div>
-                <div className="col-span-3 sm:col-span-2 flex items-center justify-center gap-1.5 whitespace-nowrap">
-                  <MessageSquare className="h-3.5 w-3.5 text-[#06c755] shrink-0" />
-                  <span className="whitespace-nowrap">LINE 通知</span>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5 px-1 sm:px-2 text-xs font-semibold text-slate-400">
+                <div className="min-w-0 flex-1">事件通知類別</div>
+                <div className="flex items-center gap-2 sm:gap-6 shrink-0">
+                  <div className="w-14 sm:w-20 flex items-center justify-center gap-1 whitespace-nowrap">
+                    <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span>Email</span>
+                    <span className="hidden sm:inline">通知</span>
+                  </div>
+                  <div className="w-14 sm:w-20 flex items-center justify-center gap-1 whitespace-nowrap">
+                    <MessageSquare className="h-3.5 w-3.5 text-[#06c755] shrink-0" />
+                    <span>LINE</span>
+                    <span className="hidden sm:inline">通知</span>
+                  </div>
                 </div>
               </div>
 
@@ -456,41 +460,44 @@ export function NotificationPrefsCard() {
                   return (
                     <div
                       key={item.key}
-                      className="grid grid-cols-12 gap-2 items-center py-3.5 px-2 hover:bg-slate-50/60 dark:hover:bg-white/[0.02] rounded-lg transition-colors"
+                      className="flex items-center justify-between py-3.5 px-1 sm:px-2 hover:bg-slate-50/60 dark:hover:bg-white/[0.02] rounded-lg transition-colors gap-2"
                     >
                       {/* 事件資訊 */}
-                      <div className="col-span-6 sm:col-span-8 flex items-start gap-3 pr-2">
-                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 text-[#ffc000] shrink-0 mt-0.5">
+                      <div className="flex items-center sm:items-start gap-2.5 sm:gap-3 min-w-0 flex-1 pr-1 sm:pr-2">
+                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 text-[#ffc000] shrink-0 mt-0 sm:mt-0.5">
                           <Icon className="h-4 w-4" />
                         </div>
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate sm:whitespace-normal">
                             {item.title}
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 sm:line-clamp-none leading-relaxed">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate sm:line-clamp-none leading-relaxed">
                             {item.description}
                           </p>
                         </div>
                       </div>
 
-                      {/* Email 開關 */}
-                      <div className="col-span-3 sm:col-span-2 flex justify-center items-center">
-                        <CustomSwitch
-                          checked={emailChecked}
-                          disabled={item.emailLocked}
-                          onCheckedChange={(val) => handleToggle("email", item.key, val)}
-                          label={`${item.title} Email 通知開關`}
-                        />
-                      </div>
+                      {/* 開關控制項 */}
+                      <div className="flex items-center gap-2 sm:gap-6 shrink-0">
+                        {/* Email 開關 */}
+                        <div className="w-14 sm:w-20 flex justify-center items-center">
+                          <CustomSwitch
+                            checked={emailChecked}
+                            disabled={item.emailLocked}
+                            onCheckedChange={(val) => handleToggle("email", item.key, val)}
+                            label={`${item.title} Email 通知開關`}
+                          />
+                        </div>
 
-                      {/* LINE 開關 */}
-                      <div className="col-span-3 sm:col-span-2 flex justify-center items-center">
-                        <CustomSwitch
-                          checked={isLineBound ? lineChecked : false}
-                          disabled={!isLineBound}
-                          onCheckedChange={(val) => handleToggle("line", item.key, val)}
-                          label={`${item.title} LINE 通知開關`}
-                        />
+                        {/* LINE 開關 */}
+                        <div className="w-14 sm:w-20 flex justify-center items-center">
+                          <CustomSwitch
+                            checked={isLineBound ? lineChecked : false}
+                            disabled={!isLineBound}
+                            onCheckedChange={(val) => handleToggle("line", item.key, val)}
+                            label={`${item.title} LINE 通知開關`}
+                          />
+                        </div>
                       </div>
                     </div>
                   );
@@ -515,7 +522,7 @@ export function NotificationPrefsCard() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                   <Button
                     type="button"
                     variant="outline"

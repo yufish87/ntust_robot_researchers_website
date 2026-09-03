@@ -15,6 +15,8 @@ import type {
   ExtendMembershipRequest,
   AdminUpdatePositionsRequest,
   AdminSetMemberYearRequest,
+  NotificationPreferences,
+  NotificationChannel,
 } from "@/lib/types/user";
 
 /**
@@ -168,17 +170,6 @@ export const UserAPI = {
   },
 };
 
-// ─── 通知偏好設定類型 ──────────────────────────────────────────────
-export interface NotificationChannel {
-  equipment: boolean;
-  machine: boolean;
-  finance: boolean;
-  announcements: boolean;
-  wishlist?: boolean;
-}
-
-export interface NotificationPreferences {
-  email: NotificationChannel;
-  line: NotificationChannel;
-}
+// ─── 重新導出通知偏好型別（單一真實來源自 @/lib/types/user）───────────
+export type { NotificationPreferences, NotificationChannel };
 
