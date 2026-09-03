@@ -25,13 +25,14 @@ export const metadata: Metadata = {
     default: "臺科大機器人研究社 | NTUST Robot Researchers Club",
     template: "%s | 臺科大機器人研究社",
   },
-  description: "國立臺灣科技大學 機器人研究社 社團網站",
+  description: "國立臺灣科技大學機器人研究社（NTUST Robot Researchers Club）。以創客實作為根基，致力於推廣機器人科技、軟硬體整合與全國賽事實戰，提供社課教學、設備機具借用與跨領域技術交流空間。",
   keywords: [
     "臺科大",
     "臺灣科技大學",
     "NTUST",
     "機器人研究社",
     "臺科大機器人研究社",
+    "NTUST Robot Researchers Club",
     "機器人",
     "創客",
     "程式",
@@ -62,7 +63,7 @@ export const metadata: Metadata = {
     locale: "zh_TW",
     siteName: "臺科大機器人研究社",
     title: "臺科大機器人研究社 | NTUST Robot Researchers Club",
-    description: "國立臺灣科技大學 機器人研究社 社團網站",
+    description: "國立臺灣科技大學機器人研究社（NTUST Robot Researchers Club）。以創客實作為根基，致力於推廣機器人科技、軟硬體整合與全國賽事實戰，提供社課教學、設備機具借用與跨領域技術交流空間。",
     images: [
       {
         url: "/image/Bar_Logo_Yellow.png",
@@ -75,7 +76,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "臺科大機器人研究社 | NTUST Robot Researchers Club",
-    description: "國立臺灣科技大學 機器人研究社 社團網站",
+    description: "國立臺灣科技大學機器人研究社（NTUST Robot Researchers Club）。以創客實作為根基，致力於推廣機器人科技、軟硬體整合與全國賽事實戰，提供社課教學、設備機具借用與跨領域技術交流空間。",
     images: ["/image/Bar_Logo_Yellow.png"],
   },
   alternates: {
@@ -99,6 +100,7 @@ const jsonLd = {
     "NTUST RRC",
     "臺科大機器人研究社 | NTUST Robot Researchers Club",
   ],
+  description: "國立臺灣科技大學機器人研究社（NTUST Robot Researchers Club）。以創客實作為根基，致力於推廣機器人科技、軟硬體整合與全國賽事實戰，提供社課教學、設備機具借用與跨領域技術交流空間。",
   url: "https://ntust-robotresearchers.vercel.app/",
 };
 
