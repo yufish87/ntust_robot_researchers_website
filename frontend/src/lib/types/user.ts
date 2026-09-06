@@ -123,7 +123,9 @@ export interface VerifyCode {
 
 /** 管理員用 — 產生驗證碼 Request */
 export interface AdminGenerateCodeRequest {
-  code: string;
+  code?: string;
+  count?: number;       // 產生組數，預設 1
+  prefix?: string;      // 驗證碼前綴，預設 "RRC-"
   description: string;
   validFrom: string;
   validUntil: string;
@@ -133,7 +135,8 @@ export interface AdminGenerateCodeRequest {
 
 /** 管理員用 — 產生驗證碼 Response */
 export interface AdminGenerateCodeResponse {
-  code: string;
+  code?: string;
+  codes?: string[];
   message: string;
 }
 

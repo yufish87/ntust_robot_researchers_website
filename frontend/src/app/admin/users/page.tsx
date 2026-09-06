@@ -51,9 +51,11 @@ import {
   Loader2,
   MoreHorizontal,
   Plus,
+  Printer,
   RefreshCw,
   Search,
 } from "lucide-react";
+import { ReceiptPrintModal } from "@/components/admin/users/ReceiptPrintModal";
 
 /** 身份中文對照 */
 const ROLE_LABEL: Record<string, string> = {
@@ -155,13 +157,24 @@ export default function AdminUsersPage() {
 
   // Generate Code Dialog
   const [codeDialogOpen, setCodeDialogOpen] = useState(false);
+  const [codeCount, setCodeCount] = useState<number>(1);
+  const [codePrefix, setCodePrefix] = useState<string>("RRC-");
   const [codeValue, setCodeValue] = useState("");
   const [codeDesc, setCodeDesc] = useState("");
   const [codeValidFrom, setCodeValidFrom] = useState("");
   const [codeValidUntil, setCodeValidUntil] = useState("");
-  const [codeUsageLimit, setCodeUsageLimit] = useState(0);
+  const [codeUsageLimit, setCodeUsageLimit] = useState(1);
   const [codeTargetYear, setCodeTargetYear] = useState("");
   const [codeLoading, setCodeLoading] = useState(false);
+
+  // Receipt Print Modal
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+  const [printModalCodes, setPrintModalCodes] = useState<string[]>([]);
+  const [printModalDesc, setPrintModalDesc] = useState("");
+  const [printModalYear, setPrintModalYear] = useState("");
+
+  // Checkbox selection in VerifyCodes Tab
+  const [selectedCodes, setSelectedCodes] = useState<Set<string>>(new Set());
 
   // Add User Dialog
   const [addUserOpen, setAddUserOpen] = useState(false);
@@ -298,25 +311,77 @@ export default function AdminUsersPage() {
     }
   };
 
+  const openCodeDialog = () => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const formatDt = (d: Date) =>
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+    const fromStr = formatDt(now);
+    const year = now.getMonth() + 1 >= 9 ? now.getFullYear() + 1 : now.getFullYear();
+    const untilDate = new Date(year, 5, 30, 23, 59, 0);
+    const untilStr = formatDt(untilDate);
+
+    const currentRocYear = now.getFullYear() - 1911;
+    const academicYear = now.getMonth() + 1 >= 9 ? currentRocYear : currentRocYear - 1;
+
+    setCodeCount(1);
+    setCodePrefix("RRC-");
+    setCodeValue("");
+    setCodeDesc("");
+    setCodeValidFrom(fromStr);
+    setCodeValidUntil(untilStr);
+    setCodeUsageLimit(1);
+    setCodeTargetYear(String(academicYear));
+    setCodeDialogOpen(true);
+  };
+
   const handleGenerateCode = async () => {
     setCodeLoading(true);
     try {
+      const isBatch = codeCount > 1;
       const result = await UserAPI.generateCode({
-        code: codeValue.trim(),
+        code: !isBatch ? codeValue.trim() : undefined,
+        count: codeCount,
+        prefix: codePrefix.trim() || "RRC-",
         description: codeDesc,
         validFrom: codeValidFrom,
         validUntil: codeValidUntil,
         usageLimit: codeUsageLimit,
         targetYear: codeTargetYear.trim(),
       });
+
+      const generatedList =
+        result.codes && result.codes.length > 0
+          ? result.codes
+          : result.code
+          ? [result.code]
+          : [];
+
       setCodeDialogOpen(false);
       setCodeValue("");
       setCodeDesc("");
       setCodeValidFrom("");
       setCodeValidUntil("");
-      setCodeUsageLimit(0);
+      setCodeUsageLimit(1);
       setCodeTargetYear("");
-      toast({ title: "驗證碼已產生", description: `驗證碼: ${result.code}` });
+      setCodeCount(1);
+      queryClient.invalidateQueries({ queryKey: ["admin-codes"] });
+
+      toast({
+        title: isBatch ? `已成功產生 ${generatedList.length} 組驗證碼` : "驗證碼已產生",
+        description: isBatch
+          ? `代碼如：${generatedList[0]} 等共 ${generatedList.length} 組。`
+          : `驗證碼: ${generatedList[0]}`,
+      });
+
+      // 自動準備並開啟列印繳費證明視窗
+      if (generatedList.length > 0) {
+        setPrintModalCodes(generatedList);
+        setPrintModalDesc(codeDesc);
+        setPrintModalYear(codeTargetYear.trim());
+        setPrintModalOpen(true);
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "產生失敗";
       toast({
@@ -357,12 +422,32 @@ export default function AdminUsersPage() {
   };
 
   const generateRandomCode = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
     let code = "";
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 6; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    setCodeValue(code);
+    setCodeValue(`RRC-${code}`);
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedCodes.size === codes.length) {
+      setSelectedCodes(new Set());
+    } else {
+      setSelectedCodes(new Set(codes.map((c) => c.code)));
+    }
+  };
+
+  const handleToggleSelectOne = (code: string) => {
+    setSelectedCodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) {
+        next.delete(code);
+      } else {
+        next.add(code);
+      }
+      return next;
+    });
   };
 
   // Verify code actions
@@ -542,7 +627,7 @@ export default function AdminUsersPage() {
 
           <Button
             variant="outline"
-            onClick={() => setCodeDialogOpen(true)}
+            onClick={openCodeDialog}
             className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
           >
             <KeyRound className="h-4 w-4 mr-1.5" />
@@ -752,10 +837,48 @@ export default function AdminUsersPage() {
       {/* ===== 驗證碼 Tab ===== */}
       {mainTab === "codes" && (
         <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                共 {codes.length} 筆
+              </span>
+              {selectedCodes.size > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  已選取 {selectedCodes.size} 筆
+                </Badge>
+              )}
+            </div>
+            {selectedCodes.size > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const chosen = codes.filter((c) => selectedCodes.has(c.code));
+                  setPrintModalCodes(chosen.map((c) => c.code));
+                  setPrintModalDesc(chosen[0]?.description || "");
+                  setPrintModalYear(chosen[0]?.targetYear || "");
+                  setPrintModalOpen(true);
+                }}
+                className="gap-1.5 text-xs text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                列印所選繳費證明 ({selectedCodes.size})
+              </Button>
+            )}
+          </div>
+
           <div className="bg-white dark:bg-[#201e26] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
             <Table className="min-w-[850px]">
               <TableHeader>
                 <TableRow className="bg-muted/50">
+                  <TableHead className="w-[40px] text-center">
+                    <input
+                      type="checkbox"
+                      className="rounded border-slate-300 dark:border-white/20 cursor-pointer"
+                      checked={codes.length > 0 && selectedCodes.size === codes.length}
+                      onChange={handleToggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead className="w-[120px]">驗證碼</TableHead>
                   <TableHead className="w-[140px]">說明</TableHead>
                   <TableHead className="w-[60px] text-center">目標學年</TableHead>
@@ -774,7 +897,7 @@ export default function AdminUsersPage() {
               <TableBody>
                 {codesLoading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center h-32">
+                    <TableCell colSpan={12} className="text-center h-32">
                       <div className="flex items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         載入中...
@@ -784,7 +907,7 @@ export default function AdminUsersPage() {
                 ) : codes.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={10}
+                      colSpan={12}
                       className="text-center h-32 text-muted-foreground"
                     >
                       尚無驗證碼資料。
@@ -793,6 +916,14 @@ export default function AdminUsersPage() {
                 ) : (
                   codes.map((vc) => (
                     <TableRow key={vc.code}>
+                      <TableCell className="text-center">
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 dark:border-white/20 cursor-pointer"
+                          checked={selectedCodes.has(vc.code)}
+                          onChange={() => handleToggleSelectOne(vc.code)}
+                        />
+                      </TableCell>
                       <TableCell className="font-mono text-xs font-medium">
                         {vc.code}
                       </TableCell>
@@ -861,6 +992,17 @@ export default function AdminUsersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setPrintModalCodes([vc.code]);
+                                setPrintModalDesc(vc.description || "");
+                                setPrintModalYear(vc.targetYear || "");
+                                setPrintModalOpen(true);
+                              }}
+                            >
+                              <Printer className="h-4 w-4 mr-2" />
+                              列印此繳費證明
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleToggleActive(vc)}
                             >
@@ -969,91 +1111,152 @@ export default function AdminUsersPage() {
 
       {/* Generate Code Dialog */}
       <Dialog open={codeDialogOpen} onOpenChange={setCodeDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>產生註冊驗證碼</DialogTitle>
             <DialogDescription>
-              產生一組驗證碼供新成員註冊使用。
+              支援單組自訂或批次隨機生成，並自動整合 A4 社費繳費證明列印。
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* 組數設定 */}
             <div className="space-y-2">
-              <Label htmlFor="code-value">
-                驗證碼<span className="text-red-500 ml-1">*</span>
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="code-value"
-                  placeholder="請輸入驗證碼"
-                  value={codeValue}
-                  onChange={(e) => setCodeValue(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={generateRandomCode}
-                  title="隨機產生"
-                >
-                  <Dices className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="code-count">產生組數</Label>
+                <div className="flex gap-1">
+                  {[1, 6, 12, 24].map((cnt) => (
+                    <Button
+                      key={cnt}
+                      type="button"
+                      variant={codeCount === cnt ? "default" : "outline"}
+                      size="sm"
+                      className="h-6 px-2 text-[11px]"
+                      onClick={() => {
+                        setCodeCount(cnt);
+                        if (cnt > 1 && !codeValue) {
+                          setCodeUsageLimit(1);
+                        }
+                      }}
+                    >
+                      {cnt === 1 ? "1組" : `${cnt}組(${cnt / 6}頁)`}
+                    </Button>
+                  ))}
+                </div>
               </div>
+              <Input
+                id="code-count"
+                type="number"
+                min={1}
+                max={60}
+                value={codeCount}
+                onChange={(e) =>
+                  setCodeCount(
+                    Math.max(1, Math.min(60, Number(e.target.value) || 1))
+                  )
+                }
+              />
             </div>
+
+            {/* 單組 vs 批次輸入模式 */}
+            {codeCount === 1 ? (
+              <div className="space-y-2">
+                <Label htmlFor="code-value">
+                  驗證碼<span className="text-red-500 ml-1">*</span>
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="code-value"
+                    placeholder="請輸入驗證碼（例：RRC-8K9M2P）"
+                    value={codeValue}
+                    onChange={(e) => setCodeValue(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={generateRandomCode}
+                    title="隨機產生"
+                  >
+                    <Dices className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="code-prefix">代碼前綴</Label>
+                <Input
+                  id="code-prefix"
+                  placeholder="預設 RRC-"
+                  value={codePrefix}
+                  onChange={(e) => setCodePrefix(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground bg-muted/60 p-2.5 rounded-lg">
+                  系統將批次隨機生成 {codeCount} 組不重複代碼，完成後自動開啟 A4 繳費證明列印。
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="code-desc">說明</Label>
               <Input
                 id="code-desc"
-                placeholder="例：113-2 新進社員"
+                placeholder="例：113-2 社費繳費證明"
                 value={codeDesc}
                 onChange={(e) => setCodeDesc(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="code-valid-from">
-                生效時間<span className="text-red-500 ml-1">*</span>
-              </Label>
-              <Input
-                id="code-valid-from"
-                type="datetime-local"
-                value={codeValidFrom}
-                onChange={(e) => setCodeValidFrom(e.target.value)}
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
+                <Label htmlFor="code-valid-from">
+                  生效時間<span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Input
+                  id="code-valid-from"
+                  type="datetime-local"
+                  value={codeValidFrom}
+                  onChange={(e) => setCodeValidFrom(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="code-valid-until">
+                  失效時間<span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Input
+                  id="code-valid-until"
+                  type="datetime-local"
+                  value={codeValidUntil}
+                  onChange={(e) => setCodeValidUntil(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="code-valid-until">
-                失效時間<span className="text-red-500 ml-1">*</span>
-              </Label>
-              <Input
-                id="code-valid-until"
-                type="datetime-local"
-                value={codeValidUntil}
-                onChange={(e) => setCodeValidUntil(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="code-limit">使用次數限制</Label>
-              <Input
-                id="code-limit"
-                type="number"
-                min={0}
-                placeholder="0 = 無限制"
-                value={codeUsageLimit}
-                onChange={(e) => setCodeUsageLimit(Number(e.target.value))}
-              />
-              <p className="text-xs text-muted-foreground">
-                設為 0 表示不限制使用次數。
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="code-target-year">目標學年（選填）</Label>
-              <Input
-                id="code-target-year"
-                placeholder="例：114"
-                maxLength={3}
-                value={codeTargetYear}
-                onChange={(e) => setCodeTargetYear(e.target.value.replace(/\D/g, ""))}
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
+                <Label htmlFor="code-limit">每組使用次數</Label>
+                <Input
+                  id="code-limit"
+                  type="number"
+                  min={0}
+                  placeholder="0 = 無限制"
+                  value={codeUsageLimit}
+                  onChange={(e) => setCodeUsageLimit(Number(e.target.value))}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  單人收據建議設為 1 次。
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="code-target-year">目標學年（選填）</Label>
+                <Input
+                  id="code-target-year"
+                  placeholder="例：114"
+                  maxLength={3}
+                  value={codeTargetYear}
+                  onChange={(e) =>
+                    setCodeTargetYear(e.target.value.replace(/\D/g, ""))
+                  }
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -1064,14 +1267,23 @@ export default function AdminUsersPage() {
               onClick={handleGenerateCode}
               disabled={
                 codeLoading ||
-                !codeValue.trim() ||
+                (codeCount === 1 && !codeValue.trim()) ||
+                (codeCount > 1 && codeCount <= 0) ||
                 !codeValidFrom ||
                 !codeValidUntil
               }
-              className="min-w-[100px]"
+              className="min-w-[120px] gap-1.5"
             >
               {codeLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  產生中...
+                </>
+              ) : codeCount > 1 ? (
+                <>
+                  <Printer className="h-4 w-4" />
+                  批次產生並列印
+                </>
               ) : (
                 "產生"
               )}
@@ -1304,6 +1516,15 @@ export default function AdminUsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Receipt Print Modal */}
+      <ReceiptPrintModal
+        isOpen={printModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        codes={printModalCodes}
+        description={printModalDesc}
+        targetYear={printModalYear}
+      />
     </div>
   );
 }
