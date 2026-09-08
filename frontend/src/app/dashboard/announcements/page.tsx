@@ -185,7 +185,7 @@ export default function AnnouncementsPage() {
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent
           aria-describedby={undefined}
-          className="max-w-2xl max-h-[80vh]"
+          className="max-w-2xl sm:max-w-3xl max-h-[90vh]"
         >
           <DialogHeader className="pr-8">
             <DialogTitle className="text-xl pr-6">{selected?.title}</DialogTitle>
@@ -207,7 +207,7 @@ export default function AnnouncementsPage() {
             </div>
           </DialogHeader>
 
-          <ScrollArea className="max-h-[50vh] pr-4">
+          <ScrollArea className="max-h-[68vh] pr-4">
             <div className="space-y-4">
               {/* 內容 */}
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -222,33 +222,47 @@ export default function AnnouncementsPage() {
                     附件 ({selected.attachments.length})
                   </h4>
 
-                  {/* 圖片附件：直接顯示 */}
+                  {/* 圖片附件：直接顯示完整圖片 */}
                   {selected.attachments
                     .filter((att) => isImageAttachment(att))
                     .map((att, i) => {
                       const imgSrc = getAttachmentImageSrc(att);
                       if (!imgSrc) return null;
+                      const link = getAttachmentLink(att);
+                      const targetLink = link !== "#" ? link : imgSrc;
 
                       return (
                         <div
                           key={`img-${i}`}
-                          className="rounded-lg overflow-hidden border"
+                          className="rounded-lg overflow-hidden border bg-muted/20"
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={imgSrc}
-                            alt={att.title || "附件圖片"}
-                            className="w-full h-auto object-cover"
-                            onError={(e) => {
-                              const target = e.currentTarget;
-                              if (att.fileId && !target.dataset.fallback) {
-                                target.dataset.fallback = "1";
-                                target.src = `https://drive.google.com/thumbnail?id=${att.fileId}&sz=w1200`;
-                              }
-                            }}
-                          />
+                          <a
+                            href={targetLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block group relative cursor-zoom-in"
+                            title="點擊在新分頁開啟原始圖片"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imgSrc}
+                              alt={att.title || "附件圖片"}
+                              className="w-full h-auto object-contain block mx-auto"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                if (att.fileId && !target.dataset.fallback) {
+                                  target.dataset.fallback = "1";
+                                  target.src = `https://drive.google.com/thumbnail?id=${att.fileId}&sz=w1200`;
+                                }
+                              }}
+                            />
+                            <div className="absolute top-2 right-2 px-2.5 py-1 rounded bg-black/70 backdrop-blur-xs text-xs text-slate-200 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ExternalLink className="h-3 w-3 text-primary" />
+                              <span>查看原圖</span>
+                            </div>
+                          </a>
                           {att.title && (
-                            <p className="p-3 text-xs text-muted-foreground">
+                            <p className="p-3 text-xs text-muted-foreground border-t">
                               {att.title}
                             </p>
                           )}

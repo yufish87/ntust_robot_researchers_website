@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -241,9 +241,10 @@ export function ReceiptPrintModal({
   const previewRows = currentPageCodes.length > 0 ? currentPageCodes : [""];
 
   /**
-   * 使用隱形 iframe 進行列印，徹底隔絕 Radix Dialog、Body scroll-lock 與全域 CSS 的干擾
+   * 使用離屏實體尺寸 iframe 進行列印，徹底隔絕 Radix Dialog、全域 CSS 與印出主頁面的問題
+   * 重要：不可設為 visibility: hidden 或 0x0，否則 Chromium/Edge 會無法 focus 或降級列印主視窗
    */
-  const handlePrint = () => {
+  const handlePrint = useCallback(() => {
     try {
       const existingIframe = document.getElementById("receipt-print-iframe");
       if (existingIframe) {
@@ -253,17 +254,23 @@ export function ReceiptPrintModal({
       const iframe = document.createElement("iframe");
       iframe.id = "receipt-print-iframe";
       iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "0";
-      iframe.style.visibility = "hidden";
+      iframe.style.top = "-9999px";
+      iframe.style.left = "-9999px";
+      iframe.style.width = "210mm";
+      iframe.style.height = "297mm";
+      iframe.style.border = "none";
+      iframe.style.opacity = "0";
+      iframe.style.pointerEvents = "none";
+      iframe.style.zIndex = "-9999";
       document.body.appendChild(iframe);
 
       const doc = iframe.contentWindow?.document;
       if (!doc) {
-        window.print();
+        toast({
+          variant: "destructive",
+          title: "列印失敗",
+          description: "無法建立列印畫布，請稍後再試。",
+        });
         return;
       }
 
@@ -274,41 +281,78 @@ export function ReceiptPrintModal({
       doc.write(htmlContent);
       doc.close();
 
-      const doPrint = () => {
+      let hasTriggered = false;
+      const triggerPrint = () => {
+        if (hasTriggered) return;
+        hasTriggered = true;
+
         setTimeout(() => {
           try {
             iframe.contentWindow?.focus();
             iframe.contentWindow?.print();
-          } catch {
-            window.print();
+          } catch (err) {
+            console.error("Print error:", err);
+            toast({
+              variant: "destructive",
+              title: "啟動列印失敗",
+              description: "瀏覽器阻止了列印請求，請確認瀏覽器列印權限。",
+            });
           }
-        }, 200);
+        }, 250);
       };
 
       const images = doc.images;
-      if (images.length > 0) {
+      if (images && images.length > 0) {
         let loaded = 0;
         const total = images.length;
-        const checkAll = () => {
+        const onImgDone = () => {
           loaded++;
-          if (loaded >= total) doPrint();
+          if (loaded >= total) {
+            triggerPrint();
+          }
         };
+
         for (let i = 0; i < total; i++) {
-          if (images[i].complete) {
+          const img = images[i];
+          if (img.complete) {
             loaded++;
           } else {
-            images[i].onload = checkAll;
-            images[i].onerror = checkAll;
+            img.onload = onImgDone;
+            img.onerror = onImgDone;
           }
         }
-        if (loaded >= total) doPrint();
+
+        if (loaded >= total) {
+          triggerPrint();
+        } else {
+          // 最多等待 1 秒超時後強制列印，避免因圖片阻塞
+          setTimeout(triggerPrint, 1000);
+        }
       } else {
-        doPrint();
+        triggerPrint();
       }
-    } catch {
-      window.print();
+    } catch (err) {
+      console.error("Setup print iframe failed:", err);
+      toast({
+        variant: "destructive",
+        title: "列印失敗",
+        description: "初始化列印排版時發生錯誤，請稍後再試。",
+      });
     }
-  };
+  }, [pages, targetYear]);
+
+  // 監聽鍵盤 Ctrl+P / Cmd+P，在預覽 Modal 開啟時攔截並直接觸發乾淨單據列印
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "P")) {
+        e.preventDefault();
+        handlePrint();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen, handlePrint]);
 
   const handleCopyCodes = async () => {
     try {
@@ -330,7 +374,7 @@ export function ReceiptPrintModal({
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
-      <DialogContent showCloseButton={false} className="sm:max-w-4xl lg:max-w-5xl w-[95vw] max-h-[94vh] flex flex-col p-0 overflow-hidden bg-white border border-neutral-200 text-neutral-900 shadow-2xl">
+      <DialogContent showCloseButton={false} className="sm:max-w-4xl lg:max-w-5xl w-[95vw] max-h-[94vh] flex flex-col p-0 overflow-hidden bg-white border border-neutral-200 text-neutral-900 shadow-2xl print:hidden">
         {/* 頂部操作列（淺色風格） */}
         <div className="p-4 sm:px-6 border-b border-neutral-200 flex flex-wrap items-center justify-between gap-3 bg-white shrink-0">
           <div>
