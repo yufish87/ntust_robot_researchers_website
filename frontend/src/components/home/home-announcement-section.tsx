@@ -12,7 +12,6 @@ import {
   Clock,
   Sparkles,
   ArrowRight,
-  Lock,
 } from "lucide-react";
 import { cn, isGoogleDriveOrCdnUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -134,9 +133,6 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
     0,
     MAX_HOMEPAGE_ANNOUNCEMENTS,
   );
-  const hasMore = filteredAnnouncements.length > MAX_HOMEPAGE_ANNOUNCEMENTS;
-  const remainingCount =
-    filteredAnnouncements.length - MAX_HOMEPAGE_ANNOUNCEMENTS;
 
   const categories = ["all", ...ANNOUNCEMENT_CATEGORIES];
 
@@ -267,39 +263,32 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
         </div>
       )}
 
-      {/* 底部歷史公告引導區 */}
-      <div className="mt-8 p-4 sm:p-5 rounded-xl bg-white/[0.02] border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-        <div className="flex items-center gap-2.5 text-center sm:text-left">
-          <Lock className="w-4 h-4 text-[#ffc000] shrink-0" />
-          <span>
-            {hasMore
-              ? `首頁僅展示最新 ${MAX_HOMEPAGE_ANNOUNCEMENTS} 則公告，尚有 ${remainingCount} 則歷史公告可至公告專區查閱。`
-              : "完整社團公告與歷史發布紀錄，請至會員公告專區查閱。"}
-          </span>
+      {/* 底部「查看更多公告」 */}
+      {filteredAnnouncements.length > 0 && (
+        <div className="mt-8 flex items-center justify-end">
+          {user ? (
+            <Link href="/dashboard/announcements" className="w-full sm:w-auto">
+              <Button
+                size="sm"
+                className="w-full sm:w-auto bg-white/10 hover:bg-[#ffc000] hover:text-[#1e1c24] text-white text-xs font-bold gap-1.5 h-9 px-4 cursor-pointer transition-colors border border-white/10"
+              >
+                查看更多公告
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+          ) : (
+            <LoginModal>
+              <Button
+                size="sm"
+                className="w-full sm:w-auto bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] text-xs font-bold gap-1.5 h-9 px-4 cursor-pointer"
+              >
+                查看更多公告
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            </LoginModal>
+          )}
         </div>
-
-        {user ? (
-          <Link href="/dashboard/announcements" className="shrink-0 w-full sm:w-auto">
-            <Button
-              size="sm"
-              className="w-full sm:w-auto bg-white/10 hover:bg-[#ffc000] hover:text-[#1e1c24] text-white text-xs font-bold gap-1.5 h-9 px-4 cursor-pointer transition-colors"
-            >
-              前往完整公告專區
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
-          </Link>
-        ) : (
-          <LoginModal>
-            <Button
-              size="sm"
-              className="w-full sm:w-auto bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] text-xs font-bold gap-1.5 h-9 px-4 cursor-pointer"
-            >
-              登入後查看更多公告
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
-          </LoginModal>
-        )}
-      </div>
+      )}
 
       {/* 公告詳情彈窗 (與資源管理系統 Modal 排版一致) */}
       <Dialog
@@ -308,7 +297,7 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
       >
         <DialogContent
           aria-describedby={undefined}
-          className="max-w-2xl max-h-[85vh] bg-[#1e1c24] border-white/10 text-white p-6"
+          className="max-w-2xl sm:max-w-3xl max-h-[90vh] bg-[#1e1c24] border-white/10 text-white p-6"
         >
           {selectedAnnouncement && (
             <>
@@ -333,7 +322,7 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
                 </div>
               </DialogHeader>
 
-              <ScrollArea className="max-h-[55vh] pr-4 scrollbar-dark">
+              <ScrollArea className="max-h-[68vh] pr-4 scrollbar-dark">
                 <div className="space-y-4">
                   {/* 內容 */}
                   <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
@@ -349,31 +338,45 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
                           附件 ({selectedAnnouncement.attachments.length})
                         </h4>
 
-                        {/* 圖片附件：直接顯示 */}
+                        {/* 圖片附件：直接顯示完整圖片 */}
                         {selectedAnnouncement.attachments
                           .filter((att) => isImageAttachment(att))
                           .map((att, i) => {
                             const imgSrc = getAttachmentImageSrc(att);
                             if (!imgSrc) return null;
+                            const link = getAttachmentLink(att);
+                            const targetLink = link !== "#" ? link : imgSrc;
 
                             return (
                               <div
                                 key={`img-${i}`}
                                 className="rounded-lg overflow-hidden border border-white/10 bg-black/40"
                               >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={imgSrc}
-                                  alt={att.title || "附件圖片"}
-                                  className="w-full h-auto object-cover max-h-[420px]"
-                                  onError={(e) => {
-                                    const target = e.currentTarget;
-                                    if (att.fileId && !target.dataset.fallback) {
-                                      target.dataset.fallback = "1";
-                                      target.src = `https://drive.google.com/thumbnail?id=${att.fileId}&sz=w1200`;
-                                    }
-                                  }}
-                                />
+                                <a
+                                  href={targetLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block group relative cursor-zoom-in"
+                                  title="點擊在新分頁開啟原始圖片"
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={imgSrc}
+                                    alt={att.title || "附件圖片"}
+                                    className="w-full h-auto object-contain block mx-auto"
+                                    onError={(e) => {
+                                      const target = e.currentTarget;
+                                      if (att.fileId && !target.dataset.fallback) {
+                                        target.dataset.fallback = "1";
+                                        target.src = `https://drive.google.com/thumbnail?id=${att.fileId}&sz=w1200`;
+                                      }
+                                    }}
+                                  />
+                                  <div className="absolute top-2 right-2 px-2.5 py-1 rounded bg-black/70 backdrop-blur-xs text-xs text-slate-200 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <ExternalLink className="h-3 w-3 text-[#ffc000]" />
+                                    <span>查看原圖</span>
+                                  </div>
+                                </a>
                                 {att.title && (
                                   <p className="p-3 text-xs text-slate-400 border-t border-white/5">
                                     {att.title}
