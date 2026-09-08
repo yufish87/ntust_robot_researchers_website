@@ -125,18 +125,31 @@ function generatePrintHtml(pages: string[][], targetYear?: string, origin = ""):
 }
 
 /**
+ * HTML 跳脫函式，防止 XSS 注入
+ */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
  * 產生單聯 HTML
  */
 function renderSlipHtml(type: "社員聯" | "存根聯", code: string, targetYear?: string, origin = ""): string {
-  const displayCode = code ? code : "—";
-  const yearLabel = targetYear ? `${targetYear}學年` : "NTUST RRC";
+  const displayCode = code ? escapeHtml(code) : "—";
+  const yearLabel = targetYear ? `${escapeHtml(targetYear)}學年` : "NTUST RRC";
+  const safeOrigin = origin ? escapeHtml(origin) : "";
 
   return `
     <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
       <!-- 頂部 Header：Bar_Logo + 標題 -->
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center;">
-          <img src="${origin}/image/Bar_Logo.png" alt="臺科大機器人研究社" style="height: 32px; max-width: 165px; object-fit: contain; flex-shrink: 0;" />
+          <img src="${safeOrigin}/image/Bar_Logo.png" alt="臺科大機器人研究社" style="height: 32px; max-width: 165px; object-fit: contain; flex-shrink: 0;" />
         </div>
         <div style="display: flex; align-items: baseline; gap: 3px;">
           <span style="font-size: 16.5px; font-weight: bold; color: #000; font-family: sans-serif; letter-spacing: 0.5px;">社費繳交證明</span>
@@ -208,6 +221,13 @@ export function ReceiptPrintModal({
 
   const [copied, setCopied] = useState(false);
   const [previewPage, setPreviewPage] = useState(1);
+
+  // 當 Modal 開啟或 codes 變更時，重設分頁至第 1 頁，避免停留在已不存在的頁碼
+  React.useEffect(() => {
+    if (isModalOpen) {
+      setPreviewPage(1);
+    }
+  }, [isModalOpen, codes]);
 
   // 將所有驗證碼切分為每頁 6 組
   const totalPages = Math.max(1, Math.ceil(codes.length / ITEMS_PER_PAGE));

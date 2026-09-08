@@ -358,6 +358,10 @@ export default function AdminUsersPage() {
           ? [result.code]
           : [];
 
+      if (generatedList.length === 0) {
+        throw new Error(result.message || "未能取得產生的驗證碼");
+      }
+
       setCodeDialogOpen(false);
       setCodeValue("");
       setCodeDesc("");
@@ -430,8 +434,16 @@ export default function AdminUsersPage() {
     setCodeValue(`RRC-${code}`);
   };
 
+  // 以目前 codes 清單中實際存在的已選項目為基準，避免換頁/重新整理後殘留舊代碼
+  const validSelectedCodes = useMemo(
+    () => codes.filter((c) => selectedCodes.has(c.code)),
+    [codes, selectedCodes]
+  );
+  const isAllCodesSelected =
+    codes.length > 0 && codes.every((c) => selectedCodes.has(c.code));
+
   const handleToggleSelectAll = () => {
-    if (selectedCodes.size === codes.length) {
+    if (isAllCodesSelected) {
       setSelectedCodes(new Set());
     } else {
       setSelectedCodes(new Set(codes.map((c) => c.code)));
@@ -842,27 +854,26 @@ export default function AdminUsersPage() {
               <span className="text-sm text-muted-foreground">
                 共 {codes.length} 筆
               </span>
-              {selectedCodes.size > 0 && (
+              {validSelectedCodes.length > 0 && (
                 <Badge variant="secondary" className="text-xs">
-                  已選取 {selectedCodes.size} 筆
+                  已選取 {validSelectedCodes.length} 筆
                 </Badge>
               )}
             </div>
-            {selectedCodes.size > 0 && (
+            {validSelectedCodes.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const chosen = codes.filter((c) => selectedCodes.has(c.code));
-                  setPrintModalCodes(chosen.map((c) => c.code));
-                  setPrintModalDesc(chosen[0]?.description || "");
-                  setPrintModalYear(chosen[0]?.targetYear || "");
+                  setPrintModalCodes(validSelectedCodes.map((c) => c.code));
+                  setPrintModalDesc(validSelectedCodes[0]?.description || "");
+                  setPrintModalYear(validSelectedCodes[0]?.targetYear || "");
                   setPrintModalOpen(true);
                 }}
                 className="gap-1.5 text-xs text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50 hover:bg-blue-50 dark:hover:bg-blue-950/30"
               >
                 <Printer className="h-3.5 w-3.5" />
-                列印所選繳費證明 ({selectedCodes.size})
+                列印所選繳費證明 ({validSelectedCodes.length})
               </Button>
             )}
           </div>
@@ -874,8 +885,9 @@ export default function AdminUsersPage() {
                   <TableHead className="w-[40px] text-center">
                     <input
                       type="checkbox"
+                      aria-label="全選驗證碼"
                       className="rounded border-slate-300 dark:border-white/20 cursor-pointer"
-                      checked={codes.length > 0 && selectedCodes.size === codes.length}
+                      checked={isAllCodesSelected}
                       onChange={handleToggleSelectAll}
                     />
                   </TableHead>
@@ -919,6 +931,7 @@ export default function AdminUsersPage() {
                       <TableCell className="text-center">
                         <input
                           type="checkbox"
+                          aria-label={`選取驗證碼 ${vc.code}`}
                           className="rounded border-slate-300 dark:border-white/20 cursor-pointer"
                           checked={selectedCodes.has(vc.code)}
                           onChange={() => handleToggleSelectOne(vc.code)}
