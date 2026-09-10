@@ -99,6 +99,7 @@ export function MobileNav({ variant }: MobileNavProps) {
   /* ----- helpers ----- */
 
   const checkActive = (item: (typeof navItems)[number]) => {
+    if (!item) return false;
     if (effectiveVariant === "public") {
       return item.href.startsWith("/")
         ? pathname === item.href || pathname.startsWith(item.href + "/")
@@ -109,7 +110,9 @@ export function MobileNav({ variant }: MobileNavProps) {
       return pathname === item.href || pathname.startsWith(item.href + "/");
     }
     // admin: items with exact flag
-    const exact = "exact" in item && (item as { exact?: boolean }).exact;
+    const exact = Boolean(
+      item && typeof item === "object" && "exact" in item && (item as { exact?: boolean }).exact
+    );
     return exact
       ? pathname === item.href
       : pathname === item.href || pathname.startsWith(item.href + "/");
@@ -157,13 +160,17 @@ export function MobileNav({ variant }: MobileNavProps) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <span className="font-bold text-lg text-white">
+          <Link
+            href="/"
+            className="font-bold text-lg text-white hover:text-[#ffc000] transition-colors cursor-pointer"
+            title="返回社團官網"
+          >
             {effectiveVariant === "admin"
               ? "管理員後台"
               : effectiveVariant === "dashboard"
                 ? "資源管理系統"
                 : "機器人研究社 社團網站"}
-          </span>
+          </Link>
         </div>
 
         {/* 右側 — 歡迎訊息 (dashboard/admin) */}
@@ -186,14 +193,17 @@ export function MobileNav({ variant }: MobileNavProps) {
           showCloseButton={false}
           aria-describedby={undefined}
         >
-          {/* --- Header --- */}
-          <SheetHeader
+          {/* --- Header - 點擊返回社團官網 --- */}
+          <Link
+            href="/"
+            onClick={() => setOpen(false)}
             className={cn(
-              "p-6 flex flex-col items-center gap-2",
+              "p-6 flex flex-col items-center gap-2 group cursor-pointer transition-colors hover:bg-white/[0.04]",
               isDarkSidebar
                 ? "border-b border-white/10"
                 : "border-b border-slate-100",
             )}
+            title="返回社團官網"
           >
             <div className="relative w-full h-12">
               <Image
@@ -207,18 +217,18 @@ export function MobileNav({ variant }: MobileNavProps) {
             </div>
             <SheetTitle
               className={cn(
-                "text-base font-bold tracking-[0.2em] mt-1 text-center",
+                "text-base font-bold tracking-[0.2em] mt-1 text-center group-hover:text-[#ffc000] transition-colors",
                 isDarkSidebar ? "text-white" : "text-black",
               )}
             >
               {cfg.subtitle}
             </SheetTitle>
-          </SheetHeader>
+          </Link>
 
           {/* --- Nav --- */}
           <div
             className={cn(
-              "flex-1 overflow-y-auto py-6 px-3 space-y-1",
+              "flex-1 overflow-y-auto pt-3 pb-4 px-3 space-y-1",
               isDarkSidebar ? "scrollbar-dark" : "scrollbar-light",
             )}
           >

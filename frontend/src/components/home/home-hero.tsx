@@ -46,7 +46,7 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
       {/* 1. 動態相片拼圖底圖矩陣 (Maker Photo Mosaic Matrix) - 支援滑鼠懸浮互動 */}
       {tiles.length > 0 && delays && (
         <div
-          className="absolute inset-0 grid gap-1 p-1 opacity-65 hover:opacity-80 transition-opacity duration-500"
+          className="absolute -top-1 -left-1 -right-1 bottom-0 grid gap-1 opacity-65 hover:opacity-80 transition-opacity duration-500"
           style={{
             gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
             gridAutoRows: "95px",

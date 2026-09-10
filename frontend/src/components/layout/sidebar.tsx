@@ -97,8 +97,12 @@ export function AppSidebar() {
       className="hidden lg:flex h-dvh w-64 flex-col fixed left-0 top-0"
       style={{ backgroundColor: "#34313d" }}
     >
-      {/* Header */}
-      <div className="p-6 flex flex-col items-center gap-2 border-b border-white/10">
+      {/* Header - 點擊返回社團官網 */}
+      <Link
+        href="/"
+        className="p-6 flex flex-col items-center gap-2 border-b border-white/10 group cursor-pointer transition-colors hover:bg-white/[0.04]"
+        title="返回社團官網"
+      >
         <div className="relative w-full h-12">
           <Image
             src="/image/Bar_Logo_Yellow.png"
@@ -109,10 +113,10 @@ export function AppSidebar() {
             priority
           />
         </div>
-        <p className="text-base font-bold text-white tracking-[0.2em] mt-1 text-center">
+        <p className="text-base font-bold text-white tracking-[0.2em] mt-1 text-center group-hover:text-[#ffc000] transition-colors">
           資源管理系統
         </p>
-      </div>
+      </Link>
 
       {/* Nav */}
       <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1 scrollbar-dark">

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -586,6 +587,9 @@ export function AboutSection({ className }: AboutSectionProps) {
                   <DialogTitle className="text-xl font-bold text-white text-left leading-snug pr-6">
                     {selectedAward.fullTitle}
                   </DialogTitle>
+                  <DialogDescription className="sr-only">
+                    榮譽榜得獎詳細資訊
+                  </DialogDescription>
                   <div className="flex items-center gap-2 pt-1">
                     <Badge
                       variant="secondary"
@@ -615,49 +619,31 @@ export function AboutSection({ className }: AboutSectionProps) {
                         </h4>
 
                         {/* 圖片附件：直接顯示完整圖片 */}
-                        {modalImageList.map((img, i) => {
-                          const targetLink = img.fileId
-                            ? `https://drive.google.com/file/d/${img.fileId}/view?usp=sharing`
-                            : img.src;
-
-                          return (
-                            <div
-                              key={`img-${i}`}
-                              className="rounded-lg overflow-hidden border border-white/10 bg-black/40"
-                            >
-                              <a
-                                href={targetLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block group relative cursor-zoom-in"
-                                title="點擊在新分頁開啟原始圖片"
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={img.src}
-                                  alt={img.title || "榮譽照片"}
-                                  className="w-full h-auto object-contain block mx-auto"
-                                  onError={(e) => {
-                                    const target = e.currentTarget;
-                                    if (img.fileId && !target.dataset.fallback) {
-                                      target.dataset.fallback = "1";
-                                      target.src = `https://drive.google.com/thumbnail?id=${img.fileId}&sz=w1200`;
-                                    }
-                                  }}
-                                />
-                                <div className="absolute top-2 right-2 px-2.5 py-1 rounded bg-black/70 backdrop-blur-xs text-xs text-slate-200 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <ExternalLink className="h-3 w-3 text-[#ffc000]" />
-                                  <span>查看原圖</span>
-                                </div>
-                              </a>
-                              {img.title && (
-                                <p className="p-3 text-xs text-slate-400 border-t border-white/5">
-                                  {img.title}
-                                </p>
-                              )}
-                            </div>
-                          );
-                        })}
+                        {modalImageList.map((img, i) => (
+                          <div
+                            key={`img-${i}`}
+                            className="rounded-lg overflow-hidden border border-white/10 bg-black/40"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={img.src}
+                              alt={img.title || "榮譽照片"}
+                              className="w-full h-auto object-contain block mx-auto"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                if (img.fileId && !target.dataset.fallback) {
+                                  target.dataset.fallback = "1";
+                                  target.src = `https://drive.google.com/thumbnail?id=${img.fileId}&sz=w1200`;
+                                }
+                              }}
+                            />
+                            {img.title && (
+                              <p className="p-3 text-xs text-slate-400 border-t border-white/5">
+                                {img.title}
+                              </p>
+                            )}
+                          </div>
+                        ))}
 
                         {/* 非圖片附件 */}
                         {modalNonImageAttachments.length > 0 && (
