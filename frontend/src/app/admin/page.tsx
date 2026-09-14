@@ -78,7 +78,7 @@ export default function AdminPage() {
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       <AdminPageHeader
         title="社團管理員後台"
-        description="歡迎進入臺科大機器人研究社 社團管理系統。請選擇下方功能模組進行社團各項資源審核、盤點與人員維護作業。"
+        description="請選擇下方功能模組進行社團各項資源審核、盤點與人員維護作業。"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">

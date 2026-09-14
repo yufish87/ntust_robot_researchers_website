@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -305,6 +306,9 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
                 <DialogTitle className="text-xl font-bold text-white text-left leading-snug pr-6">
                   {selectedAnnouncement.title}
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  公告詳細資訊
+                </DialogDescription>
                 <div className="flex items-center gap-2 pt-1">
                   <Badge
                     variant="secondary"
@@ -344,39 +348,25 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
                           .map((att, i) => {
                             const imgSrc = getAttachmentImageSrc(att);
                             if (!imgSrc) return null;
-                            const link = getAttachmentLink(att);
-                            const targetLink = link !== "#" ? link : imgSrc;
 
                             return (
                               <div
                                 key={`img-${i}`}
                                 className="rounded-lg overflow-hidden border border-white/10 bg-black/40"
                               >
-                                <a
-                                  href={targetLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block group relative cursor-zoom-in"
-                                  title="點擊在新分頁開啟原始圖片"
-                                >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={imgSrc}
-                                    alt={att.title || "附件圖片"}
-                                    className="w-full h-auto object-contain block mx-auto"
-                                    onError={(e) => {
-                                      const target = e.currentTarget;
-                                      if (att.fileId && !target.dataset.fallback) {
-                                        target.dataset.fallback = "1";
-                                        target.src = `https://drive.google.com/thumbnail?id=${att.fileId}&sz=w1200`;
-                                      }
-                                    }}
-                                  />
-                                  <div className="absolute top-2 right-2 px-2.5 py-1 rounded bg-black/70 backdrop-blur-xs text-xs text-slate-200 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <ExternalLink className="h-3 w-3 text-[#ffc000]" />
-                                    <span>查看原圖</span>
-                                  </div>
-                                </a>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={imgSrc}
+                                  alt={att.title || "附件圖片"}
+                                  className="w-full h-auto object-contain block mx-auto"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    if (att.fileId && !target.dataset.fallback) {
+                                      target.dataset.fallback = "1";
+                                      target.src = `https://drive.google.com/thumbnail?id=${att.fileId}&sz=w1200`;
+                                    }
+                                  }}
+                                />
                                 {att.title && (
                                   <p className="p-3 text-xs text-slate-400 border-t border-white/5">
                                     {att.title}
