@@ -101,7 +101,7 @@ export default function PublicManualPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#1e1c24] text-white selection:bg-[#ffc000] selection:text-[#1e1c24] flex flex-col justify-between">
+    <div className="dark min-h-screen bg-[#141218] text-white selection:bg-[#ffc000] selection:text-[#1e1c24] flex flex-col justify-between">
       {/* 頂部固定滿版導覽列 */}
       <SiteHeader />
 

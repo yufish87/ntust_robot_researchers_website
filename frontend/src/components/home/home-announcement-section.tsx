@@ -101,6 +101,9 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
       try {
         setLoading(true);
         const res = await fetch("/api/announcements");
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}`);
+        }
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
           setAnnouncements(data.data);

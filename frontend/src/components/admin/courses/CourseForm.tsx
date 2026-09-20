@@ -21,10 +21,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Upload, FileText, Loader2, MessageSquare, Mail } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Upload,
+  FileText,
+  Loader2,
+  MessageSquare,
+  Mail,
+  CalendarDays,
+  Sparkles,
+} from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useRef, useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { CalendarEvent } from "@/types/calendar";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -79,6 +90,7 @@ const courseSchema = z.object({
   semester: z.string().min(1, "學期必填"),
   permission: z.enum(["visitor", "member"]),
   courseDate: z.string().optional(),
+  calendarEventId: z.string().optional(),
   syncToAnnouncement: z.boolean().optional(),
   broadcastToLineGroup: z.boolean().optional(),
   broadcastLinePersonal: z.boolean().optional(),
@@ -101,6 +113,7 @@ interface CourseFormValues {
   semester: string;
   permission: "visitor" | "member";
   courseDate?: string;
+  calendarEventId?: string;
   syncToAnnouncement?: boolean;
   broadcastToLineGroup?: boolean;
   broadcastLinePersonal?: boolean;
@@ -317,12 +330,73 @@ export function CourseForm({
     name: "others",
   });
 
+  // 查詢行事曆中預排之社課日程，支援一鍵帶入
+  const [calendarCourses, setCalendarCourses] = useState<CalendarEvent[]>([]);
+  const [selectedCalendarId, setSelectedCalendarId] = useState<string>("");
+
+  useEffect(() => {
+    let active = true;
+    axios
+      .get("/api/calendar")
+      .then((res) => {
+        if (!active) return;
+        const all: CalendarEvent[] = res.data?.data || [];
+        // 篩選出社課類別
+        const courses = all.filter((e) => e.category === "course");
+        setCalendarCourses(courses);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleSelectCalendarEvent = (eventId: string) => {
+    setSelectedCalendarId(eventId);
+    const matched = calendarCourses.find((e) => e.id === eventId);
+    if (!matched) return;
+
+    form.setValue("calendarEventId", matched.id);
+    form.setValue("title", matched.title);
+    if (matched.semester) {
+      form.setValue("semester", matched.semester);
+    }
+    if (matched.startDate) {
+      form.setValue("courseDate", `${matched.startDate}T19:00`);
+    }
+    form.trigger(["title", "semester", "courseDate"]);
+  };
+
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleFormSubmit)}
         className="space-y-6"
       >
+        {/* 行事曆預排社課帶入捷徑 (僅在新增或未綁定時顯示) */}
+        {calendarCourses.length > 0 && !defaultValues?.title && (
+          <div className="p-3.5 rounded-xl bg-[#ffc000]/10 border border-[#ffc000]/30 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#ffc000]">
+              <CalendarDays className="w-4 h-4" />
+              <span>從行事曆預排日程帶入 (自動填入名稱、學期與日期)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select value={selectedCalendarId} onValueChange={handleSelectCalendarEvent}>
+                <SelectTrigger className="w-full bg-white/5 border-white/10 text-white text-xs h-9 rounded-lg">
+                  <SelectValue placeholder="選擇已在行事曆排定之社課活動..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e1c24] border-white/10 text-slate-200">
+                  {calendarCourses.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="text-xs cursor-pointer">
+                      {c.week ? `[第 ${c.week} 週] ` : ""}{c.startDate}：{c.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="title"

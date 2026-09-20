@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   GraduationCap,
   Calendar,
+  CalendarDays,
   BookOpen,
   ArrowRight,
   Sparkles,
@@ -255,6 +256,29 @@ export function CourseSection({
           )}
         </div>
       </div>
+
+      {/* 快捷探索入口 (查看行事曆 & 查看網站使用方式) */}
+      {!memberView && (
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4">
+          <Link
+            href="/calendar"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/10 hover:border-[#ffc000]/50 hover:shadow-[0_0_24px_rgba(255,192,0,0.12)] text-sm font-semibold transition-all duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc000]"
+          >
+            <CalendarDays className="w-4 h-4 text-[#ffc000] group-hover:scale-110 transition-transform duration-200" aria-hidden="true" />
+            <span>查看行事曆</span>
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#ffc000] group-hover:translate-x-1 transition-all duration-200" aria-hidden="true" />
+          </Link>
+
+          <Link
+            href="/manual"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/10 hover:border-[#ffc000]/50 hover:shadow-[0_0_24px_rgba(255,192,0,0.12)] text-sm font-semibold transition-all duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc000]"
+          >
+            <BookOpen className="w-4 h-4 text-[#ffc000] group-hover:scale-110 transition-transform duration-200" aria-hidden="true" />
+            <span>查看網站使用方式</span>
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#ffc000] group-hover:translate-x-1 transition-all duration-200" aria-hidden="true" />
+          </Link>
+        </div>
+      )}
 
       {/* 課程詳情彈窗 */}
       <CourseDetailModal

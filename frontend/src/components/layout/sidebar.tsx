@@ -227,7 +227,7 @@ export function AppSidebar() {
           onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          登出
+          登出帳號
         </Button>
       </div>
     </div>
