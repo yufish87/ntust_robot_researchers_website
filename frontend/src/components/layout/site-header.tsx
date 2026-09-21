@@ -132,7 +132,7 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 h-16 z-50 transition-all duration-300 text-white select-none",
+        "fixed top-0 left-0 right-0 h-16 z-50 transition-colors duration-300 text-white select-none",
         isSolid
           ? "bg-[#1e1c24]/90 backdrop-blur-md border-b border-white/10 shadow-lg shadow-black/20"
           : "bg-transparent border-b border-transparent",
@@ -205,7 +205,13 @@ export function SiteHeader() {
         <div className="flex items-center justify-end min-w-0">
           {/* 桌機按鈕區 */}
           <div className="hidden md:flex items-center gap-2.5">
-            {mounted && user ? (
+            {!mounted ? (
+              /* P1-5: 水合前 skeleton 佔位，避免 layout shift */
+              <div className="flex items-center gap-2">
+                <div className="w-[120px] h-9 rounded-lg bg-white/5 animate-pulse" />
+                <div className="w-[90px] h-9 rounded-lg bg-[#ffc000]/20 animate-pulse" />
+              </div>
+            ) : user ? (
               <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -275,7 +281,10 @@ export function SiteHeader() {
 
           {/* 手機/窄版畫面快捷按鈕 */}
           <div className="flex md:hidden items-center gap-2">
-            {mounted && user ? (
+            {!mounted ? (
+              /* P1-5: 手機 skeleton 佔位 */
+              <div className="w-[70px] h-8 rounded-lg bg-[#ffc000]/20 animate-pulse" />
+            ) : user ? (
               <Link href="/dashboard/announcements">
                 <Button
                   size="sm"

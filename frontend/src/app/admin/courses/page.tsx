@@ -102,6 +102,9 @@ export default function AdminCoursesPage() {
                 setIsFormOpen(false);
                 setEditingCourse(null);
                 queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+                queryClient.invalidateQueries({ queryKey: ['dashboard-courses'] });
+                queryClient.invalidateQueries({ queryKey: ['courses'] });
+                queryClient.invalidateQueries({ queryKey: ['announcements'] });
             } else {
                 toast({
                     variant: "destructive",
@@ -136,6 +139,9 @@ export default function AdminCoursesPage() {
                     description: "課程已永久刪除。"
                 });
                 queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+                queryClient.invalidateQueries({ queryKey: ['dashboard-courses'] });
+                queryClient.invalidateQueries({ queryKey: ['courses'] });
+                queryClient.invalidateQueries({ queryKey: ['announcements'] });
             } else {
                 toast({
                     variant: "destructive",

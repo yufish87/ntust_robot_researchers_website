@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import {
   Info,
@@ -137,65 +138,58 @@ function parseHonorTitle(rawTitle: string) {
 
 export function AboutSection({ className }: AboutSectionProps) {
   const [selectedAward, setSelectedAward] = useState<HonorItem | null>(null);
-  const [awards, setAwards] = useState<HonorItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
-  // 1. 純抓取後台公告「榮譽榜」資料（不使用本地照片）
-  useEffect(() => {
-    async function fetchHonorAnnouncements() {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/announcements");
-        if (!res.ok) {
-          throw new Error(`Server returned ${res.status}`);
-        }
-        const json = await res.json();
-
-        if (json.success && Array.isArray(json.data)) {
-          const honorAnnouncements = json.data.filter(
-            (item: Announcement) =>
-              item.category === "榮譽榜" && (!item.status || item.status === "顯示中"),
-          );
-
-          const honorItems: HonorItem[] = honorAnnouncements
-            .map((item: Announcement) => {
-              const imgAtt = item.attachments?.find((att) => isImageAttachment(att));
-              const imgSrc = imgAtt
-                ? getAttachmentImageSrc(imgAtt)
-                : item.attachments?.[0]?.fileId
-                  ? `https://lh3.googleusercontent.com/d/${item.attachments[0].fileId}=w1200`
-                  : "";
-
-              const { competition, award, fullTitle } = parseHonorTitle(item.title);
-
-              return {
-                id: item.id,
-                competition,
-                award,
-                fullTitle,
-                content: item.content || "",
-                imgSrc,
-                publishTime: (item.publishTime || "").split(" ")[0],
-                attachments: item.attachments || [],
-              };
-            })
-            .filter((item: HonorItem) => item.imgSrc); // 僅保留有附圖的項目
-
-          // 最多展示 4 張照片
-          setAwards(honorItems.slice(0, 4));
-        }
-      } catch (err) {
-        console.error("Failed to load honor announcements:", err);
-      } finally {
-        setLoading(false);
+  // 1. 使用 React Query 共享首頁公告快取並自動去重
+  const { data: rawAnnouncements = [], isLoading: loading } = useQuery<Announcement[]>({
+    queryKey: ["announcements"],
+    queryFn: async () => {
+      const res = await fetch("/api/announcements");
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
       }
-    }
+      const json = await res.json();
+      return (json.success && Array.isArray(json.data)) ? (json.data as Announcement[]) : [];
+    },
+    staleTime: 1000 * 60 * 2, // 2 分鐘共享快取
+  });
 
-    fetchHonorAnnouncements();
-  }, []);
+  // 由共享公告資料衍生榮譽榜清單
+  const awards = useMemo(() => {
+    const honorAnnouncements = rawAnnouncements.filter(
+      (item: Announcement) =>
+        item.category === "榮譽榜" && (!item.status || item.status === "顯示中"),
+    );
+
+    const honorItems: HonorItem[] = honorAnnouncements
+      .map((item: Announcement) => {
+        const imgAtt = item.attachments?.find((att) => isImageAttachment(att));
+        const imgSrc = imgAtt
+          ? getAttachmentImageSrc(imgAtt)
+          : item.attachments?.[0]?.fileId
+            ? `https://lh3.googleusercontent.com/d/${item.attachments[0].fileId}=w1200`
+            : "";
+
+        const { competition, award, fullTitle } = parseHonorTitle(item.title);
+
+        return {
+          id: item.id,
+          competition,
+          award,
+          fullTitle,
+          content: item.content || "",
+          imgSrc,
+          publishTime: (item.publishTime || "").split(" ")[0],
+          attachments: item.attachments || [],
+        };
+      })
+      .filter((item: HonorItem) => item.imgSrc); // 僅保留有附圖的項目
+
+    // 最多展示 4 張照片
+    return honorItems.slice(0, 4);
+  }, [rawAnnouncements]);
 
   // 2. 跑馬燈 / 輪播自動播放邏輯 (4.5秒切換)
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { CalendarEvent } from "@/types/calendar";
-import { getMeetingApprovalText } from "@/lib/excel-calendar";
+import { getMeetingApprovalText } from "@/lib/calendar-utils";
 import { getCurrentSemester } from "@/config/calendar";
 
 interface OfficialTableViewProps {

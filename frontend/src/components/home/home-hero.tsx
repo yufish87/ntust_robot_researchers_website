@@ -63,9 +63,9 @@ export function HomeHero({ mosaicImages = [] }: HomeHeroProps) {
                 src={src}
                 alt=""
                 fill
-                sizes="150px"
+                sizes="130px"
                 className="object-cover transition-transform duration-500 group-hover/tile:scale-105"
-                loading="eager"
+                loading="lazy"
                 quality={65}
               />
               <div className="absolute inset-0 bg-black/10 group-hover/tile:bg-transparent transition-colors" />

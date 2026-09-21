@@ -239,3 +239,12 @@
   }
 }
 
+/* 防止 Modal (Radix UI Dialog) 開啟鎖定滾動條時，固定頂部導覽列與懸浮按鈕產生排版位移 (Scrollbar Layout Shift Compensation) */
+body[data-scroll-locked] header {
+  padding-right: var(--removed-body-scroll-bar-size, 0px) !important;
+}
+
+body[data-scroll-locked] [data-scroll-indicator] {
+  margin-right: var(--removed-body-scroll-bar-size, 0px) !important;
+}
+
