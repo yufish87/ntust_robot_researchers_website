@@ -106,26 +106,17 @@ export function generateGoogleCalendarUrl(event: CalendarEvent): string {
       : "國立臺灣科技大學 微型車庫 / 機器人研究社辦";
   const location = encodeURIComponent(event.location || defaultLoc);
 
-  // 全天事件格式 YYYYMMDD/YYYYMMDD (結束日期+1)
-  const startClean = (event.startDate || "").replace(/-/g, "");
-  let endClean = startClean;
-  if (event.endDate) {
-    const endD = new Date(event.endDate);
-    endD.setDate(endD.getDate() + 1);
-    const y = endD.getFullYear();
-    const m = String(endD.getMonth() + 1).padStart(2, "0");
-    const d = String(endD.getDate()).padStart(2, "0");
-    endClean = `${y}${m}${d}`;
-  } else if (event.startDate) {
-    const endD = new Date(event.startDate);
-    endD.setDate(endD.getDate() + 1);
-    const y = endD.getFullYear();
-    const m = String(endD.getMonth() + 1).padStart(2, "0");
-    const d = String(endD.getDate()).padStart(2, "0");
-    endClean = `${y}${m}${d}`;
-  }
+  const isCourse = event.category === "course";
+  const startTime = isCourse ? "190000" : "080000";
+  const endTime = isCourse ? "210000" : "170000";
 
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startClean}/${endClean}&details=${details}&location=${location}`;
+  const cleanDate = (d?: string) => (d ? d.split(/[T ]/)[0].replace(/-/g, "") : "");
+  const startClean = cleanDate(event.startDate);
+  const endClean = cleanDate(event.endDate) || startClean;
+
+  const datesParam = `${startClean}T${startTime}/${endClean}T${endTime}`;
+
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${datesParam}&ctz=Asia/Taipei&details=${details}&location=${location}`;
 }
 
 /**

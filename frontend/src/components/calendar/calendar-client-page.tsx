@@ -10,6 +10,8 @@ import { ModernCalendarView } from "./modern-calendar-view";
 import { AgendaListView } from "./agenda-list-view";
 import { OfficialTableView } from "./official-table-view";
 import { EventDetailModal } from "./event-detail-modal";
+import { CourseDetailModal } from "@/components/course/CourseDetailModal";
+import { Course } from "@/lib/types/course";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -32,6 +34,19 @@ export function CalendarClientPage() {
     },
     staleTime: 1000 * 60 * 5, // 5 分鐘快取
   });
+
+  // 取得公開社課資料（用於活動詳情中直接開啟社課 Modal）
+  const { data: publicCourses = [] } = useQuery<Course[]>({
+    queryKey: ["public-courses"],
+    queryFn: async () => {
+      const res = await axios.get("/api/courses/public");
+      return res.data?.data || [];
+    },
+    staleTime: 1000 * 60,
+  });
+
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
 
   // 依類別進行客戶端篩選
   const filteredEvents = useMemo(() => {
@@ -140,6 +155,18 @@ export function CalendarClientPage() {
         event={selectedEvent}
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
+        publicCourses={publicCourses}
+        onOpenCourseModal={(course) => {
+          setSelectedCourse(course);
+          setIsCourseModalOpen(true);
+        }}
+      />
+
+      {/* 社課詳情彈窗 (行事曆中點擊公開社課直接開啟) */}
+      <CourseDetailModal
+        course={selectedCourse}
+        open={isCourseModalOpen}
+        onOpenChange={setIsCourseModalOpen}
       />
     </div>
   );

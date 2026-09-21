@@ -3,22 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { CalendarEvent } from "@/types/calendar";
 
 /**
- * 格式化為 iCalendar 專用日期格式 (全天事件 YYYYMMDD)
+ * 格式化日期 YYYYMMDD
  */
-function formatIcsDate(dateStr: string): string {
-  return dateStr.replace(/-/g, "");
-}
-
-/**
- * 計算結束隔天（iCal 全天事件的 DTEND 是 exclusive 的）
- */
-function getIcsEndDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + 1);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}${month}${day}`;
+function cleanDate(dateStr: string): string {
+  if (!dateStr) return "";
+  const dateOnly = dateStr.split(/[T ]/)[0];
+  return dateOnly.replace(/-/g, "");
 }
 
 /**
@@ -48,28 +38,47 @@ export async function GET(request: NextRequest) {
       "METHOD:PUBLISH",
       `X-WR-CALNAME:臺科大機器人研究社行事曆 (${escapeIcsText(semester)})`,
       "X-WR-TIMEZONE:Asia/Taipei",
+      "BEGIN:VTIMEZONE",
+      "TZID:Asia/Taipei",
+      "X-LIC-LOCATION:Asia/Taipei",
+      "BEGIN:STANDARD",
+      "TZOFFSETFROM:+0800",
+      "TZOFFSETTO:+0800",
+      "TZNAME:CST",
+      "DTSTART:19700101T000000",
+      "END:STANDARD",
+      "END:VTIMEZONE",
     ];
 
     const now = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 
     for (const evt of events) {
       if (!evt.startDate) continue;
-      const dtStart = formatIcsDate(evt.startDate);
-      const dtEnd = evt.endDate ? getIcsEndDate(evt.endDate) : getIcsEndDate(evt.startDate);
+
+      const isCourse = evt.category === "course";
+      // 社課固定 19:00 - 21:00，其它活動預設 08:00 - 17:00
+      const startTime = isCourse ? "190000" : "080000";
+      const endTime = isCourse ? "210000" : "170000";
+
+      const startClean = cleanDate(evt.startDate);
+      const endClean = cleanDate(evt.endDate) || startClean;
 
       lines.push("BEGIN:VEVENT");
       lines.push(`UID:${evt.id}@ntust-robotresearchers.club`);
       lines.push(`DTSTAMP:${now}`);
-      lines.push(`DTSTART;VALUE=DATE:${dtStart}`);
+      lines.push(`DTSTART;TZID=Asia/Taipei:${startClean}T${startTime}`);
+      lines.push(`DTEND;TZID=Asia/Taipei:${endClean}T${endTime}`);
       const prefix = "臺科大機器人研究社";
       const fullTitle = evt.title.startsWith(prefix) ? evt.title : `${prefix} ${evt.title}`;
       lines.push(`SUMMARY:${escapeIcsText(fullTitle)}`);
 
       const desc = [
         evt.week ? `週次：第 ${evt.week} 週` : "",
-        evt.category ? `類別：${evt.category}` : "",
-        evt.status === "tentative" ? "狀態：[暫定]" : "",
-        evt.location ? `地點/備註：${evt.location}` : ""
+        evt.category ? `類別：${isCourse ? "社課/工作坊" : evt.category}` : "",
+        isCourse ? "時間：19:00 - 21:00" : "時間：08:00 - 17:00",
+        evt.status === "tentative" ? "狀態：[暫定]" : "狀態：[已確認]",
+        evt.location ? `地點/備註：${evt.location}` : "",
+        evt.courseId ? "本活動有提供社課講義與教材，請至社團網站查閱" : "",
       ].filter(Boolean).join("\\n");
 
       if (desc) {
@@ -86,7 +95,7 @@ export async function GET(request: NextRequest) {
       }
 
       lines.push("STATUS:CONFIRMED");
-      lines.push("TRANSP:TRANSPARENT");
+      lines.push("TRANSP:OPAQUE");
       lines.push("END:VEVENT");
     }
 
