@@ -31,7 +31,7 @@ export function ScrollIndicator() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 select-none">
+    <div data-scroll-indicator className="fixed bottom-6 right-6 z-40 select-none">
       <div className="relative w-11 h-11 sm:w-12 sm:h-12">
         {/* Scroll Down Button (Visible when at top) */}
         <button

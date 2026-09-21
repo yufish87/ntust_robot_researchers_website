@@ -15,7 +15,7 @@ if (!GAS_API_URL) {
 export async function proxyToGas(
   req: NextRequest,
   gasRoute: string,
-  options?: { revalidate?: number },
+  options?: { revalidate?: number; tags?: string[] },
 ) {
   try {
     const method = req.method;
@@ -87,7 +87,10 @@ export async function proxyToGas(
 
     // P1: 對 GET 請求啟用 Next.js Data Cache (ISR 風格)
     if (fetchMethod === "GET" && options?.revalidate) {
-      (fetchInit as any).next = { revalidate: options.revalidate };
+      (fetchInit as any).next = {
+        revalidate: options.revalidate,
+        tags: options.tags,
+      };
     }
 
     const response = await fetch(url.toString(), fetchInit);

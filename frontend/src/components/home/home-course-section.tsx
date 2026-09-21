@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   GraduationCap,
   Calendar,
@@ -30,84 +31,127 @@ export function CourseSection({
   className,
   memberView = false,
 }: CourseSectionProps) {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const fetchedRef = useRef(false);
   const { user } = useAuthStore();
 
   // Modal State
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-
-    const fetchCourses = async () => {
-      try {
-        setLoading(true);
-        const endpoint = memberView ? "/api/courses" : "/api/courses/public";
-        const res = await fetch(endpoint);
-
-        if (!res.ok) {
-          throw new Error(`Server returned ${res.status}`);
-        }
-
-        const json = await res.json();
-        if (json.success) {
-          let data = json.data as Course[];
-
-          if (!memberView) {
-            // 公開版: 顯示未來 45 天課程或最近課程
-            const now = new Date();
-            const future45d = new Date();
-            future45d.setDate(now.getDate() + 45);
-
-            const upcoming = data.filter((c) => {
-              if (!c.courseDate) return false;
-              const dateStr = c.courseDate.replace(" ", "T");
-              const cTime = new Date(dateStr);
-              return !isNaN(cTime.getTime()) && cTime >= now && cTime <= future45d;
-            });
-
-            if (upcoming.length > 0) {
-              const sorted = upcoming.sort((a, b) =>
-                (a.courseDate || "").localeCompare(b.courseDate || ""),
-              );
-              setCourses(sorted.slice(0, 6));
-            } else {
-              // 若近期無課，顯示最近 5 堂課
-              const sorted = data.sort((a, b) =>
-                (b.courseDate || b.uploadTime || "").localeCompare(
-                  a.courseDate || a.uploadTime || "",
-                ),
-              );
-              setCourses(sorted.slice(0, 5));
-            }
-          } else {
-            // 社員版
-            const now = Date.now();
-            const withDate = data.filter((c) => c.courseDate);
-            const sorted = withDate.sort((a, b) => {
-              const diffA = Math.abs(
-                new Date(a.courseDate!.replace(" ", "T")).getTime() - now,
-              );
-              const diffB = Math.abs(
-                new Date(b.courseDate!.replace(" ", "T")).getTime() - now,
-              );
-              return diffA - diffB;
-            });
-            setCourses(sorted.slice(0, 5));
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch courses", error);
-      } finally {
-        setLoading(false);
+  // 使用 React Query 取得課程資料，支援管理員新增/編輯時即時自動更新
+  const { data: courses = [], isLoading: loading } = useQuery<Course[]>({
+    queryKey: ["courses", memberView],
+    queryFn: async () => {
+      const endpoint = memberView ? "/api/courses" : "/api/courses/public";
+      const res = await fetch(endpoint);
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
       }
-    };
-    fetchCourses();
-  }, [memberView]);
+      const json = await res.json();
+      if (!json.success) return [];
+      const data = (json.data || []) as Course[];
+
+      if (!memberView) {
+        // 公開版: 顯示未來 45 天課程或最近課程
+        const now = new Date();
+        const future45d = new Date();
+        future45d.setDate(now.getDate() + 45);
+
+        const upcoming = data.filter((c) => {
+          if (!c.courseDate) return false;
+          const dateStr = c.courseDate.replace(" ", "T");
+          const cTime = new Date(dateStr);
+          return !isNaN(cTime.getTime()) && cTime >= now && cTime <= future45d;
+        });
+
+        if (upcoming.length > 0) {
+          const sorted = upcoming.sort((a, b) =>
+            (a.courseDate || "").localeCompare(b.courseDate || ""),
+          );
+          return sorted.slice(0, 6);
+        } else {
+          // 若近期無課，顯示最近 5 堂課
+          const sorted = data.sort((a, b) =>
+            (b.courseDate || b.uploadTime || "").localeCompare(
+              a.courseDate || a.uploadTime || "",
+            ),
+          );
+          return sorted.slice(0, 5);
+        }
+      } else {
+        // 社員版
+        const now = Date.now();
+        const withDate = data.filter((c) => c.courseDate);
+        const sorted = withDate.sort((a, b) => {
+          const diffA = Math.abs(
+            new Date(a.courseDate!.replace(" ", "T")).getTime() - now,
+          );
+          const diffB = Math.abs(
+            new Date(b.courseDate!.replace(" ", "T")).getTime() - now,
+          );
+          return diffA - diffB;
+        });
+        return sorted.slice(0, 5);
+      }
+    },
+  });
+
+  // 記錄是否已處理過網址帶入的 courseId 自動彈出，避免重複觸發
+  const hasAutoOpenedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || hasAutoOpenedRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const courseId = params.get("courseId");
+    if (!courseId) return;
+
+    // 1. 若當前首頁切片已有該課程，直接開啟
+    const found = courses.find((c) => c.id === courseId);
+    if (found) {
+      hasAutoOpenedRef.current = true;
+      setSelectedCourse(found);
+      setIsModalOpen(true);
+      return;
+    }
+
+    // 2. 若當前列表還在載入中，等待載入完成
+    if (loading) return;
+
+    // 3. 若首頁切片內無此課程（非近期課程），自後端完整清單抓取該課程並開啟
+    hasAutoOpenedRef.current = true;
+    const endpoint = memberView ? "/api/courses" : "/api/courses/public";
+    fetch(endpoint)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!json?.success) return;
+        const allCourses = (json.data || []) as Course[];
+        const target = allCourses.find((c) => c.id === courseId);
+        if (target) {
+          setSelectedCourse(target);
+          setIsModalOpen(true);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to auto-open course modal:", err);
+      });
+  }, [courses, loading, memberView]);
+
+  const handleModalOpenChange = (open: boolean) => {
+    setIsModalOpen(open);
+    if (!open) {
+      // 關閉 Modal 時移除網址上的 courseId，避免重整頁面重複跳出
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has("courseId")) {
+          url.searchParams.delete("courseId");
+          window.history.replaceState(
+            null,
+            "",
+            url.pathname + (url.search ? url.search : "") + (url.hash || "")
+          );
+        }
+      }
+    }
+  };
 
   return (
     <section id="courses" className={cn("w-full scroll-mt-24", className)}>
@@ -284,7 +328,7 @@ export function CourseSection({
       <CourseDetailModal
         course={selectedCourse}
         open={isModalOpen}
-        onOpenChange={setIsModalOpen}
+        onOpenChange={handleModalOpenChange}
       />
     </section>
   );

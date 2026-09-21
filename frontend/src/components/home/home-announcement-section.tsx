@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Megaphone,
   ExternalLink,
@@ -86,8 +87,6 @@ function getAttachmentLink(att: { link?: string; fileId?: string }) {
 }
 
 export function AnnouncementSection({ className }: AnnouncementSectionProps) {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selectedAnnouncement, setSelectedAnnouncement] =
     useState<Announcement | null>(null);
@@ -96,26 +95,19 @@ export function AnnouncementSection({ className }: AnnouncementSectionProps) {
 
   const MAX_HOMEPAGE_ANNOUNCEMENTS = 6;
 
-  useEffect(() => {
-    async function fetchAnnouncements() {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/announcements");
-        if (!res.ok) {
-          throw new Error(`Server returned ${res.status}`);
-        }
-        const data = await res.json();
-        if (data.success && Array.isArray(data.data)) {
-          setAnnouncements(data.data);
-        }
-      } catch (err) {
-        console.error("Failed to load announcements:", err);
-      } finally {
-        setLoading(false);
+  // 使用 React Query 共享首頁公告快取並自動去重
+  const { data: announcements = [], isLoading: loading } = useQuery<Announcement[]>({
+    queryKey: ["announcements"],
+    queryFn: async () => {
+      const res = await fetch("/api/announcements");
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
       }
-    }
-    fetchAnnouncements();
-  }, []);
+      const data = await res.json();
+      return (data.success && Array.isArray(data.data)) ? data.data : [];
+    },
+    staleTime: 1000 * 60 * 2, // 2 分鐘共享快取
+  });
 
   const filteredAnnouncements = announcements
     .filter((item) => {

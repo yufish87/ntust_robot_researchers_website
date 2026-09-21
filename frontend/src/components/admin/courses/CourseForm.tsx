@@ -29,7 +29,6 @@ import {
   Loader2,
   MessageSquare,
   Mail,
-  CalendarDays,
   Sparkles,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -375,26 +374,36 @@ export function CourseForm({
       >
         {/* 行事曆預排社課帶入捷徑 (僅在新增或未綁定時顯示) */}
         {calendarCourses.length > 0 && !defaultValues?.title && (
-          <div className="p-3.5 rounded-xl bg-[#ffc000]/10 border border-[#ffc000]/30 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#ffc000]">
-              <CalendarDays className="w-4 h-4" />
-              <span>從行事曆預排日程帶入 (自動填入名稱、學期與日期)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={selectedCalendarId} onValueChange={handleSelectCalendarEvent}>
-                <SelectTrigger className="w-full bg-white/5 border-white/10 text-white text-xs h-9 rounded-lg">
-                  <SelectValue placeholder="選擇已在行事曆排定之社課活動..." />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1e1c24] border-white/10 text-slate-200">
-                  {calendarCourses.map((c) => (
-                    <SelectItem key={c.id} value={c.id} className="text-xs cursor-pointer">
-                      {c.week ? `[第 ${c.week} 週] ` : ""}{c.startDate}：{c.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <FormField
+            control={form.control}
+            name="calendarEventId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>從行事曆預排日程帶入 (自動填入名稱、學期與日期)</FormLabel>
+                <Select
+                  value={field.value || selectedCalendarId}
+                  onValueChange={(val) => {
+                    field.onChange(val);
+                    handleSelectCalendarEvent(val);
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="選擇已在行事曆排定之社課活動..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent position="popper" sideOffset={4}>
+                    {calendarCourses.map((c) => (
+                      <SelectItem key={c.id} value={c.id} className="cursor-pointer">
+                        {c.week ? `[第 ${c.week} 週] ` : ""}{c.startDate}：{c.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
 
         <FormField

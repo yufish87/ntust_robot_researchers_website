@@ -1,6 +1,8 @@
 import ExcelJS from "exceljs";
 import { CalendarEvent } from "@/types/calendar";
 import { CALENDAR_CATEGORY_CONFIG, getWeekdayName } from "@/config/calendar";
+export { getMeetingApprovalText } from "@/lib/calendar-utils";
+import { getMeetingApprovalText } from "@/lib/calendar-utils";
 
 // 產生日曆月曆格陣列 (週日到週六)
 function generateMonthlyGrid(year: number, month: number) {
@@ -111,32 +113,7 @@ function getEventColorStyle(evt?: CalendarEvent) {
   return { type: "normal", fill: null, fontColor: "FF000000", isRed: false, isExam: false };
 }
 
-/**
- * 解析動態會議通過文字："YYYY.MM.DD 115-1幹部會議通過"
- */
-export function getMeetingApprovalText(
-  events: CalendarEvent[],
-  sem: string,
-  rocYear: number
-): string {
-  for (const evt of events) {
-    if (evt.updatedAt) {
-      const u = evt.updatedAt.trim();
-      if (u.includes("幹部會議通過") || u.includes("會議通過")) {
-        return u;
-      }
-      const match = u.match(/^(\d{2,4})[./-](\d{1,2})[./-](\d{1,2})/);
-      if (match) {
-        let yr = parseInt(match[1], 10);
-        if (yr > 1911) yr -= 1911;
-        const mm = String(match[2]).padStart(2, "0");
-        const dd = String(match[3]).padStart(2, "0");
-        return `${yr}.${mm}.${dd} ${sem}幹部會議通過`;
-      }
-    }
-  }
-  return `${rocYear}.08.13 ${sem}幹部會議通過`;
-}
+// getMeetingApprovalText 已移至 @/lib/calendar-utils 以避免 exceljs 洩漏
 
 export interface ExportOfficialCalendarExcelParams {
   events: CalendarEvent[];

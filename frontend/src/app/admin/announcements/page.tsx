@@ -466,6 +466,7 @@ export default function AdminAnnouncementsPage() {
         initialFormRef.current = "";
         setIsFormOpen(false);
         queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
+        queryClient.invalidateQueries({ queryKey: ["announcements"] });
       } else {
         toast({
           title: "操作失敗",
@@ -498,6 +499,7 @@ export default function AdminAnnouncementsPage() {
         toast({ title: "公告已刪除" });
         setDeletingId(null);
         queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
+        queryClient.invalidateQueries({ queryKey: ["announcements"] });
       } else {
         toast({
           title: "刪除失敗",
