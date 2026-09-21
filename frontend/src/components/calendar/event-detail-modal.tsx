@@ -29,16 +29,22 @@ import {
 import { useAuthStore } from "@/store/useAuthStore";
 import { LoginModal } from "@/components/auth/login-modal";
 
+import { Course } from "@/lib/types/course";
+
 interface EventDetailModalProps {
   event: CalendarEvent | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  publicCourses?: Course[];
+  onOpenCourseModal?: (course: Course) => void;
 }
 
 export function EventDetailModal({
   event,
   open,
   onOpenChange,
+  publicCourses = [],
+  onOpenCourseModal,
 }: EventDetailModalProps) {
   const { user } = useAuthStore();
   if (!event) return null;
@@ -103,9 +109,13 @@ export function EventDetailModal({
                   </>
                 ) : null}
               </div>
-              <p className="text-xs text-slate-400">
-                學期：{event.semester || "未指定"}
-              </p>
+              <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
+                <span className="text-[#ffc000]/90 font-mono">
+                  {event.category === "course" ? "19:00 - 21:00" : "08:00 - 17:00"}
+                </span>
+                <span>•</span>
+                <span>學期：{event.semester || "未指定"}</span>
+              </div>
             </div>
           </div>
 
@@ -121,32 +131,49 @@ export function EventDetailModal({
           ) : null}
 
           {/* 社課關聯卡片 */}
-          {event.courseId ? (
-            <div className="p-3 rounded-xl bg-[#ffc000]/10 border border-[#ffc000]/20 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <BookOpen className="w-5 h-5 text-[#ffc000] shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-[#ffc000]">本課程已上架教學教材</p>
-                  <p className="text-xs text-slate-300">可前往社課專區下載簡報、程式碼與影音</p>
+          {event.courseId ? (() => {
+            const linkedCourse = publicCourses.find((c) => c.id === event.courseId);
+            const isPublic = linkedCourse?.permission === "visitor" || !!linkedCourse;
+
+            return (
+              <div className="p-3 rounded-xl bg-[#ffc000]/10 border border-[#ffc000]/20 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <BookOpen className="w-5 h-5 text-[#ffc000] shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold text-[#ffc000]">本課程已上架教學教材</p>
+                    <p className="text-xs text-slate-300">可前往社課專區下載簡報、程式碼與影音</p>
+                  </div>
                 </div>
+                {isPublic && linkedCourse ? (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onOpenCourseModal?.(linkedCourse);
+                    }}
+                    className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold text-xs h-8 gap-1 cursor-pointer shrink-0"
+                  >
+                    前往社課
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Button>
+                ) : user ? (
+                  <Link href="/dashboard/courses" className="shrink-0">
+                    <Button size="sm" className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold text-xs h-8 gap-1 cursor-pointer">
+                      前往社課
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <LoginModal>
+                    <Button size="sm" className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold text-xs h-8 gap-1 cursor-pointer shrink-0">
+                      前往社課
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                  </LoginModal>
+                )}
               </div>
-              {user ? (
-                <Link href="/dashboard/courses" className="shrink-0">
-                  <Button size="sm" className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold text-xs h-8 gap-1 cursor-pointer">
-                    前往社課
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Button>
-                </Link>
-              ) : (
-                <LoginModal>
-                  <Button size="sm" className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold text-xs h-8 gap-1 cursor-pointer shrink-0">
-                    前往社課
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Button>
-                </LoginModal>
-              )}
-            </div>
-          ) : null}
+            );
+          })() : null}
         </div>
 
         {/* 底部操作欄 */}

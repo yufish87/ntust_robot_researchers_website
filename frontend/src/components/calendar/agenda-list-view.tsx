@@ -101,12 +101,20 @@ export function AgendaListView({
                   {evt.title}
                 </h3>
 
-                {evt.location ? (
-                  <p className="text-xs text-slate-400 flex items-center gap-1.5 truncate">
-                    <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                    <span>{evt.location}</span>
-                  </p>
-                ) : null}
+                <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
+                  <span className="text-[#ffc000]/90 font-mono">
+                    {evt.category === "course" ? "19:00 - 21:00" : "08:00 - 17:00"}
+                  </span>
+                  {evt.location ? (
+                    <>
+                      <span>•</span>
+                      <p className="text-xs text-slate-400 flex items-center gap-1 truncate">
+                        <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                        <span>{evt.location}</span>
+                      </p>
+                    </>
+                  ) : null}
+                </div>
               </div>
             </div>
 
