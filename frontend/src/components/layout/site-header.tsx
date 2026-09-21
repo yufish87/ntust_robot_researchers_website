@@ -15,6 +15,7 @@ import {
   Trophy,
   Megaphone,
   GraduationCap,
+  CalendarDays,
   LogOut,
   ChevronDown,
   Shield,
@@ -41,6 +42,7 @@ const NAV_ITEMS = [
   { label: "競賽榮譽", href: "#awards", icon: Trophy },
   { label: "最新消息", href: "#news", icon: Megaphone },
   { label: "社課資訊", href: "#courses", icon: GraduationCap },
+  { label: "社團行事曆", href: "/calendar", icon: CalendarDays, isPage: true },
   { label: "使用手冊", href: "/manual", icon: BookOpen, isPage: true },
 ];
 
@@ -136,42 +138,45 @@ export function SiteHeader() {
           : "bg-transparent border-b border-transparent",
       )}
     >
-      <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        {/* 手機/窄版畫面：左側三橫槓選單按鈕 (不需要顯示 bar_logo) */}
-        <div className="flex md:hidden items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpen(true)}
-            className="text-white hover:bg-white/10 h-9 w-9 cursor-pointer -ml-1"
-            aria-label="開啟選單"
+      <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex md:grid md:grid-cols-[1fr_auto_1fr] items-center justify-between">
+        {/* 左側：手機漢堡選單 (md:hidden) / 桌機 Logo (hidden md:flex) */}
+        <div className="flex items-center justify-start min-w-0">
+          {/* 手機/窄版畫面：左側三橫槓選單按鈕 (不需要顯示 bar_logo) */}
+          <div className="flex md:hidden items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setOpen(true)}
+              className="text-white hover:bg-white/10 h-9 w-9 cursor-pointer -ml-1"
+              aria-label="開啟選單"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* 桌機寬版畫面：左側社團 Logo 與名稱 (窄版畫面隱藏) */}
+          <button
+            type="button"
+            onClick={() => handleNavClick("", false)}
+            className="hidden md:flex items-center gap-3 cursor-pointer group text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#ffc000] rounded-md p-1 -ml-1"
+            aria-label="回首頁"
           >
-            <Menu className="w-5 h-5" />
-          </Button>
+            <div className="relative w-36 sm:w-44 h-9 select-none">
+              <Image
+                src="/image/Bar_Logo_Yellow.png"
+                alt="臺科大機器人研究社標誌"
+                fill
+                priority
+                draggable={false}
+                className="object-contain object-left select-none pointer-events-none"
+                sizes="180px"
+              />
+            </div>
+          </button>
         </div>
 
-        {/* 桌機寬版畫面：左側社團 Logo 與名稱 (窄版畫面隱藏) */}
-        <button
-          type="button"
-          onClick={() => handleNavClick("", false)}
-          className="hidden md:flex items-center gap-3 cursor-pointer group text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#ffc000] rounded-md p-1 -ml-1"
-          aria-label="回首頁"
-        >
-          <div className="relative w-36 sm:w-44 h-9 select-none">
-            <Image
-              src="/image/Bar_Logo_Yellow.png"
-              alt="臺科大機器人研究社標誌"
-              fill
-              priority
-              draggable={false}
-              className="object-contain object-left select-none pointer-events-none"
-              sizes="180px"
-            />
-          </div>
-        </button>
-
-        {/* 中間：桌機導覽連結 (Desktop Navigation) */}
-        <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+        {/* 中間：桌機導覽連結 (三欄 Grid 鎖定正中央，無論兩側寬度如何變化皆 0 位移) */}
+        <nav className="hidden md:flex items-center justify-center gap-1 lg:gap-2 justify-self-center">
           {NAV_ITEMS.map((item) => {
             const isActive = item.isPage
               ? pathname === item.href
@@ -183,7 +188,7 @@ export function SiteHeader() {
                 type="button"
                 onClick={() => handleNavClick(item.href, item.isPage)}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer flex items-center gap-1.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#ffc000]",
+                  "px-2.5 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all duration-200 cursor-pointer flex items-center gap-1.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#ffc000] shrink-0",
                   isActive
                     ? "text-[#ffc000] bg-white/10 font-semibold"
                     : "text-slate-300 hover:text-white hover:bg-white/5",
@@ -196,98 +201,101 @@ export function SiteHeader() {
           })}
         </nav>
 
-        {/* 右側：桌機會員狀態 / 登入註冊按鈕 */}
-        <div className="hidden md:flex items-center gap-2.5">
-          {mounted && user ? (
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+        {/* 右側：桌機會員狀態 / 登入註冊按鈕 / 手機快捷按鈕 (靠右對齊) */}
+        <div className="flex items-center justify-end min-w-0">
+          {/* 桌機按鈕區 */}
+          <div className="hidden md:flex items-center gap-2.5">
+            {mounted && user ? (
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 hover:text-white cursor-pointer transition-colors focus-visible:ring-1 focus-visible:ring-[#ffc000] h-9"
+                    >
+                      <User className="w-3.5 h-3.5 text-[#ffc000]" />
+                      <span className="font-medium text-white truncate max-w-[110px]">
+                        {user.name || "社員"}
+                      </span>
+                      <ChevronDown className="w-3 h-3 text-slate-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="min-w-[100px] w-auto bg-[#1e1c24] border-white/10 text-slate-200 shadow-xl p-1 rounded-lg z-50"
+                  >
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        void handleLogout();
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 text-xs rounded-md text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer transition-colors group"
+                    >
+                      <LogOut className="w-3.5 h-3.5 text-red-400 group-hover:text-red-300 transition-colors" />
+                      <span>登出帳號</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Link href="/dashboard/announcements">
+                  <Button
+                    size="sm"
+                    className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold cursor-pointer rounded-lg shadow-sm hover:shadow-md transition-all gap-1.5 h-9"
+                  >
+                    進入系統
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <LoginModal>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 hover:text-white cursor-pointer transition-colors focus-visible:ring-1 focus-visible:ring-[#ffc000] h-9"
+                    className="text-slate-200 hover:text-white hover:bg-white/10 cursor-pointer rounded-lg text-sm font-medium gap-1.5 h-9"
                   >
-                    <User className="w-3.5 h-3.5 text-[#ffc000]" />
-                    <span className="font-medium text-white truncate max-w-[110px]">
-                      {user.name || "社員"}
-                    </span>
-                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                    <LogIn className="w-4 h-4" />
+                    登入系統
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="min-w-[100px] w-auto bg-[#1e1c24] border-white/10 text-slate-200 shadow-xl p-1 rounded-lg z-50"
-                >
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      void handleLogout();
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 text-xs rounded-md text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer transition-colors group"
+                </LoginModal>
+                <RegisterModal>
+                  <Button
+                    size="sm"
+                    className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold cursor-pointer rounded-lg text-sm gap-1.5 shadow-sm hover:shadow-md transition-all h-9"
                   >
-                    <LogOut className="w-3.5 h-3.5 text-red-400 group-hover:text-red-300 transition-colors" />
-                    <span>登出</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <UserPlus className="w-4 h-4" />
+                    加入社團
+                  </Button>
+                </RegisterModal>
+              </div>
+            )}
+          </div>
 
+          {/* 手機/窄版畫面快捷按鈕 */}
+          <div className="flex md:hidden items-center gap-2">
+            {mounted && user ? (
               <Link href="/dashboard/announcements">
                 <Button
                   size="sm"
-                  className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold cursor-pointer rounded-lg shadow-sm hover:shadow-md transition-all gap-1.5 h-9"
+                  className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold cursor-pointer rounded-lg text-xs gap-1 h-8 px-2.5"
                 >
                   進入系統
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3 h-3" />
                 </Button>
               </Link>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
+            ) : (
               <LoginModal>
                 <Button
-                  variant="ghost"
                   size="sm"
-                  className="text-slate-200 hover:text-white hover:bg-white/10 cursor-pointer rounded-lg text-sm font-medium gap-1.5 h-9"
+                  className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold cursor-pointer rounded-lg text-xs gap-1 h-8 px-3"
                 >
-                  <LogIn className="w-4 h-4" />
-                  登入系統
+                  登入
                 </Button>
               </LoginModal>
-              <RegisterModal>
-                <Button
-                  size="sm"
-                  className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold cursor-pointer rounded-lg text-sm gap-1.5 shadow-sm hover:shadow-md transition-all h-9"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  加入社團
-                </Button>
-              </RegisterModal>
-            </div>
-          )}
-        </div>
-
-        {/* 右側：手機/窄版畫面快捷按鈕 */}
-        <div className="flex md:hidden items-center gap-2">
-          {mounted && user ? (
-            <Link href="/dashboard/announcements">
-              <Button
-                size="sm"
-                className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold cursor-pointer rounded-lg text-xs gap-1 h-8 px-2.5"
-              >
-                進入系統
-                <ArrowRight className="w-3 h-3" />
-              </Button>
-            </Link>
-          ) : (
-            <LoginModal>
-              <Button
-                size="sm"
-                className="bg-[#ffc000] hover:bg-yellow-500 text-[#1e1c24] font-bold cursor-pointer rounded-lg text-xs gap-1 h-8 px-3"
-              >
-                登入
-              </Button>
-            </LoginModal>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -428,7 +436,7 @@ export function SiteHeader() {
                   }}
                 >
                   <LogOut className="mr-2 h-4 w-4 text-red-400" />
-                  登出
+                  登出帳號
                 </Button>
               </>
             ) : (

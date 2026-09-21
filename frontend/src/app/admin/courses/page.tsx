@@ -79,6 +79,21 @@ export default function AdminCoursesPage() {
             const json = await res.json();
 
             if (json.success) {
+                // 若有自社團行事曆帶入排程，自動回寫 courseId 實現雙向綁定
+                if (values.calendarEventId) {
+                    const linkedCourseId = json.data?.id || (editingCourse ? editingCourse.id : undefined);
+                    if (linkedCourseId) {
+                        fetch('/api/admin/calendar', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: values.calendarEventId, courseId: linkedCourseId })
+                        }).then(() => {
+                            queryClient.invalidateQueries({ queryKey: ['admin-calendar-events'] });
+                            queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
+                        }).catch(() => {});
+                    }
+                }
+
                 toast({
                     title: editingCourse ? "更新成功" : "新增成功",
                     description: `課程已${editingCourse ? "更新" : "建立"}。`
@@ -166,17 +181,17 @@ export default function AdminCoursesPage() {
             </AdminPageHeader>
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <Table className="min-w-[720px]">
+                <Table className="min-w-[840px]">
                     <TableHeader>
                         <TableRow className="bg-muted/50">
                             <TableHead className="w-[140px]">課程 ID</TableHead>
                             <TableHead className="w-[70px]">學期</TableHead>
                             <TableHead>課程名稱</TableHead>
                             <TableHead className="w-[70px]">權限</TableHead>
-                            <TableHead className="w-[160px]">教材資源</TableHead>
-                            <TableHead className="w-[110px]">上傳者</TableHead>
-                            <TableHead className="w-[120px]">上課時間</TableHead>
-                            <TableHead className="w-[110px] text-center">操作</TableHead>
+                            <TableHead className="w-[210px] min-w-[200px] whitespace-nowrap">教材資源</TableHead>
+                            <TableHead className="w-[90px]">上傳者</TableHead>
+                            <TableHead className="w-[140px] whitespace-nowrap">上課時間</TableHead>
+                            <TableHead className="w-[80px] text-center">操作</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -219,15 +234,15 @@ export default function AdminCoursesPage() {
                                                 {course.permission === 'visitor' ? '公開' : '社員'}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-wrap items-center gap-1">
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                                        <TableCell className="whitespace-nowrap">
+                                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-blue-50 text-blue-700">
                                                     講義 {handoutCount}
                                                 </span>
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700">
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-emerald-50 text-emerald-700">
                                                     影片 {videoCount}
                                                 </span>
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-orange-50 text-orange-700">
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap bg-orange-50 text-orange-700">
                                                     其他 {otherCount}
                                                 </span>
                                             </div>
@@ -235,7 +250,7 @@ export default function AdminCoursesPage() {
                                         <TableCell className="font-mono text-xs">
                                             {course.uploaderId}
                                         </TableCell>
-                                        <TableCell className="text-sm">
+                                        <TableCell className="text-sm whitespace-nowrap">
                                             {course.courseDate || '—'}
                                         </TableCell>
                                         <TableCell className="text-center">

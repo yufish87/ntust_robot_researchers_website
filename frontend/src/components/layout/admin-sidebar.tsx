@@ -17,6 +17,7 @@ import {
   User,
   ClipboardCheck,
   BookOpenCheck,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,11 @@ export const adminNavItems = [
     title: "課程管理",
     href: "/admin/courses",
     icon: BookOpen,
+  },
+  {
+    title: "行事曆管理",
+    href: "/admin/calendar",
+    icon: CalendarDays,
   },
   {
     title: "器材借用審核",
@@ -189,7 +195,7 @@ export function AdminSidebar() {
           onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          登出
+          登出帳號
         </Button>
       </div>
     </div>

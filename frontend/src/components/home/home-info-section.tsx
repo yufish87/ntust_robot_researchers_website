@@ -149,6 +149,9 @@ export function AboutSection({ className }: AboutSectionProps) {
       try {
         setLoading(true);
         const res = await fetch("/api/announcements");
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}`);
+        }
         const json = await res.json();
 
         if (json.success && Array.isArray(json.data)) {

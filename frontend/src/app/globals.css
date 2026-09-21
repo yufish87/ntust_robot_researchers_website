@@ -198,3 +198,44 @@
     opacity: 1;
   }
 }
+
+/* 公版行事曆 A4 列印與轉 PDF 樣式 (精準還原 Excel 官方報表規格) */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-family: "Microsoft JhengHei", "微軟正黑體", "Segoe UI", sans-serif !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+  header,
+  footer,
+  nav,
+  aside {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    margin: 0 auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+

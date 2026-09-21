@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import {
+  Users,
   Megaphone,
   BookOpen,
+  CalendarDays,
   Wrench,
+  ClipboardCheck,
   Printer,
   CreditCard,
-  Users,
-  ClipboardCheck,
   BookOpenCheck,
   ArrowRight,
 } from "lucide-react";
@@ -20,7 +21,7 @@ const adminModules = [
     description: "註冊授權碼派發、社員清單與權限組調整",
     href: "/admin/users",
     icon: Users,
-    badge: "帳號與權限",
+    badge: "帳號權限",
   },
   {
     title: "公告管理",
@@ -37,6 +38,13 @@ const adminModules = [
     badge: "教學資源",
   },
   {
+    title: "行事曆管理",
+    description: "全學期日程維護、活動排程與 Excel 匯出入",
+    href: "/admin/calendar",
+    icon: CalendarDays,
+    badge: "校曆排程",
+  },
+  {
     title: "器材借用審核",
     description: "審核社員借用申請、面交點收與歸還結案",
     href: "/admin/equipment",
@@ -44,7 +52,7 @@ const adminModules = [
     badge: "資產審核",
   },
   {
-    title: "器材庫存盤點",
+    title: "器材盤點",
     description: "管理器材總表庫存、新增規格與狀態清查",
     href: "/admin/equipment/inventory",
     icon: ClipboardCheck,
@@ -65,7 +73,7 @@ const adminModules = [
     badge: "社團財務",
   },
   {
-    title: "管理員操作手冊",
+    title: "系統手冊",
     description: "查看幹部標準作業程序、審核規範與指引說明",
     href: "/admin/manual",
     icon: BookOpenCheck,
@@ -75,38 +83,39 @@ const adminModules = [
 
 export default function AdminPage() {
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+    <div className="space-y-4 max-w-6xl mx-auto pb-4">
       <AdminPageHeader
         title="社團管理員後台"
         description="請選擇下方功能模組進行社團各項資源審核、盤點與人員維護作業。"
+        className="py-3 px-5 sm:py-3.5 sm:px-6"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
         {adminModules.map((mod) => (
           <Link key={mod.href} href={mod.href} className="block group">
-            <div className="bg-white dark:bg-[#201e26] p-5.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[#ffc000] dark:hover:border-[#ffc000] shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full">
-              <div className="space-y-3">
+            <div className="bg-white dark:bg-[#201e26] p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[#ffc000] dark:hover:border-[#ffc000] shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 flex items-center justify-center text-slate-800 dark:text-[#ffc000] group-hover:bg-[#ffc000]/10 group-hover:text-amber-600 dark:group-hover:text-[#ffc000] transition-colors">
-                    <mod.icon className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 flex items-center justify-center text-slate-800 dark:text-[#ffc000] group-hover:bg-[#ffc000]/10 group-hover:text-amber-600 dark:group-hover:text-[#ffc000] transition-colors">
+                    <mod.icon className="w-4.5 h-4.5" />
                   </div>
-                  <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-white/5">
+                  <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-white/5">
                     {mod.badge}
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-[#ffc000] transition-colors">
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-[#ffc000] transition-colors leading-snug">
                     {mod.title}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 leading-normal">
                     {mod.description}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-[#ffc000] font-medium transition-colors">
+              <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-[#ffc000] font-medium transition-colors">
                 <span>進入管理</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </Link>

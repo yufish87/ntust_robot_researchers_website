@@ -9,6 +9,7 @@ import {
   Megaphone,
   BookOpen,
   Phone,
+  CalendarDays,
   LogIn,
   UserPlus,
 } from "lucide-react";
@@ -24,6 +25,7 @@ export const publicNavItems = [
   { title: "社團簡介", href: "#about", icon: Info },
   { title: "最新公告", href: "#news", icon: Megaphone },
   { title: "課程資訊", href: "#courses", icon: BookOpen },
+  { title: "社團行事曆", href: "/calendar", icon: CalendarDays },
   { title: "聯絡我們", href: "#footer", icon: Phone },
 ];
 
