@@ -11,9 +11,9 @@
 ### 核心功能與視圖切換
 - **多種檢視視圖**：支援「**月份檢視 (Month)**」與「**活動清單 (List)**」兩種排版模式，方便宏觀規劃與微觀查看行程。
 - **色彩分類標籤**：
-  - <span style="color:#ffc000; font-weight:bold;">黃色標籤</span>：社課/工作坊（例行技術社課與專題實作）。
-  - <span style="color:#3b82f6; font-weight:bold;">藍色標籤</span>：活動/社員大會（迎新、期末大會、幹部例會、社辦大掃除、競賽日程等社務活動）。
-  - <span style="color:#ef4444; font-weight:bold;">紅色標籤</span>：考試/國定假日（校曆期中期末考週、國定連假或社辦維護公休）。
+  - **社課/工作坊（黃色標籤）**：例行技術社課與專題實作。
+  - **活動/社員大會（藍色標籤）**：迎新、期末大會、幹部例會、社辦大掃除、競賽日程等社務活動。
+  - **考試/國定假日（紅色標籤）**：校曆期中期末考週、國定連假或社辦維護公休。
 - **活動詳細資訊彈窗**：點擊任一活動方塊即可展開彈窗，查看精確活動時間、地點（如社辦、微型創客空間或特定工科教室）與補充說明。
 
 ---
@@ -34,14 +34,14 @@ https://ntust-robotresearchers.vercel.app/api/calendar/ics
 #### A. iPhone / iPad (iOS Apple 行事曆)
 1. 在手機上前往 iOS「**設定**」➔「**行事曆**」➔「**帳號**」➔「**加入帳號**」。
 2. 選擇「**其他**」➔ 點擊「**新增已訂閱的行事曆**」。
-3. 在伺服器欄位貼上訂閱網址：`https://ntust-robotresearchers.vercel.app/api/calendar/ics`，點擊「下一步」。
+3. 在伺服器欄位貼上訂閱網址，點擊「下一步」。
 4. 描述設定為「**臺科大機器人研究社行事曆**」，點擊「儲存」即可。
 
 #### B. Google 日曆 (Android / 電腦網頁版)
 1. 使用電腦開啟 [Google 日曆](https://calendar.google.com/)。
 2. 在左側欄位「**其他日曆**」旁邊點擊 **`+`** 號。
 3. 選擇「**透過網址**」。
-4. 貼上訂閱網址：`https://ntust-robotresearchers.vercel.app/api/calendar/ics`。
+4. 貼上訂閱網址。
 5. 點擊「**新增日曆**」即可完成訂閱。
 
 #### C. Microsoft Outlook (Mac / Windows / Web)
