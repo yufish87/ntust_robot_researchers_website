@@ -1,4 +1,4 @@
-# NTUST 機器人研究社 社團網站
+# 國立臺灣科技大學 機器人研究社 (NTUST Robot Researchers Club) 社團網站
 
 本專案使用了以下開源軟體，感謝其貢獻者：
 
@@ -9,6 +9,18 @@
 - Copyright (c) 2024 Vercel, Inc.
 - License: MIT
 - https://github.com/vercel/next.js
+
+### ExcelJS
+
+- Copyright (c) 2014-present Guyon Roche
+- License: MIT
+- https://github.com/exceljs/exceljs
+
+### SheetJS (xlsx)
+
+- Copyright (c) 2012-present SheetJS LLC
+- License: Apache-2.0
+- https://github.com/SheetJS/sheetjs
 
 ### React
 

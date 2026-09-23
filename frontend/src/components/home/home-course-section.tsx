@@ -50,48 +50,34 @@ export function CourseSection({
       if (!json.success) return [];
       const data = (json.data || []) as Course[];
 
-      if (!memberView) {
-        // 公開版: 顯示未來 45 天課程或最近課程
-        const now = new Date();
-        const future45d = new Date();
-        future45d.setDate(now.getDate() + 45);
+      // 僅顯示近 30 天內的課程 (過去 30 天至未來 30 天內)
+      const now = new Date();
+      const past30d = new Date();
+      past30d.setDate(now.getDate() - 30);
+      past30d.setHours(0, 0, 0, 0);
 
-        const upcoming = data.filter((c) => {
-          if (!c.courseDate) return false;
-          const dateStr = c.courseDate.replace(" ", "T");
-          const cTime = new Date(dateStr);
-          return !isNaN(cTime.getTime()) && cTime >= now && cTime <= future45d;
-        });
+      const future30d = new Date();
+      future30d.setDate(now.getDate() + 30);
+      future30d.setHours(23, 59, 59, 999);
 
-        if (upcoming.length > 0) {
-          const sorted = upcoming.sort((a, b) =>
-            (a.courseDate || "").localeCompare(b.courseDate || ""),
-          );
-          return sorted.slice(0, 6);
-        } else {
-          // 若近期無課，顯示最近 5 堂課
-          const sorted = data.sort((a, b) =>
-            (b.courseDate || b.uploadTime || "").localeCompare(
-              a.courseDate || a.uploadTime || "",
-            ),
-          );
-          return sorted.slice(0, 5);
-        }
-      } else {
-        // 社員版
-        const now = Date.now();
-        const withDate = data.filter((c) => c.courseDate);
-        const sorted = withDate.sort((a, b) => {
-          const diffA = Math.abs(
-            new Date(a.courseDate!.replace(" ", "T")).getTime() - now,
-          );
-          const diffB = Math.abs(
-            new Date(b.courseDate!.replace(" ", "T")).getTime() - now,
-          );
-          return diffA - diffB;
-        });
-        return sorted.slice(0, 5);
-      }
+      // 嚴格過濾：僅保留近 30 天內的社課，杜絕一年前的歷史課程出現在首頁
+      const recentCourses = data.filter((c) => {
+        if (!c.courseDate) return false;
+        const dateStr = c.courseDate.replace(" ", "T");
+        const cTime = new Date(dateStr);
+        return !isNaN(cTime.getTime()) && cTime >= past30d && cTime <= future30d;
+      });
+
+      // 排序策略：即將到來的課程優先（按時間升序），過去 30 天內剛結束的接續在後（按時間降序）
+      const upcoming = recentCourses
+        .filter((c) => new Date(c.courseDate!.replace(" ", "T")) >= now)
+        .sort((a, b) => (a.courseDate || "").localeCompare(b.courseDate || ""));
+
+      const recentPast = recentCourses
+        .filter((c) => new Date(c.courseDate!.replace(" ", "T")) < now)
+        .sort((a, b) => (b.courseDate || "").localeCompare(a.courseDate || ""));
+
+      return [...upcoming, ...recentPast].slice(0, 6);
     },
   });
 

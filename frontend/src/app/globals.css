@@ -121,8 +121,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    background-color: #1e1c24;
+  }
   html, body {
-    @apply min-h-screen bg-background text-foreground;
+    @apply min-h-screen text-foreground;
+    background-color: #1e1c24;
   }
   
   /* Fix Autofill Styles */

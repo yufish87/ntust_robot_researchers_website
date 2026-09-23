@@ -29,6 +29,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   overview: BookOpen,
+  calendar: Calendar,
   equipment: Wrench,
   machine: Printer,
   finance: CreditCard,

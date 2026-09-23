@@ -1,16 +1,22 @@
 import { NextRequest } from "next/server";
+import { getSessionToken } from "@/lib/session";
 
 /**
  * 強制動態渲染，防止 Next.js 快取或靜態最佳化此路由。
- * 這對一次性 Token 下載至關重要。
  */
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
     const token = request.nextUrl.searchParams.get("token");
-    if (!token) {
-      return Response.json({ error: "Missing token" }, { status: 400 });
+    const courseId = request.nextUrl.searchParams.get("courseId");
+    const fileId = request.nextUrl.searchParams.get("fileId");
+
+    if (!token && (!courseId || !fileId)) {
+      return Response.json(
+        { error: "Missing required download parameters: requires token or (courseId + fileId)" },
+        { status: 400 },
+      );
     }
 
     // 1. 從 GAS 取得檔案資料 (JSON 含 base64)
@@ -19,7 +25,15 @@ export async function GET(request: NextRequest) {
 
     const gasUrl = new URL(GAS_API_URL);
     gasUrl.searchParams.set("route", "course/file/download");
-    gasUrl.searchParams.set("token", token);
+    if (token) gasUrl.searchParams.set("token", token);
+    if (courseId) gasUrl.searchParams.set("courseId", courseId);
+    if (fileId) gasUrl.searchParams.set("fileId", fileId);
+
+    // 附帶使用者 Session Token（從加密 cookie 讀取），供後端檢驗是否為社員/幹部
+    const sessionToken = getSessionToken(request);
+    if (sessionToken) {
+      gasUrl.searchParams.set("session_token", sessionToken);
+    }
 
     const userAgent = request.headers.get("user-agent") || "unknown";
     gasUrl.searchParams.set("user_agent", userAgent);

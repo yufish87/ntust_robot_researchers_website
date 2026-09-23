@@ -268,16 +268,29 @@ export default function ThreeDPrinterApplicationPage() {
 
       if (!appId) throw new Error("提交成功但無單號回傳");
 
-      // 2. Upload Gcode
+      // 2 & 3. 並行上傳 Gcode 與切片軟體截圖 (Promise.all，消除串聯等待延遲)
+      const uploadTasks: Promise<void>[] = [];
+
       if (gcodeUploadRef.current) {
-        const fileId = await gcodeUploadRef.current.upload(appId);
-        await MachineAPI.updateFile(appId, fileId, "main");
+        uploadTasks.push(
+          (async () => {
+            const fileId = await gcodeUploadRef.current!.upload(appId);
+            await MachineAPI.updateFile(appId, fileId, "main");
+          })(),
+        );
       }
 
-      // 3. Upload Screenshot
       if (screenshotUploadRef.current) {
-        const fileId = await screenshotUploadRef.current.upload(appId);
-        await MachineAPI.updateFile(appId, fileId, "screenshot");
+        uploadTasks.push(
+          (async () => {
+            const fileId = await screenshotUploadRef.current!.upload(appId);
+            await MachineAPI.updateFile(appId, fileId, "screenshot");
+          })(),
+        );
+      }
+
+      if (uploadTasks.length > 0) {
+        await Promise.all(uploadTasks);
       }
 
       toast({

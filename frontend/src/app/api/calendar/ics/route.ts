@@ -28,7 +28,10 @@ export async function GET(request: NextRequest) {
     const json = await gasResponse.json();
 
     const events: CalendarEvent[] = (json && json.data) ? json.data : [];
-    const semester = request.nextUrl.searchParams.get("semester") || "NTUST RRC";
+    const semester = request.nextUrl.searchParams.get("semester")?.trim();
+    const calName = semester && semester.toLowerCase() !== "all"
+      ? `臺科大機器人研究社行事曆 (${semester})`
+      : "臺科大機器人研究社行事曆";
 
     const lines: string[] = [
       "BEGIN:VCALENDAR",
@@ -36,8 +39,14 @@ export async function GET(request: NextRequest) {
       "PRODID:-//NTUST Robot Researchers Club//Calendar System//ZH-TW",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
-      `X-WR-CALNAME:臺科大機器人研究社行事曆 (${escapeIcsText(semester)})`,
+      `X-WR-CALNAME:${escapeIcsText(calName)}`,
+      `NAME:${escapeIcsText(calName)}`,
+      "X-WR-CALDESC:臺科大機器人研究社全年度社課、活動與競賽行事曆",
+      "DESCRIPTION:臺科大機器人研究社全年度社課、活動與競賽行事曆",
       "X-WR-TIMEZONE:Asia/Taipei",
+      "TIMEZONE-ID:Asia/Taipei",
+      "REFRESH-INTERVAL;VALUE=DURATION:PT6H",
+      "X-PUBLISHED-TTL:PT6H",
       "BEGIN:VTIMEZONE",
       "TZID:Asia/Taipei",
       "X-LIC-LOCATION:Asia/Taipei",
@@ -103,11 +112,15 @@ export async function GET(request: NextRequest) {
 
     const icsContent = lines.join("\r\n");
 
+    const filename = semester && semester.toLowerCase() !== "all"
+      ? `ntust_robot_researchers_club_calendar_${semester}.ics`
+      : "ntust_robot_researchers_club_calendar.ics";
+
     return new NextResponse(icsContent, {
       status: 200,
       headers: {
         "Content-Type": "text/calendar; charset=utf-8",
-        "Content-Disposition": `attachment; filename="ntust_rrc_calendar_${semester}.ics"`,
+        "Content-Disposition": `inline; filename="${filename}"`,
         "Cache-Control": "public, max-age=300",
       },
     });

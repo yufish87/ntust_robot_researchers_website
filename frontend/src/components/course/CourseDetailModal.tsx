@@ -45,36 +45,13 @@ export function CourseDetailModal({
     try {
       setDownloadingId(resource.fileId);
 
-      // 1. Request Access Token
-      const tokenRes = await fetch("/api/courses/access", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          courseId: course.id,
-          fileId: resource.fileId,
-        }),
-      });
-
-      if (!tokenRes.ok) {
-        throw new Error("授權失敗");
-      }
-
-      const tokenText = await tokenRes.text();
-      let tokenJson;
-      try {
-        tokenJson = JSON.parse(tokenText);
-      } catch (e) {
-        throw new Error("伺服器回應無效的格式");
-      }
-
-      if (!tokenJson.success || !tokenJson.data?.token) {
-        throw new Error(tokenJson.message || "Failed to get access token");
-      }
-
-      // 2. 使用 fetch + Blob 下載檔案
+      // 1. 直接使用 fetch + Blob 下載檔案 (單一步驟直連，消除額外 token 往返延遲與跨實例快取過期錯誤)
       //    避免 window.location.href 被 Next.js App Router RSC 管線干擾
-      const token = tokenJson.data.token;
-      const downloadRes = await fetch(`/api/storage/download?token=${token}`);
+      const query = new URLSearchParams({
+        courseId: course.id,
+        fileId: resource.fileId,
+      });
+      const downloadRes = await fetch(`/api/storage/download?${query.toString()}`);
 
       if (!downloadRes.ok) {
         const errorData = await downloadRes.json().catch(() => null);

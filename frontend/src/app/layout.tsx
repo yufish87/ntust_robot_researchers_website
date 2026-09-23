@@ -88,6 +88,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
+  themeColor: "#1e1c24",
   viewportFit: "cover",
 };
 
@@ -97,7 +98,6 @@ const jsonLd = {
   name: "臺科大機器人研究社",
   alternateName: [
     "NTUST Robot Researchers Club",
-    "NTUST RRC",
     "臺科大機器人研究社 | NTUST Robot Researchers Club",
   ],
   description: "國立臺灣科技大學機器人研究社（NTUST Robot Researchers Club）。以創客實作為根基，致力於推廣機器人科技、軟硬體整合與全國賽事實戰，提供社課教學、設備機具借用與跨領域技術交流空間。",
@@ -110,15 +110,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-TW" suppressHydrationWarning>
+    <html lang="zh-TW" className="bg-[#1e1c24]" suppressHydrationWarning>
       <head>
+        <meta name="theme-color" content="#1e1c24" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body
-        className={`${notoSansTC.variable} ${geistMono.variable} font-sans antialiased overscroll-none`}
+        className={`${notoSansTC.variable} ${geistMono.variable} font-sans antialiased overscroll-none bg-[#1e1c24]`}
         style={{ fontFamily: "var(--font-noto-sans-tc), sans-serif" }}
         suppressHydrationWarning
       >

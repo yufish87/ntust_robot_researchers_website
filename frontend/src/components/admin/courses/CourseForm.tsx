@@ -257,42 +257,47 @@ export function CourseForm({
         deletions.clear();
 
         // 2. 上傳新檔案
-        for (const [key, file] of pending.entries()) {
-          const [section, idxStr] = key.split(".");
-          const idx = parseInt(idxStr, 10);
-          const arr = (values as any)[section] as
-            | ResourceFormItem[]
-            | undefined;
-          if (!arr || !arr[idx]) continue;
+        // 並行上傳所有待上傳附件 (Promise.all)，大幅消除多檔案單線循序等待延遲
+        const uploadTasks = Array.from(pending.entries()).map(
+          async ([key, file]) => {
+            const [section, idxStr] = key.split(".");
+            const idx = parseInt(idxStr, 10);
+            const arr = (values as any)[section] as
+              | ResourceFormItem[]
+              | undefined;
+            if (!arr || !arr[idx]) return;
 
-          // 1. Init
-          const initRes = await axios.post("/api/upload/init", {
-            fileName: file.name,
-            mimeType: file.type || "application/pdf",
-            fileSize: file.size,
-            type: "course",
-            semester: values.semester || "",
-            courseTitle: values.title || "未命名",
-          });
-          const { sessionUri, fileId: uploadedFileId } = initRes.data;
-          if (!sessionUri) throw new Error("無法取得上傳連結");
+            // 1. Init Upload Session
+            const initRes = await axios.post("/api/upload/init", {
+              fileName: file.name,
+              mimeType: file.type || "application/pdf",
+              fileSize: file.size,
+              type: "course",
+              semester: values.semester || "",
+              courseTitle: values.title || "未命名",
+            });
+            const { sessionUri, fileId: uploadedFileId } = initRes.data;
+            if (!sessionUri) throw new Error("無法取得上傳連結");
 
-          // 2. PUT file content
-          await new Promise<void>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open("PUT", sessionUri);
-            xhr.onload = () =>
-              xhr.status >= 200 && xhr.status < 300
-                ? resolve()
-                : reject(new Error(`上傳失敗: ${xhr.status}`));
-            xhr.onerror = () =>
-              uploadedFileId ? resolve() : reject(new Error("網路錯誤"));
-            xhr.send(file);
-          });
+            // 2. PUT file content directly to Google Drive
+            await new Promise<void>((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+              xhr.open("PUT", sessionUri);
+              xhr.onload = () =>
+                xhr.status >= 200 && xhr.status < 300
+                  ? resolve()
+                  : reject(new Error(`上傳失敗: ${xhr.status}`));
+              xhr.onerror = () =>
+                uploadedFileId ? resolve() : reject(new Error("網路錯誤"));
+              xhr.send(file);
+            });
 
-          // 3. 塞回 fileId
-          arr[idx].fileId = uploadedFileId;
-        }
+            // 3. 填入取得之 fileId
+            arr[idx].fileId = uploadedFileId;
+          },
+        );
+
+        await Promise.all(uploadTasks);
         pending.clear();
       } catch (err: any) {
         setIsUploading(false);

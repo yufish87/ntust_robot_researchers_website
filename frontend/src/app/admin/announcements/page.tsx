@@ -415,35 +415,39 @@ export default function AdminAnnouncementsPage() {
       }
       deletions.clear();
 
-      // 2. 上傳新檔案
-      for (const [key, file] of pending.entries()) {
-        const idx = parseInt(key.split(".")[1], 10);
-        if (!attachmentsCopy[idx]) continue;
+      // 2. 上傳新檔案 (改為 Promise.all 並行上傳，消除單線循序等待)
+      const uploadTasks = Array.from(pending.entries()).map(
+        async ([key, file]) => {
+          const idx = parseInt(key.split(".")[1], 10);
+          if (!attachmentsCopy[idx]) return;
 
-        const initRes = await axios.post("/api/upload/init", {
-          fileName: file.name,
-          mimeType: file.type || "application/octet-stream",
-          fileSize: file.size,
-          type: "announcement",
-        });
-        const { sessionUri, fileId: uploadedFileId } = initRes.data;
-        if (!sessionUri) throw new Error("無法取得上傳連結");
+          const initRes = await axios.post("/api/upload/init", {
+            fileName: file.name,
+            mimeType: file.type || "application/octet-stream",
+            fileSize: file.size,
+            type: "announcement",
+          });
+          const { sessionUri, fileId: uploadedFileId } = initRes.data;
+          if (!sessionUri) throw new Error("無法取得上傳連結");
 
-        await new Promise<void>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("PUT", sessionUri);
-          xhr.onload = () =>
-            xhr.status >= 200 && xhr.status < 300
-              ? resolve()
-              : reject(new Error(`上傳失敗: ${xhr.status}`));
-          xhr.onerror = () =>
-            uploadedFileId ? resolve() : reject(new Error("網路錯誤"));
-          xhr.send(file);
-        });
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("PUT", sessionUri);
+            xhr.onload = () =>
+              xhr.status >= 200 && xhr.status < 300
+                ? resolve()
+                : reject(new Error(`上傳失敗: ${xhr.status}`));
+            xhr.onerror = () =>
+              uploadedFileId ? resolve() : reject(new Error("網路錯誤"));
+            xhr.send(file);
+          });
 
-        attachmentsCopy[idx].fileId = uploadedFileId;
-        attachmentsCopy[idx].link = "";
-      }
+          attachmentsCopy[idx].fileId = uploadedFileId;
+          attachmentsCopy[idx].link = "";
+        },
+      );
+
+      await Promise.all(uploadTasks);
       pending.clear();
 
       // 3. 送出 API
