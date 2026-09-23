@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/home/site-footer";
 
 export const metadata = {
   title: "社團使用說明",
-  description: "臺科大機器人研究社社團網站與資源管理系統使用指南，包含帳號註冊、器材借用、機台預約與財務報帳規範說明。",
+  description: "臺科大機器人研究社社團網站與資源管理系統使用指南，包含帳號註冊、行事曆訂閱、器材借用、機台預約與財務報帳規範說明。",
   alternates: {
     canonical: "/manual",
   },
@@ -43,6 +43,7 @@ function loadDoc(filename: string): { content: string; updatedAt: string } {
 
 export default function PublicManualPage() {
   const docOverview = loadDoc("overview.md");
+  const docCalendar = loadDoc("calendar.md");
   const docEquipment = loadDoc("equipment.md");
   const docMachine = loadDoc("machine.md");
   const docFinance = loadDoc("finance.md");
@@ -57,6 +58,14 @@ export default function PublicManualPage() {
       content: docOverview.content,
       updatedAt: docOverview.updatedAt,
       description: "官網與資源管理系統說明、註冊驗證碼與登入流程",
+    },
+    {
+      id: "calendar",
+      label: "行事曆與社課資源",
+      iconName: "calendar",
+      content: docCalendar.content,
+      updatedAt: docCalendar.updatedAt,
+      description: "社團活動行事曆、手機 iCal 日曆即時訂閱與社課教材直連下載",
     },
     {
       id: "equipment",

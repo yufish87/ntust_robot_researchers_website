@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
         if (!res.ok) {
           lastError = `GAS responded with status ${res.status}`;
           if (attempt < 2) {
-            await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+            await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
             continue;
           }
         }
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         if (!data || !data.success) {
           lastError = data?.message || "Failed to init upload";
           if (attempt < 2) {
-            await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+            await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
             continue;
           }
         } else {
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       } catch (err: any) {
         lastError = err.message || "Network error";
         if (attempt < 2) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+          await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
           continue;
         }
       }

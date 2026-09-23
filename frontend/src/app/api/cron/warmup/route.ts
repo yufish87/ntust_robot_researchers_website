@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // 允許 Vercel Function 執行至多 60 秒，確保深度冷啟動不被中斷
 
 /**
  * Vercel Cron / External Keeper: 保活 GAS 容器，避免冷啟動延遲
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
       method: "GET",
       cache: "no-store",
       redirect: "follow",
-      signal: AbortSignal.timeout(9000),
+      signal: AbortSignal.timeout(25000), // 給予充足的 25 秒開機容忍時間（GAS 深度冷啟動約需 10~13 秒）
     });
 
     const latencyMs = Date.now() - t0;

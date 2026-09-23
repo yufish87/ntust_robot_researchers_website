@@ -1,6 +1,6 @@
-# NTUST RRC Website Frontend
+# NTUST Robot Researchers Club Website Frontend
 
-這是 NTUST RRC 社團管理系統的前端專案，採用 Next.js 16 (App Router) 建構，並使用 Google Apps Script (GAS) 作為後端 API。本文件提供詳細的開發說明與安裝指南。
+這是國立臺灣科技大學機器人研究社（NTUST Robot Researchers Club）社團管理系統的前端專案，採用 Next.js 16 (App Router) 建構，並使用 Google Apps Script (GAS) 作為後端 API。本文件提供詳細的開發說明與安裝指南。
 
 ## 技術棧
 
@@ -100,59 +100,41 @@ frontend/
 │   │   │
 │   │   ├── auth/               # 登入與註冊頁面 (/auth/login, /auth/register)
 │   │   │
-│   │   ├── dashboard/          # 社員內部管理系統 (/dashboard)
-│   │   │   ├── page.tsx        # 社員首頁 (快捷入口與社辦開放狀態)
-│   │   │   ├── layout.tsx      # 內部系統側邊欄佈局
-│   │   │   ├── announcements/  # 社團公告專區
-│   │   │   ├── competitions/   # 競賽意願專區
-│   │   │   ├── courses/        # 專業社課與錄影回放
-│   │   │   ├── equipment/      # 器材借用目錄與購物車
-│   │   │   │   ├── checkout/   # 器材借用確認送出
-│   │   │   │   └── applications/# 個人器材借用記錄
-│   │   │   ├── finance/        # 財務報帳記錄
-│   │   │   │   └── new/        # 新增財務報帳申請
-│   │   │   ├── machine/        # 機臺設備借用總覽與排程日曆
-│   │   │   │   ├── 3d-printer/ # 借用 3D 列印機
-│   │   │   │   └── laser-cutter/# 借用雷射切割機
-│   │   │   ├── manual/         # 社員操作使用手冊
-│   │   │   ├── settings/       # 個人設定、通知信箱與偏好中心
-│   │   │   └── wishlist/       # 許願池專區
-│   │   │
-│   │   └── admin/              # 管理幹部後台 (/admin)
-│   │       ├── page.tsx        # 後台概覽儀表板
-│   │       ├── layout.tsx      # 管理員側邊欄佈局
-│   │       ├── announcements/  # 公告發布與三軌推播管理
-│   │       ├── courses/        # 社課內容維護與開課推播
-│   │       ├── equipment/      # 器材借用審核與簽出歸還
-│   │       │   └── inventory/  # 器材總表與入庫盤點
-│   │       ├── finance/        # 財務報帳初審與撥款核銷
-│   │       ├── machine/        # 機臺借用排程審核
-│   │       ├── manual/         # 管理員後台審核手冊
-│   │       ├── members/        # 社員名冊與到期狀態
-│   │       └── users/          # 人員權限與註冊驗證碼派發
+│   ├── app/                    # Next.js App Router 頁面與 API 路由
+│   │   ├── (auth)/             # 登入與註冊頁面
+│   │   ├── admin/              # 後台管理模組 (器材、機台、財務、使用者、公告、社課、行事曆、盤點、說明手冊)
+│   │   ├── api/                # BFF Proxy 反向代理端點 (轉發至 Google Apps Script)
+│   │   │   ├── calendar/       # 行事曆資料 API 與 iCal / ICS 串流端點 (`/api/calendar/ics`)
+│   │   │   ├── cron/warmup/    # 伺服器保活探活端點
+│   │   │   └── storage/        # 講義教材單步驟直連串流下載
+│   │   ├── calendar/           # 公開社團行事曆 (月份與列表檢視、公版 PDF 匯出)
+│   │   ├── dashboard/          # 前台社員儀表板
+│   │   ├── manual/             # 公開社團使用指南
+│   │   └── layout.tsx          # 根版面與 SEO 結構化資料 (Schema.org)
 │   │
 │   ├── components/             # React 組件庫
 │   │   ├── ui/                 # Shadcn/UI 基礎組件
 │   │   ├── auth/               # 登入/註冊/OTP 彈窗組件
+│   │   ├── calendar/           # 行事曆月曆、列表與日程彈窗組件
 │   │   ├── course/             # 課程卡片與教材彈窗組件
 │   │   ├── equipment/          # 器材卡片、購物車與詳情彈窗
 │   │   ├── finance/            # 財務報帳表單與明細清單
-│   │   ├── home/               # 公開首頁區塊 (Hero, Features, Footer)
-│   │   ├── layout/             # 導覽列、側邊欄 (Sidebar, MobileNav)
+│   │   ├── home/               # 公開首頁區塊 (Hero, Features, Courses, Footer)
+│   │   ├── layout/             # 導覽列、側邊欄 (Sidebar, MobileNav, SiteHeader)
 │   │   ├── manual/             # 使用手冊容器與 MarkdownViewer
 │   │   ├── settings/           # 個人設定與自訂通知偏好卡片 (NotificationPrefsCard)
 │   │   └── admin/              # 後台標準標題列 (AdminPageHeader)
 │   │
 │   ├── content/                # 使用說明 Markdown 文件庫
 │   │   └── manual/
-│   │       ├── member/         # 社員使用指南 (overview, equipment, machine, finance, faq, wishlist)
-│   │       └── admin/          # 管理員審核指引 (overview, users, equipment, machine, finance)
+│   │       ├── member/         # 社員使用指南 (overview, calendar, equipment, machine, finance, faq, wishlist)
+│   │       └── admin/          # 管理員審核指引 (overview, users, calendar, equipment, machine, finance)
 │   │
 │   ├── lib/                    # 核心工具函式庫
 │   │   ├── api.ts              # Axios 實例與全域錯誤攔截
 │   │   ├── session.ts          # AES-256-GCM Session Cookie 加解密
 │   │   ├── utils.ts            # 通用輔助函式 (cn, date 格式化)
-│   │   ├── api/                # 各功能模組 API 封裝 (auth, equipment, machine, finance, user 等)
+│   │   ├── api/                # 各功能模組 API 封裝 (auth, calendar, equipment, machine, finance, user 等)
 │   │   └── types/              # 全域 TypeScript 型別定義
 │   │
 │   ├── store/                  # Zustand 狀態管理庫
@@ -193,43 +175,62 @@ frontend/
   - **未綁定 LINE**：Email 通知全開（防止漏接重要訊息）。
   - 提供「恢復預設值」按鈕一鍵還原系統推薦配置。
 
-### 3. 檔案上傳與自動重試機制 (Resilient File Upload)
+### 3. 社團行事曆與即時同步訂閱 (Calendar & iCal Sync)
+
+- **公開行事曆（`/calendar`）**：全學年社課、社務會議、競賽與創客活動排程，支援「月份檢視 (Month)」與「活動清單 (List)」兩種模式。
+- **iCal / ICS 跨平台即時訂閱**：提供標準 iCalendar 串流端點（`/api/calendar/ics`），支援 Google 日曆、Apple 行事曆 (iOS/macOS) 與 Outlook 背景排程即時同步更新。
+- **公版行事曆 PDF 匯出列印**：精準支援 A4 橫式列印排版，一鍵瀏覽器匯出公版社團行事曆 PDF。
+- **後台 Excel 批次排程匯入**：幹部可直接上傳 Excel 檔案批次解析匯入整學期行程，並支援單筆活動即時增刪改。
+
+### 4. 檔案上傳與自動重試機制 (Resilient File Upload)
 
 - 針對 Next.js BFF Proxy 與 Google Apps Script 之間 302 重導向可能遺失 Body 之問題，實作自動重定向跟隨與備援參數解析。
 - 前端 `file-upload.tsx` 實作 3 次客戶端指數退避自動重試（動態顯示第幾次嘗試中）與手動重試按鈕。
 - BFF 伺服器端實作 3 次指數退避重試，確保發票照片、Gcode 切片檔案等大檔案能穩定上傳。
 
-### 4. 系統使用說明中心 (Documentation & Manual)
+### 5. 系統使用說明中心 (Documentation & Manual)
 
 - 支援全文關鍵字搜尋、即時目錄索引（TOC）與章節切換。
 - Markdown 文件解析支援 GitHub Alert 語法。
 - 雷射切割可切材質清單重構為結構化三欄對照表（材料類別、允許切削材質、加工特性與防焰注意事項）。
-- 涵蓋系統概覽、器材借用、機臺借用、財務報帳、許願池與常見問答 FAQ。
+- 涵蓋系統概覽、社團行事曆與社課教材、器材借用、機臺借用、財務報帳、許願池與常見問答 FAQ。
 
-### 5. 器材借用系統 (Equipment Management)
+### 6. 社團課程專區與教材極速下載 (Courses & Direct Download)
 
-- 即時庫存狀態標籤（「剩餘: N」、「已借完」、「可直接取用」）。
+- 學期分類篩選（例如 `113-2`、`114-1`）與大綱簡介，首頁即時顯示近 30 天動態課程。
+- 公開 / 社員限定教材權限區分。
+- **單步驟直連極速下載**：消除兩階段 Token 交換的 400 過期快取錯誤與冷啟動延遲，直接由 Next.js BFF 自動附帶 Session 進行即時權限校驗並直通 Google Drive 私有檔案串流。
+- 課堂錄影（串流回放）與教材投影片線上查閱。
+
+### 7. 器材借用系統 (Equipment Management)
+
+- 器材即時庫存狀態標籤（「剩餘: N」、「已借完」、「可直接取用」）。
 - 整合購物車機制與自動預分配最小序號可用實體編號。
 - 完整支援借用審核、社辦現場領取點收與實體歸還結案作業。
+- **後台庫存盤點與點收 (Inventory Audit)**：支援器材實體盤點勾選、狀態即時更新與盤點時間戳記自動記錄。
 
-### 6. 機臺設備借用系統 (Machine Reservation)
+### 8. 機臺設備借用系統 (Machine Reservation)
 
 - **3D 列印（Creality Ender 3 S1 Pro 等）**：支援 30MB Gcode 上傳、預覽圖、PETG 耗材規範、時長乘算與新手教學勾選。
 - **雷射切割（FLUX Ador 等）**：結構化材質對照、禁切劇毒材質、專用桌推至室外走廊開放空間與排煙操作守則。
-- 提供機臺時段日曆排程檢視器，防撞期排程與一鍵重新整理。
+- **排程防撞避碰檢核 (Collision Guard)**：提交申請時即時比對現有機臺時段，時間重疊時硬性阻擋衝突申請，並提供即時排程日曆防撞期檢視與一鍵重新整理。
 
-### 7. 財務報帳系統 (Finance & Reimbursement)
+### 9. 財務報帳系統 (Finance & Reimbursement)
 
 - 四大報帳類別（一般報銷、社團內部競賽報銷、上銀競賽報銷、暑期營隊報銷）。
 - 嚴格校驗臺科大統編 `04126516` 與抬頭 `國立臺灣科技大學`。
 - 多圖憑證上傳、品項明細動態加總與「回報已投遞發票」核銷確認機制。
 
-### 8. 後台管理系統 (Admin Dashboard)
+### 10. 後台管理系統 (Admin Dashboard)
 
 - 標準化 `AdminPageHeader` 統一風格與跨裝置排版。
 - **發布三軌推播系統**：發布公告與社課時支援勾選「Email 全體社員」、「LINE 個人推播」與「LINE 社員大群群播」。
 - **社員通知偏好自動過濾**：發送個人推播時系統自動依每位社員的個人通知偏好進行過濾，不重複打擾已關閉的成員。
-- 提供器材庫存盤點、機臺審核、財務撥款標記與人員驗證碼管理。
+- 提供器材庫存盤點、機臺衝突排程審核、行事曆日程排程與 Excel 批次匯入、財務撥款標記與人員驗證碼管理。
+
+### 11. 伺服器保活與防冷啟動機制 (Keep-Warm & Health Ping)
+
+- 結合 GitHub Actions 工作流（每 10 分鐘自動排程探活 `/api/cron/warmup`）與 GAS 時間驅動觸發器，維持 Serverless 容器與 SheetDB 常態熱機，徹底消除冷啟動延遲。
 
 ## 常用指令
 

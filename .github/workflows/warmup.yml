@@ -15,10 +15,18 @@ jobs:
     steps:
       - name: Ping Warmup Endpoint
         run: |
-          HTTP_STATUS=$(curl -s -o /tmp/warmup_res.json -w "%{http_code}" https://ntust-robotresearchers.vercel.app/api/cron/warmup)
-          echo "HTTP Status: $HTTP_STATUS"
-          cat /tmp/warmup_res.json || true
-          if [ "$HTTP_STATUS" -ne 200 ]; then
-            echo "Warmup ping returned status $HTTP_STATUS"
-            exit 1
-          fi
+          for i in {1..2}; do
+            echo "Attempt $i: Pinging warmup endpoint..."
+            HTTP_STATUS=$(curl -s --max-time 35 -o /tmp/warmup_res.json -w "%{http_code}" https://ntust-robotresearchers.vercel.app/api/cron/warmup)
+            echo "HTTP Status: $HTTP_STATUS"
+            cat /tmp/warmup_res.json || true
+            echo ""
+            if [ "$HTTP_STATUS" -eq 200 ]; then
+              echo "Warmup succeeded on attempt $i."
+              exit 0
+            fi
+            echo "Attempt $i failed with status $HTTP_STATUS. Retrying in 3 seconds..."
+            sleep 3
+          done
+          echo "Warmup failed after 2 attempts."
+          exit 1
