@@ -84,45 +84,30 @@ export function ExportMembersCsvModal({
 
   // 解析與篩選名單
   const parsedMembers = useMemo(() => {
-    const targetYrNum = Number(selectedYear);
-    const isCurrentYear = selectedYear === defaultYear;
+    const targetYrStr = String(selectedYear).trim();
 
-    // 1. 篩選在目標學年有效的社員
+    // 1. 精準篩選在目標學年有效的社員（排除停用人員，且社費或記錄必須精準符合該學年）
     const activeUsers = users.filter((u) => {
       if (u.status === "deleted") return false;
 
-      // 檢查歷年記錄是否有該學年
+      // 檢查歷年記錄中是否有該學年
       const hasHistoryRecord = u.membershipHistory?.some(
-        (h) => String(h.year) === String(selectedYear)
+        (h) => String(h.year).trim() === targetYrStr
       );
 
-      // 檢查社費是否涵蓋該學年 (activeUntilYear >= selectedYear)
-      const userActiveYrNum = Number(u.activeUntilYear);
-      const isYearActive =
-        !isNaN(userActiveYrNum) && !isNaN(targetYrNum) && userActiveYrNum >= targetYrNum;
+      // 檢查社費學年是否為該學年
+      const matchesActiveYear = String(u.activeUntilYear || "").trim() === targetYrStr;
 
-      // 當目標學年為當前學年，現任幹部/最高管理員視為有效
-      const isCurrentOfficer =
-        isCurrentYear && (u.role === "admin" || u.role === "owner");
-
-      return hasHistoryRecord || isYearActive || isCurrentOfficer;
+      return hasHistoryRecord || matchesActiveYear;
     });
 
-    // 2. 判斷每位成員的屬性與職稱
+    // 2. 判斷每位成員在該學年的屬性與職稱
     const result = activeUsers.map((u) => {
       const yearRec = u.membershipHistory?.find(
-        (h) => String(h.year) === String(selectedYear)
+        (h) => String(h.year).trim() === targetYrStr
       );
-      const latestOfficerRec = [...(u.membershipHistory ?? [])]
-        .reverse()
-        .find((h) => h.type === "admin" || h.type === "owner");
 
-      const rec =
-        yearRec ||
-        (isCurrentYear && (u.role === "admin" || u.role === "owner")
-          ? latestOfficerRec
-          : null);
-      const posString = (rec?.positions || "").trim();
+      const posString = (yearRec?.positions || "").trim();
       const posArray = posString.split(",").map((p) => p.trim()).filter(Boolean);
 
       let attribute: MemberAttribute = "社員";
@@ -132,7 +117,8 @@ export function ExportMembersCsvModal({
       const isPresident =
         posArray.includes("社長") ||
         (posString.includes("社長") && !posString.includes("副社長")) ||
-        (u.role === "owner" && !posArray.includes("副社長"));
+        (yearRec?.type === "owner" && !posArray.includes("副社長")) ||
+        (!yearRec && u.role === "owner" && !posArray.includes("副社長"));
 
       // 判斷副社長
       const isVicePresident =
@@ -145,10 +131,10 @@ export function ExportMembersCsvModal({
         attribute = "副社長";
         title = "";
       } else if (
-        rec?.type === "admin" ||
-        rec?.type === "owner" ||
-        (isCurrentYear && (u.role === "admin" || u.role === "owner")) ||
-        posArray.length > 0
+        yearRec?.type === "admin" ||
+        yearRec?.type === "owner" ||
+        posArray.length > 0 ||
+        (!yearRec && (u.role === "admin" || u.role === "owner"))
       ) {
         attribute = "幹部";
         const filteredPositions = posArray.filter(

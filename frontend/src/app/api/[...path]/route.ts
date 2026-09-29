@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionToken, setSessionCookie } from "@/lib/session";
+import { fetchGasWithRetry } from "@/lib/api/gas-server";
 
 export const dynamic = "force-dynamic";
 
@@ -58,18 +59,27 @@ async function handler(
       }
     }
 
-    // 4. Forward Request
-    const response = await fetch(url.toString(), {
-      method: method,
-      headers: { "Content-Type": "application/json" },
-      body: body,
-      redirect: "follow",
-      cache: "no-store",
-    });
+    // 4. Forward Request with Retry (自動重試應對 GAS 冷啟動 404 / 500 / 網路抖動)
+    const response = await fetchGasWithRetry(
+      url.toString(),
+      {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: body,
+        redirect: "follow",
+        cache: "no-store",
+      },
+      path,
+    );
 
     if (!response.ok) {
+      const isColdStart = response.status === 404 || response.status >= 500;
+      const message = isColdStart
+        ? "社團後端伺服器正在喚醒中或暫時無回應，請於 3 秒後重新嘗試。"
+        : `Upstream error: ${response.status}`;
+
       return NextResponse.json(
-        { success: false, message: `Upstream error: ${response.status}` },
+        { success: false, message, upstreamStatus: response.status },
         { status: response.status },
       );
     }
@@ -95,7 +105,7 @@ async function handler(
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Proxy Error:", message);
     return NextResponse.json(
-      { success: false, message: "Backend proxy error", error: message },
+      { success: false, message: "社團伺服器連線異常，請稍後再試。", error: message },
       { status: 500 },
     );
   }
