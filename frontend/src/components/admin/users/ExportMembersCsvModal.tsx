@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Download, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile } from "@/lib/types/user";
@@ -241,15 +240,15 @@ export function ExportMembersCsvModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-6 overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle>匯出社員 (CSV)</DialogTitle>
           <DialogDescription>
             依據學校社團系統匯入規範格式匯出社員名冊。
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 py-2 overflow-y-auto flex-1 min-h-0 pr-1">
           {/* 目標學年度下拉選單 */}
           <div className="space-y-2">
             <Label htmlFor="export-year">目標學年度</Label>
@@ -294,18 +293,17 @@ export function ExportMembersCsvModal({
                 )}
               </Button>
             </div>
-            <Textarea
+            <textarea
               id="csv-preview"
               readOnly
               value={csvContent}
-              rows={8}
               placeholder="該學年度尚無符合資格的成員資料"
-              className="font-mono text-xs bg-muted/40 resize-none leading-relaxed"
+              className="w-full h-56 font-mono text-xs bg-muted/40 border border-input rounded-md p-3 resize-none leading-relaxed overflow-y-auto focus:outline-none"
             />
           </div>
         </div>
 
-        <DialogFooter className="gap-3">
+        <DialogFooter className="gap-3 shrink-0 pt-2 border-t">
           <Button
             type="button"
             variant="outline"
