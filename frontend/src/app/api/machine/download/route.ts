@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getSessionToken } from "@/lib/session";
+import { fetchGasWithRetry } from "@/lib/api/gas-server";
 
 export const dynamic = "force-dynamic";
 
@@ -24,13 +25,20 @@ export async function GET(request: NextRequest) {
     gasUrl.searchParams.set("fileId", fileId);
     gasUrl.searchParams.set("token", token);
 
-    const res = await fetch(gasUrl.toString(), {
-      method: "GET",
-      redirect: "follow",
-    });
+    const res = await fetchGasWithRetry(
+      gasUrl.toString(),
+      {
+        method: "GET",
+        redirect: "follow",
+      },
+      "admin/machine/file/download",
+    );
 
     if (!res.ok) {
-      return Response.json({ error: "Upstream error" }, { status: res.status });
+      return Response.json(
+        { error: "檔案伺服器連線異常，請稍後重試" },
+        { status: res.status },
+      );
     }
 
     const json = await res.json();

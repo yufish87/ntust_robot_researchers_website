@@ -209,6 +209,8 @@ function LoginForm({
         form.setError("password", { message: "密碼錯誤" });
       } else if (msg.includes("inactive") || msg.includes("deleted")) {
         form.setError("studentId", { message: "此帳號已停用" });
+      } else if (msg.includes("喚醒中") || msg.includes("暫時無回應")) {
+        form.setError("password", { message: msg });
       } else {
         form.setError("password", { message: "登入失敗，請稍後再試" });
       }

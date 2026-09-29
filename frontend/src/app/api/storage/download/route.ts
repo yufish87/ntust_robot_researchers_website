@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getSessionToken } from "@/lib/session";
+import { fetchGasWithRetry } from "@/lib/api/gas-server";
 
 /**
  * 強制動態渲染，防止 Next.js 快取或靜態最佳化此路由。
@@ -38,13 +39,20 @@ export async function GET(request: NextRequest) {
     const userAgent = request.headers.get("user-agent") || "unknown";
     gasUrl.searchParams.set("user_agent", userAgent);
 
-    const res = await fetch(gasUrl.toString(), {
-      method: "GET",
-      redirect: "follow",
-    });
+    const res = await fetchGasWithRetry(
+      gasUrl.toString(),
+      {
+        method: "GET",
+        redirect: "follow",
+      },
+      "course/file/download",
+    );
 
     if (!res.ok) {
-      return Response.json({ error: "Upstream error" }, { status: res.status });
+      return Response.json(
+        { error: "教材檔案伺服器連線異常，請稍後重試" },
+        { status: res.status },
+      );
     }
 
     const json = await res.json();

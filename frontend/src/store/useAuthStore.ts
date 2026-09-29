@@ -36,29 +36,43 @@ export const useAuthStore = create<AuthState>()(
       authChecked: false,
 
       login: async (payload) => {
-        // payload: { studentId, password }
-        const res = await api.post("/auth/login", payload);
+        try {
+          // payload: { studentId, password }
+          const res = await api.post("/auth/login", payload);
 
-        if (res.data.success) {
-          // token 已由 server-side BFF proxy 設定為 HttpOnly cookie
-          // client 只收到 user info
-          set({
-            user: res.data.data.user,
-            authChecked: true,
-          });
-        } else {
-          throw new Error(res.data.message || "Login failed");
+          if (res.data.success) {
+            // token 已由 server-side BFF proxy 設定為 HttpOnly cookie
+            // client 只收到 user info
+            set({
+              user: res.data.data.user,
+              authChecked: true,
+            });
+          } else {
+            throw new Error(res.data.message || "登入失敗");
+          }
+        } catch (error: any) {
+          const message =
+            error.response?.data?.message ||
+            error.message ||
+            "登入失敗，請稍後再試";
+          throw new Error(message);
         }
       },
 
       register: async (payload) => {
-        // payload: { studentId, password, name, dept, grade, verifyCode }
-        const res = await api.post("/auth/register", payload);
+        try {
+          // payload: { studentId, password, name, dept, grade, verifyCode }
+          const res = await api.post("/auth/register", payload);
 
-        if (res.data.success) {
-          return;
-        } else {
-          throw new Error(res.data.message || "Registration failed");
+          if (!res.data.success) {
+            throw new Error(res.data.message || "註冊失敗");
+          }
+        } catch (error: any) {
+          const message =
+            error.response?.data?.message ||
+            error.message ||
+            "註冊失敗，請稍後再試";
+          throw new Error(message);
         }
       },
 

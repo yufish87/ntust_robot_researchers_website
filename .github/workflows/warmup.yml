@@ -6,6 +6,9 @@ on:
     - cron: "*/10 * * * *"
   workflow_dispatch: # 支援在 GitHub 網頁介面手動觸發測試
 
+# 遵循最小權限原則，warmup 僅執行 curl 請求，不需任何 GITHUB_TOKEN 權限
+permissions: {}
+
 jobs:
   warmup:
     name: Ping Warmup Route
