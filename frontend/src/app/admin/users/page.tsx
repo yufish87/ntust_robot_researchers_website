@@ -47,6 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import {
   Dices,
+  Download,
   KeyRound,
   Loader2,
   MoreHorizontal,
@@ -56,6 +57,7 @@ import {
   Search,
 } from "lucide-react";
 import { ReceiptPrintModal } from "@/components/admin/users/ReceiptPrintModal";
+import { ExportMembersCsvModal } from "@/components/admin/users/ExportMembersCsvModal";
 
 /** 身份中文對照 */
 const ROLE_LABEL: Record<string, string> = {
@@ -172,6 +174,9 @@ export default function AdminUsersPage() {
   const [printModalCodes, setPrintModalCodes] = useState<string[]>([]);
   const [printModalDesc, setPrintModalDesc] = useState("");
   const [printModalYear, setPrintModalYear] = useState("");
+
+  // Export Members CSV Modal
+  const [exportCsvOpen, setExportCsvOpen] = useState(false);
 
   // Checkbox selection in VerifyCodes Tab
   const [selectedCodes, setSelectedCodes] = useState<Set<string>>(new Set());
@@ -657,12 +662,12 @@ export default function AdminUsersPage() {
       </AdminPageHeader>
       {mainTab === "users" && (
         <div className="space-y-4">
-          {/* Sub filter + Search */}
+          {/* Sub filter + Export & Search */}
           <Tabs
             value={tabFilter}
             onValueChange={(v) => setTabFilter(v as TabFilter)}
           >
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
               <TabsList className="bg-slate-100 dark:bg-[#1a1820] border border-slate-200/80 dark:border-white/10 p-1 rounded-xl h-auto flex flex-wrap gap-1">
                 <TabsTrigger value="all" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#201e26] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#ffc000] data-[state=active]:shadow-xs rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer">
                   全部
@@ -677,14 +682,25 @@ export default function AdminUsersPage() {
                   已停用
                 </TabsTrigger>
               </TabsList>
-              <div className="relative max-w-sm flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜尋學號或姓名..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
+              <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setExportCsvOpen(true)}
+                  className="shrink-0 h-9 text-xs sm:text-sm bg-white dark:bg-[#201e26] border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer"
+                >
+                  <Download className="h-4 w-4 mr-1.5 text-muted-foreground" />
+                  匯出社員 (CSV)
+                </Button>
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="搜尋學號或姓名..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 h-9"
+                  />
+                </div>
               </div>
             </div>
           </Tabs>
@@ -1537,6 +1553,13 @@ export default function AdminUsersPage() {
         codes={printModalCodes}
         description={printModalDesc}
         targetYear={printModalYear}
+      />
+
+      {/* Export Members CSV Modal */}
+      <ExportMembersCsvModal
+        open={exportCsvOpen}
+        onOpenChange={setExportCsvOpen}
+        users={users}
       />
     </div>
   );
