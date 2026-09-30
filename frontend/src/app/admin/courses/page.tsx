@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Course } from '@/lib/types/course';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,66 @@ import { CourseForm } from '@/components/admin/courses/CourseForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function parseCourseDate(raw?: string): number {
+    if (!raw) return 0;
+    const str = raw.trim();
+    if (!str) return 0;
+
+    let t = Date.parse(str);
+    if (!isNaN(t)) return t;
+
+    t = Date.parse(str.replace(' ', 'T'));
+    if (!isNaN(t)) return t;
+
+    t = Date.parse(str.replace(/-/g, '/'));
+    if (!isNaN(t)) return t;
+
+    return 0;
+}
+
+function getCourseSortTime(course: Course): number {
+    // 1. 優先使用上課時間 (courseDate)
+    if (course.courseDate) {
+        const t = parseCourseDate(course.courseDate);
+        if (t > 0) return t;
+    }
+
+    // 2. 次之使用建立上傳時間 (uploadTime)
+    if (course.uploadTime) {
+        const t = parseCourseDate(course.uploadTime);
+        if (t > 0) return t;
+    }
+
+    // 3. 次之從課程 ID (CRS-YYYYMMDD-xxx) 解析日期
+    if (course.id) {
+        const match = course.id.match(/CRS-(\d{4})(\d{2})(\d{2})/i);
+        if (match) {
+            const [, y, m, d] = match;
+            const t = Date.parse(`${y}-${m}-${d}T00:00:00`);
+            if (!isNaN(t)) return t;
+        }
+    }
+
+    // 4. 次之從學期 (例如 114-2) 推算時間
+    if (course.semester) {
+        const match = course.semester.match(/(\d+)-([12])/);
+        if (match) {
+            const rocYear = parseInt(match[1], 10);
+            const term = parseInt(match[2], 10);
+            const adYear = rocYear + 1911;
+            const month = term === 1 ? '09' : '02';
+            const t = Date.parse(`${adYear}-${month}-01T00:00:00`);
+            if (!isNaN(t)) return t;
+        }
+    }
+
+    return 0;
+}
 
 export default function AdminCoursesPage() {
     const queryClient = useQueryClient();
@@ -48,21 +108,29 @@ export default function AdminCoursesPage() {
         isLoading: loading,
         isFetching: refreshing,
         refetch,
-    } = useQuery({
+    } = useQuery<Course[]>({
         queryKey: ['admin-courses'],
         queryFn: async () => {
-            const res = await fetch('/api/courses');
+            const res = await fetch('/api/courses', { cache: 'no-store' });
             const json = await res.json();
-            if (json.success) {
-                return [...json.data].sort((a: Course, b: Course) => {
-                    const dateA = a.courseDate || '';
-                    const dateB = b.courseDate || '';
-                    return dateB.localeCompare(dateA);
-                });
+            if (json.success && Array.isArray(json.data)) {
+                return json.data as Course[];
             }
             throw new Error('載入課程失敗');
         },
     });
+
+    // 倒序排列：時間較靠近（最新/即將開始）的放最上面
+    const sortedCourses = useMemo(() => {
+        return [...courses].sort((a, b) => {
+            const timeA = getCourseSortTime(a);
+            const timeB = getCourseSortTime(b);
+            if (timeA !== timeB) {
+                return timeB - timeA;
+            }
+            return b.id.localeCompare(a.id);
+        });
+    }, [courses]);
 
     const handleSubmit = async (values: any) => {
         setIsSubmitting(true);
@@ -210,14 +278,14 @@ export default function AdminCoursesPage() {
                                     </div>
                                 </TableCell>
                             </TableRow>
-                        ) : courses.length === 0 ? (
+                        ) : sortedCourses.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={8} className="text-center h-32 text-muted-foreground">
                                     尚無課程資料，點擊右上角「新增課程」開始建立。
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            courses.map((course) => {
+                            sortedCourses.map((course) => {
                                 const handoutCount = course.handouts?.length || 0;
                                 const videoCount = course.videos?.length || 0;
                                 const otherCount = course.others?.length || 0;
@@ -257,7 +325,7 @@ export default function AdminCoursesPage() {
                                             {course.uploaderId}
                                         </TableCell>
                                         <TableCell className="text-sm whitespace-nowrap">
-                                            {course.courseDate || '—'}
+                                            {course.courseDate ? course.courseDate.replace('T', ' ') : '—'}
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <div className="flex items-center justify-center gap-1">
