@@ -14,6 +14,27 @@ export interface EquipmentActionResponse {
   message?: string;
 }
 
+export const EquipmentUserAPI = {
+  /**
+   * 社員申請器材續借
+   * @param applicationId - 申請單號
+   * @param requestedReturnDate - 擬展延之新歸還日期 (YYYY-MM-DD)
+   * @param reason - 續借理由 (選填)
+   */
+  applyRenewal: async (
+    applicationId: string,
+    requestedReturnDate: string,
+    reason?: string,
+  ): Promise<EquipmentActionResponse> => {
+    const res = await api.post("/equipment/renew", {
+      applicationId,
+      requestedReturnDate,
+      reason: reason || "",
+    });
+    return res.data;
+  },
+};
+
 export const EquipmentAdminAPI = {
   /**
    * 取得管理員器材借用申請列表
@@ -53,6 +74,25 @@ export const EquipmentAdminAPI = {
       applicationId,
       action: "reject",
       rejectReason: reason,
+    });
+    return res.data;
+  },
+
+  /**
+   * 審核續借申請
+   * @param applicationId - 申請單號
+   * @param action - "approve" | "reject"
+   * @param rejectReason - 拒絕理由 (駁回時必填)
+   */
+  reviewRenewal: async (
+    applicationId: string,
+    action: "approve" | "reject",
+    rejectReason?: string,
+  ): Promise<EquipmentActionResponse> => {
+    const res = await api.post("/admin/equipment/review-renewal", {
+      applicationId,
+      action,
+      rejectReason: rejectReason || "",
     });
     return res.data;
   },

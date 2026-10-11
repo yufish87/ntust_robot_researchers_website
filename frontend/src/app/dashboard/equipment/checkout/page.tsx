@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +60,7 @@ type CheckoutFormValues = z.input<typeof checkoutSchema>;
 export default function CheckoutPage() {
     const router = useRouter();
     const { toast } = useToast();
+    const queryClient = useQueryClient();
     const { items, removeItem, itemCount, clearCart } = useCartStore();
     const { user } = useAuthStore();
     
@@ -91,12 +93,19 @@ export default function CheckoutPage() {
 
             // Construct payload
             const payload = {
-                items: JSON.stringify(items.map(i => ({
-                    code: i.code,
-                    name: i.name,
-                    qty: i.quantity
-                }))),
-                summary: items.map(i => `${i.quantity}x ${i.name}`).join('\n'),
+                items: JSON.stringify(items.map(i => {
+                    const hasSelected = i.selectedItemIds && i.selectedItemIds.length > 0;
+                    return {
+                        code: i.code,
+                        name: i.name,
+                        qty: hasSelected ? i.selectedItemIds!.length : i.quantity,
+                        itemIds: hasSelected ? i.selectedItemIds : [],
+                    };
+                })),
+                summary: items.map(i => {
+                    const qty = i.selectedItemIds && i.selectedItemIds.length > 0 ? i.selectedItemIds.length : i.quantity;
+                    return `${qty}x ${i.name}`;
+                }).join('\n'),
                 reason: data.reason,
                 pickupDate: data.pickupDate || "",
                 returnDate: data.returnDate,
@@ -106,7 +115,8 @@ export default function CheckoutPage() {
 
             if (res.data.success) {
                 clearCart();
-                // alert(`申請成功！單號: ...`); // Moved to toast for better UX
+                queryClient.invalidateQueries({ queryKey: ["equipment-catalog"] });
+                queryClient.invalidateQueries({ queryKey: ["equipment-applications"] });
                 toast({
                     title: "申請提交成功",
                     description: `單號: ${res.data.data.applicationId}`,
@@ -312,7 +322,21 @@ export default function CheckoutPage() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="font-semibold text-slate-900 dark:text-white truncate">{item.name}</div>
-                                        <div className="text-slate-500 dark:text-slate-400 text-xs">數量: {item.quantity}</div>
+                                        <div className="text-slate-500 dark:text-slate-400 text-xs">
+                                            數量: {item.selectedItemIds && item.selectedItemIds.length > 0 ? item.selectedItemIds.length : item.quantity}
+                                        </div>
+                                        {item.selectedItemIds && item.selectedItemIds.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {item.selectedItemIds.map((id) => (
+                                                    <span 
+                                                        key={id} 
+                                                        className="text-[10px] font-mono px-1 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border border-amber-300/60"
+                                                    >
+                                                        {id}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <div>
                                         <Button 

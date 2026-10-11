@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Course } from '@/lib/types/course';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Loader2, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from "@/hooks/use-toast";
@@ -360,6 +360,9 @@ export default function AdminCoursesPage() {
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{editingCourse ? "編輯課程" : "新增課程"}</DialogTitle>
+                        <DialogDescription>
+                            {editingCourse ? "編輯現有課程與教材資料。" : "建立新社團課程與上傳相關教材資源。"}
+                        </DialogDescription>
                     </DialogHeader>
                     <CourseForm 
                         defaultValues={editingCourse || {}} 

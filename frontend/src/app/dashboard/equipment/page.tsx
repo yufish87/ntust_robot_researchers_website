@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getGoogleDriveImageUrl } from "@/lib/utils";
+import { getGoogleDriveImageUrl, cn } from "@/lib/utils";
 import Link from "next/link";
 import {
   Select,
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { EquipmentDetailModal } from "@/components/equipment/EquipmentDetailModal";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { History } from "lucide-react";
+import { History, RefreshCw } from "lucide-react";
 interface EquipmentIndex {
   code: string;
   name: string;
@@ -46,7 +46,12 @@ export default function EquipmentCatalogPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   /* ---------- 資料載入（useQuery 快取）---------- */
-  const { data: catalog = [], isLoading: loading } = useQuery({
+  const {
+    data: catalog = [],
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: ["equipment-catalog"],
     queryFn: async () => {
       let retries = 3;
@@ -106,6 +111,20 @@ export default function EquipmentCatalogPage() {
         title="器材列表"
         description="瀏覽社團各項硬體模組、感測器與工具庫存，加入借用清單並送出借用申請。"
       >
+        <Button
+          variant="outline"
+          onClick={() => void refetch()}
+          disabled={loading || isFetching}
+          className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white cursor-pointer text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4"
+        >
+          <RefreshCw
+            className={cn(
+              "mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4",
+              isFetching && "animate-spin",
+            )}
+          />
+          重新整理
+        </Button>
         <Link
           href="/dashboard/equipment/applications"
           className="w-full sm:w-auto"

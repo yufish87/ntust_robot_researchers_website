@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -19,12 +19,17 @@ import {
   Calendar,
   Wrench,
   Info,
+  RotateCcw,
+  Loader2,
 } from "lucide-react";
 import api from "@/lib/api";
+import { EquipmentUserAPI } from "@/lib/api/equipment";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -39,6 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { cn } from "@/lib/utils";
@@ -48,7 +54,7 @@ interface ApplicationItem {
   studentId: string;
   name: string;
   reason: string;
-  items: Array<{ code: string; name: string; qty: number } | string>;
+  items: Array<{ code: string; name: string; qty: number; itemIds?: string[] } | string>;
   allocated?: Array<{ code: string; items: string[] }>;
   summary: string;
   pickupDate: string;
@@ -58,6 +64,9 @@ interface ApplicationItem {
   reviewer?: string;
   reviewedAt?: string;
   rejectReason?: string;
+  renewalCount?: number;
+  requestedReturnDate?: string;
+  renewalReason?: string;
 }
 
 interface FlattenedBorrowedItem {
@@ -77,11 +86,80 @@ type ViewMode = "grid" | "table";
 type StatusFilter = "all" | "active" | "pending" | "returned" | "rejected";
 
 export default function ApplicationsPage() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedApp, setSelectedApp] = useState<ApplicationItem | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+  // 續借申請相關 State
+  const [renewalDialogOpen, setRenewalDialogOpen] = useState(false);
+  const [renewalTarget, setRenewalTarget] = useState<ApplicationItem | null>(null);
+  const [renewalNewReturnDate, setRenewalNewReturnDate] = useState("");
+  const [renewalReasonInput, setRenewalReasonInput] = useState("");
+  const [renewalSubmitting, setRenewalSubmitting] = useState(false);
+
+  // 開啟續借 Dialog
+  const openRenewalDialog = (app: ApplicationItem) => {
+    setRenewalTarget(app);
+    // 預設為原歸還日往後推 60 天（2 個月）
+    const baseDate = app.returnDate ? new Date(app.returnDate) : new Date();
+    baseDate.setDate(baseDate.getDate() + 60);
+    const defaultDateStr = baseDate.toISOString().split("T")[0];
+    setRenewalNewReturnDate(defaultDateStr);
+    setRenewalReasonInput("");
+    setRenewalDialogOpen(true);
+  };
+
+  // 送出續借申請
+  const handleRenewalSubmit = async () => {
+    if (!renewalTarget) return;
+    if (!renewalNewReturnDate) {
+      toast({ variant: "destructive", title: "請選擇擬延長之新歸還日期" });
+      return;
+    }
+
+    if (renewalTarget.returnDate && renewalNewReturnDate <= renewalTarget.returnDate) {
+      toast({ variant: "destructive", title: "擬延長日期必須晚於原歸還日期" });
+      return;
+    }
+
+    setRenewalSubmitting(true);
+    try {
+      const res = await EquipmentUserAPI.applyRenewal(
+        renewalTarget.id,
+        renewalNewReturnDate,
+        renewalReasonInput,
+      );
+
+      if (res.success) {
+        toast({
+          title: "續借申請已送出",
+          description: `申請單 ${renewalTarget.id} 已提交續借申請，待幹部審核。`,
+        });
+        setRenewalDialogOpen(false);
+        setRenewalTarget(null);
+        queryClient.invalidateQueries({ queryKey: ["my-equipment-apps"] });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "續借申請失敗",
+          description: res.message || "系統發生錯誤",
+        });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "發生未知錯誤";
+      toast({
+        variant: "destructive",
+        title: "送出失敗",
+        description: msg,
+      });
+    } finally {
+      setRenewalSubmitting(false);
+    }
+  };
 
   // 初始化讀取使用者偏好的檢視模式
   useEffect(() => {
@@ -123,6 +201,13 @@ export default function ApplicationsPage() {
           variant: "outline" as const,
           className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
           icon: Clock,
+        };
+      case "續借待審核":
+        return {
+          label: "續借待審核",
+          variant: "outline" as const,
+          className: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40 font-semibold",
+          icon: RotateCcw,
         };
       case "已核准":
         return {
@@ -803,20 +888,63 @@ export default function ApplicationsPage() {
                         )}
                       </div>
 
-                      {/* 底部按鈕 */}
-                      <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                        <div className="text-xs text-slate-400 font-mono">
-                          {app.reviewer && `審核幹部: ${app.reviewer}`}
+                      {/* 底部按鈕與續借操作 */}
+                      <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs text-slate-400 font-mono">
+                            {app.reviewer && `審核幹部: ${app.reviewer}`}
+                          </div>
+                          {app.status === "續借待審核" && (
+                            <span className="text-xs text-amber-600 dark:text-amber-400 font-mono bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded border border-amber-300">
+                              擬延至 {app.requestedReturnDate}
+                            </span>
+                          )}
+                          {app.status === "已核准" && (app.renewalCount || 0) >= 1 && (
+                            <Badge variant="outline" className="text-[11px] bg-slate-50 text-slate-500 border-slate-200">
+                              已續借 1 次
+                            </Badge>
+                          )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openAppDetail(app)}
-                          className="h-8 px-3 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-                        >
-                          <Eye className="w-4 h-4 mr-1.5" />
-                          查看詳情
-                        </Button>
+
+                        <div className="flex items-center gap-1.5 ml-auto">
+                          {app.status === "已核准" &&
+                            (app.renewalCount || 0) < 1 &&
+                            (() => {
+                              const isOverdue = app.returnDate
+                                ? new Date(app.returnDate).setHours(23, 59, 59, 999) < Date.now()
+                                : false;
+
+                              if (isOverdue) {
+                                return (
+                                  <span className="text-xs text-red-500 pr-1">
+                                    逾期不可續借
+                                  </span>
+                                );
+                              }
+
+                              return (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openRenewalDialog(app)}
+                                  className="h-8 px-2.5 text-xs text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/40 cursor-pointer"
+                                >
+                                  <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                                  申請續借
+                                </Button>
+                              );
+                            })()}
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openAppDetail(app)}
+                            className="h-8 px-3 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                          >
+                            <Eye className="w-4 h-4 mr-1.5" />
+                            查看詳情
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -1059,15 +1187,38 @@ export default function ApplicationsPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right pr-4 whitespace-nowrap">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openAppDetail(app)}
-                              className="h-8 px-3 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-                            >
-                              <Eye className="w-4 h-4 mr-1.5" />
-                              查看
-                            </Button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              {app.status === "已核准" &&
+                                (app.renewalCount || 0) < 1 &&
+                                (() => {
+                                  const isOverdue = app.returnDate
+                                    ? new Date(app.returnDate).setHours(23, 59, 59, 999) < Date.now()
+                                    : false;
+
+                                  if (isOverdue) return null;
+
+                                  return (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openRenewalDialog(app)}
+                                      className="h-8 px-2.5 text-xs text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100 cursor-pointer"
+                                    >
+                                      <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                                      續借
+                                    </Button>
+                                  );
+                                })()}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openAppDetail(app)}
+                                className="h-8 px-3 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                              >
+                                <Eye className="w-4 h-4 mr-1.5" />
+                                查看
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -1240,6 +1391,18 @@ export default function ApplicationsPage() {
                 </div>
               </div>
 
+              {/* 續借狀態提示 */}
+              {selectedApp.status === "續借待審核" && (
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl text-sm text-amber-800 dark:text-amber-200 space-y-1">
+                  <div className="font-bold flex items-center gap-1.5">
+                    <RotateCcw className="w-4 h-4 text-amber-600" />
+                    <span>續借申請審核中</span>
+                  </div>
+                  <p>擬延長至：<span className="font-mono font-semibold">{selectedApp.requestedReturnDate}</span></p>
+                  {selectedApp.renewalReason && <p>續借理由：{selectedApp.renewalReason}</p>}
+                </div>
+              )}
+
               {/* 拒絕原因（若有） */}
               {selectedApp.rejectReason && (
                 <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl text-sm text-red-700 dark:text-red-300">
@@ -1257,6 +1420,101 @@ export default function ApplicationsPage() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 續借申請彈窗 */}
+      <Dialog open={renewalDialogOpen} onOpenChange={setRenewalDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-amber-500" />
+              器材續借申請
+            </DialogTitle>
+            <DialogDescription>
+              每筆借用申請單上限續借 1 次。送出後將由社團幹部審核，審核通過後自動展延歸還截止日。
+            </DialogDescription>
+          </DialogHeader>
+
+          {renewalTarget && (
+            <div className="space-y-4 py-2">
+              <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-500 text-xs">申請單號</span>
+                  <span className="font-mono font-semibold">{renewalTarget.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 text-xs">借用器材</span>
+                  <span className="text-right truncate max-w-[260px] font-medium">{renewalTarget.summary}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 text-xs">原預計歸還日</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">
+                    {renewalTarget.returnDate ? formatAppDate(renewalTarget.returnDate) : "—"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-900 dark:text-white">
+                  擬延長新歸還日期 <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="date"
+                  value={renewalNewReturnDate}
+                  min={
+                    renewalTarget.returnDate
+                      ? new Date(new Date(renewalTarget.returnDate).getTime() + 86400000)
+                          .toISOString()
+                          .split("T")[0]
+                      : new Date().toISOString().split("T")[0]
+                  }
+                  max="9999-12-31"
+                  onChange={(e) => setRenewalNewReturnDate(e.target.value)}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  請選擇延長後的預計歸還日期（必須晚於原歸還日）。
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-900 dark:text-white">
+                  續借原因說明 <span className="text-slate-400 font-normal text-xs">(選填)</span>
+                </label>
+                <Textarea
+                  placeholder="請簡要說明延長使用需求（例如：專題測試尚未完成、競賽延期等）"
+                  value={renewalReasonInput}
+                  onChange={(e) => setRenewalReasonInput(e.target.value)}
+                  className="resize-none h-20 text-sm"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setRenewalDialogOpen(false)}
+              disabled={renewalSubmitting}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleRenewalSubmit}
+              disabled={renewalSubmitting || !renewalNewReturnDate}
+              className="bg-[#ffc000] hover:bg-yellow-400 text-black font-semibold"
+            >
+              {renewalSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  提交中...
+                </>
+              ) : (
+                "送出續借申請"
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

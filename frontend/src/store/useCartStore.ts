@@ -8,6 +8,7 @@ export interface CartItem {
   image?: string;
   quantity: number;
   maxQuantity: number; // Available stock
+  selectedItemIds?: string[]; // 使用者自選的器材個體編號清單
 }
 
 interface CartState {
@@ -15,6 +16,7 @@ interface CartState {
   addItem: (item: CartItem) => void;
   removeItem: (code: string) => void;
   updateQuantity: (code: string, quantity: number) => void;
+  updateSelectedItems: (code: string, selectedItemIds: string[]) => void;
   clearCart: () => void;
   itemCount: () => number;
 }
@@ -29,14 +31,26 @@ export const useCartStore = create<CartState>()(
         const existingItem = items.find((i) => i.code === newItem.code);
 
         if (existingItem) {
-          // If already exists, update quantity but don't exceed max
-          const newQty = Math.min(
-            existingItem.quantity + newItem.quantity,
-            newItem.maxQuantity,
-          );
+          // If already exists, merge selectedItemIds if provided
+          let mergedSelectedIds: string[] | undefined = undefined;
+          if (newItem.selectedItemIds && newItem.selectedItemIds.length > 0) {
+            const existingIds = existingItem.selectedItemIds || [];
+            mergedSelectedIds = Array.from(new Set([...existingIds, ...newItem.selectedItemIds]));
+          }
+
+          const newQty = mergedSelectedIds
+            ? Math.min(mergedSelectedIds.length, newItem.maxQuantity)
+            : Math.min(existingItem.quantity + newItem.quantity, newItem.maxQuantity);
+
           set({
             items: items.map((i) =>
-              i.code === newItem.code ? { ...i, quantity: newQty } : i,
+              i.code === newItem.code
+                ? {
+                    ...i,
+                    quantity: newQty,
+                    selectedItemIds: mergedSelectedIds || i.selectedItemIds,
+                  }
+                : i,
             ),
           });
         } else {
@@ -55,6 +69,18 @@ export const useCartStore = create<CartState>()(
               // Ensure quantity is at least 1 and at most maxQuantity
               const safeQty = Math.max(1, Math.min(quantity, i.maxQuantity));
               return { ...i, quantity: safeQty };
+            }
+            return i;
+          }),
+        });
+      },
+
+      updateSelectedItems: (code, selectedItemIds) => {
+        set({
+          items: get().items.map((i) => {
+            if (i.code === code) {
+              const safeQty = Math.max(1, Math.min(selectedItemIds.length, i.maxQuantity));
+              return { ...i, selectedItemIds, quantity: safeQty };
             }
             return i;
           }),
