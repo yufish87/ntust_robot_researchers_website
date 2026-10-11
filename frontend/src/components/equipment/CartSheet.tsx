@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useCartStore } from '@/store/useCartStore';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetFooter } from '@/components/ui/sheet';
 import { ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import { getGoogleDriveImageUrl } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -40,6 +40,7 @@ export function CartSheet() {
             <SheetContent className="flex flex-col w-full sm:max-w-lg">
                 <SheetHeader>
                     <SheetTitle className="text-2xl font-bold">借用清單</SheetTitle>
+                    <SheetDescription className="sr-only">目前選取的借用器材清單與結帳操作</SheetDescription>
                 </SheetHeader>
 
                 <div className="flex-1 overflow-y-auto py-6 px-1">
@@ -64,36 +65,58 @@ export function CartSheet() {
                                         )}
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="font-semibold">{item.name}</h4>
-                                        <p className="text-xs text-gray-500 mb-2">{item.code}</p>
+                                        <h4 className="font-semibold text-slate-900 dark:text-white">{item.name}</h4>
+                                        <p className="text-xs text-gray-500 mb-1.5 font-mono">{item.code}</p>
+
+                                        {item.selectedItemIds && item.selectedItemIds.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mb-2">
+                                                {item.selectedItemIds.map((id) => (
+                                                    <span 
+                                                        key={id} 
+                                                        className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono font-medium bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border border-amber-300/70"
+                                                    >
+                                                        {id}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                         
                                         <div className="flex items-center gap-3">
-                                            <div className="flex items-center border rounded-md">
-                                                <Button
-                                                    variant="ghost" 
-                                                    size="icon"
-                                                    className="h-8 w-8 rounded-none"
-                                                    onClick={() => updateQuantity(item.code, item.quantity - 1)}
-                                                    disabled={item.quantity <= 1}
-                                                >
-                                                    <Minus className="h-3 w-3" />
-                                                </Button>
-                                                <div className="w-8 text-center text-sm font-bold">
-                                                    {item.quantity}
+                                            {item.selectedItemIds && item.selectedItemIds.length > 0 ? (
+                                                <span className="text-xs text-slate-500 font-medium">
+                                                    指定借用 {item.selectedItemIds.length} 件
+                                                </span>
+                                            ) : (
+                                                <div className="flex items-center border rounded-md">
+                                                    <Button
+                                                        variant="ghost" 
+                                                        size="icon"
+                                                        aria-label={`減少 ${item.name} 借用數量`}
+                                                        className="h-8 w-8 rounded-none"
+                                                        onClick={() => updateQuantity(item.code, item.quantity - 1)}
+                                                        disabled={item.quantity <= 1}
+                                                    >
+                                                        <Minus className="h-3 w-3" />
+                                                    </Button>
+                                                    <div className="w-8 text-center text-sm font-bold">
+                                                        {item.quantity}
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost" 
+                                                        size="icon"
+                                                        aria-label={`增加 ${item.name} 借用數量`}
+                                                        className="h-8 w-8 rounded-none"
+                                                        onClick={() => updateQuantity(item.code, item.quantity + 1)}
+                                                        disabled={item.quantity >= item.maxQuantity}
+                                                    >
+                                                        <Plus className="h-3 w-3" />
+                                                    </Button>
                                                 </div>
-                                                <Button
-                                                    variant="ghost" 
-                                                    size="icon"
-                                                    className="h-8 w-8 rounded-none"
-                                                    onClick={() => updateQuantity(item.code, item.quantity + 1)}
-                                                    disabled={item.quantity >= item.maxQuantity}
-                                                >
-                                                    <Plus className="h-3 w-3" />
-                                                </Button>
-                                            </div>
+                                            )}
                                             <Button 
                                                 variant="ghost" 
                                                 size="icon" 
+                                                aria-label={`自清單移除 ${item.name}`}
                                                 className="text-red-500 hover:text-red-600 hover:bg-red-50"
                                                 onClick={() => removeItem(item.code)}
                                             >

@@ -49,6 +49,7 @@ import {
 function StatusBadge({ status }: { status: string }) {
   const colorMap: Record<string, string> = {
     待審核: "bg-yellow-500 hover:bg-yellow-600",
+    續借待審核: "bg-amber-500 hover:bg-amber-600 text-black font-semibold",
     已核准: "bg-green-500 hover:bg-green-600",
     已歸還: "bg-slate-500 hover:bg-slate-600",
     不予通過: "bg-red-500 hover:bg-red-600",
@@ -67,6 +68,16 @@ function ExpandedRow({ app }: { app: EquipmentApplication }) {
       ? JSON.parse(app.allocated || "[]")
       : (app.allocated ?? []);
 
+  const codeToNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    items.forEach((it) => {
+      if (it.code && it.name) {
+        map.set(it.code, it.name);
+      }
+    });
+    return map;
+  }, [items]);
+
   return (
     <TableRow className="bg-slate-50/60">
       <TableCell colSpan={7} className="p-4 whitespace-normal align-top">
@@ -80,6 +91,26 @@ function ExpandedRow({ app }: { app: EquipmentApplication }) {
               {app.reason || "—"}
             </p>
           </div>
+
+          {/* 續借申請詳情（若有） */}
+          {(app.requestedReturnDate || app.status === "續借待審核") && (
+            <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <p className="text-sm font-semibold text-amber-800 mb-1">
+                【續借申請資訊】
+              </p>
+              <p className="text-sm text-amber-900">
+                原歸還日期：<span className="font-mono">{app.returnDate || "—"}</span>
+              </p>
+              <p className="text-sm text-amber-900">
+                擬延長至：<span className="font-mono font-bold">{app.requestedReturnDate || "—"}</span>
+              </p>
+              {app.renewalReason && (
+                <p className="text-sm text-amber-800 mt-1 whitespace-pre-wrap break-words">
+                  續借原因：{app.renewalReason}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* 借用器材清單 */}
           <div>
@@ -104,21 +135,24 @@ function ExpandedRow({ app }: { app: EquipmentApplication }) {
                 分配器材編號
               </p>
               <ul className="list-disc list-inside text-sm text-slate-700 space-y-0.5 whitespace-normal break-keep">
-                {allocated.map((a, i) => (
-                  <li key={i} className="break-normal">
-                    <span className="inline-block whitespace-nowrap">
-                      {a.code}:
-                    </span>{" "}
-                    {a.items.map((id, idx) => (
-                      <Fragment key={`${a.code}-${id}-${idx}`}>
-                        <span className="inline-block whitespace-nowrap">
-                          {id}
-                        </span>
-                        {idx < a.items.length - 1 ? ", " : ""}
-                      </Fragment>
-                    ))}
-                  </li>
-                ))}
+                {allocated.map((a, i) => {
+                  const displayName = codeToNameMap.get(a.code) || a.code;
+                  return (
+                    <li key={i} className="break-normal">
+                      <span className="inline-block whitespace-nowrap font-medium text-slate-900">
+                        {displayName}:
+                      </span>{" "}
+                      {a.items.map((id, idx) => (
+                        <Fragment key={`${a.code}-${id}-${idx}`}>
+                          <span className="inline-block whitespace-nowrap font-mono text-xs">
+                            {id}
+                          </span>
+                          {idx < a.items.length - 1 ? ", " : ""}
+                        </Fragment>
+                      ))}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
@@ -167,6 +201,7 @@ export default function AdminEquipmentPage() {
 
   // 拒絕理由 Dialog
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
+  const [rejectType, setRejectType] = useState<"application" | "renewal">("application");
   const [rejectReason, setRejectReason] = useState("");
 
   // 歸還確認 Dialog
@@ -193,7 +228,7 @@ export default function AdminEquipmentPage() {
     return allData.filter((app) => {
       switch (tab) {
         case "pending":
-          return app.status === "待審核";
+          return app.status === "待審核" || app.status === "續借待審核";
         case "active":
           return app.status === "已核准";
         case "history":
@@ -212,6 +247,29 @@ export default function AdminEquipmentPage() {
       if (res.success) {
         toast({ title: "已核准", description: `申請 ${id} 已通過` });
         queryClient.invalidateQueries({ queryKey: ["admin-equipment"] });
+        queryClient.invalidateQueries({ queryKey: ["equipment-catalog"] });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "操作失敗",
+          description: res.message,
+        });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "操作失敗" });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleApproveRenewal = async (id: string) => {
+    setActionLoading(id);
+    try {
+      const res = await EquipmentAdminAPI.reviewRenewal(id, "approve");
+      if (res.success) {
+        toast({ title: "已核准續借", description: `申請 ${id} 續借展延已通過` });
+        queryClient.invalidateQueries({ queryKey: ["admin-equipment"] });
+        queryClient.invalidateQueries({ queryKey: ["equipment-catalog"] });
       } else {
         toast({
           variant: "destructive",
@@ -230,15 +288,19 @@ export default function AdminEquipmentPage() {
     if (!rejectTarget) return;
     setActionLoading(rejectTarget);
     try {
-      const res = await EquipmentAdminAPI.reject(rejectTarget, rejectReason);
+      const res =
+        rejectType === "renewal"
+          ? await EquipmentAdminAPI.reviewRenewal(rejectTarget, "reject", rejectReason)
+          : await EquipmentAdminAPI.reject(rejectTarget, rejectReason);
       if (res.success) {
         toast({
-          title: "已拒絕",
-          description: `申請 ${rejectTarget} 不予通過`,
+          title: rejectType === "renewal" ? "已駁回續借" : "已拒絕",
+          description: `申請 ${rejectTarget} ${rejectType === "renewal" ? "續借申請已駁回" : "不予通過"}`,
         });
         setRejectTarget(null);
         setRejectReason("");
         queryClient.invalidateQueries({ queryKey: ["admin-equipment"] });
+        queryClient.invalidateQueries({ queryKey: ["equipment-catalog"] });
       } else {
         toast({
           variant: "destructive",
@@ -265,6 +327,7 @@ export default function AdminEquipmentPage() {
         });
         setReturnTarget(null);
         queryClient.invalidateQueries({ queryKey: ["admin-equipment"] });
+        queryClient.invalidateQueries({ queryKey: ["equipment-catalog"] });
       } else {
         toast({
           variant: "destructive",
@@ -423,6 +486,7 @@ export default function AdminEquipmentPage() {
                                       className="bg-green-600 hover:bg-green-700"
                                       disabled={isActioning}
                                       onClick={() => handleApprove(app.id)}
+                                      title="核准申請"
                                     >
                                       {isActioning ? (
                                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -436,10 +500,49 @@ export default function AdminEquipmentPage() {
                                       disabled={isActioning}
                                       onClick={() => {
                                         setRejectTarget(app.id);
+                                        setRejectType("application");
                                         setRejectReason("");
                                       }}
+                                      title="拒絕申請"
                                     >
                                       <X className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </>
+                                )}
+                                {/* 續借待審核 → 核准續借 / 駁回續借 */}
+                                {app.status === "續借待審核" && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="default"
+                                      className="bg-amber-500 hover:bg-yellow-500 text-black font-bold px-2.5"
+                                      disabled={isActioning}
+                                      onClick={() => handleApproveRenewal(app.id)}
+                                      title="核准續借展延"
+                                    >
+                                      {isActioning ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <Check className="h-3.5 w-3.5 mr-1" />
+                                          核准續借
+                                        </>
+                                      )}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      className="px-2.5"
+                                      disabled={isActioning}
+                                      onClick={() => {
+                                        setRejectTarget(app.id);
+                                        setRejectType("renewal");
+                                        setRejectReason("");
+                                      }}
+                                      title="駁回續借申請"
+                                    >
+                                      <X className="h-3.5 w-3.5 mr-1" />
+                                      駁回
                                     </Button>
                                   </>
                                 )}
@@ -476,7 +579,7 @@ export default function AdminEquipmentPage() {
         ))}
       </Tabs>
 
-      {/* ---- 拒絕理由 Dialog ---- */}
+      {/* ---- 拒絕 / 駁回理由 Dialog ---- */}
       <Dialog
         open={rejectTarget !== null}
         onOpenChange={(open) => {
@@ -488,13 +591,21 @@ export default function AdminEquipmentPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>拒絕申請</DialogTitle>
+            <DialogTitle>
+              {rejectType === "renewal" ? "駁回續借申請" : "拒絕借用申請"}
+            </DialogTitle>
             <DialogDescription>
-              請輸入拒絕理由，將通知申請者。（申請單：{rejectTarget}）
+              {rejectType === "renewal"
+                ? `請輸入駁回續借理由，將通知申請者。（申請單：${rejectTarget}）`
+                : `請輸入拒絕理由，將通知申請者。（申請單：${rejectTarget}）`}
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder="請輸入拒絕理由..."
+            placeholder={
+              rejectType === "renewal"
+                ? "請說明駁回續借理由（例如：器材後續社課有使用需求等）..."
+                : "請輸入拒絕理由..."
+            }
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             rows={3}
@@ -517,7 +628,7 @@ export default function AdminEquipmentPage() {
               {actionLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-1" />
               ) : null}
-              確認拒絕
+              {rejectType === "renewal" ? "確認駁回續借" : "確認拒絕"}
             </Button>
           </DialogFooter>
         </DialogContent>

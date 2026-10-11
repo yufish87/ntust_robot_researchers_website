@@ -8,6 +8,7 @@ export interface EquipmentRequestItem {
   code: string;
   name: string;
   qty: number;
+  itemIds?: string[]; // 使用者自選器材個體編號清單
 }
 
 /** 分配器材編號 JSON 內部物件 */
@@ -19,6 +20,7 @@ export interface AllocatedEquipment {
 /** Sheet 7 借出狀態 */
 export type EquipmentApplicationStatus =
   | "待審核"
+  | "續借待審核"
   | "已核准"
   | "已歸還"
   | "不予通過";
@@ -39,6 +41,11 @@ export interface EquipmentApplication {
   rejectReason: string; // 拒絕理由
   createdAt: string; // 申請時間
   reviewedAt: string; // 審核時間
+  renewalCount?: number; // 續借次數 (0 或 1)
+  requestedReturnDate?: string; // 申請續借之新歸還日期
+  renewalReason?: string; // 續借原因
+  renewalRequestedAt?: string; // 續借申請時間
+  renewalReviewedAt?: string; // 續借審核時間
 }
 
 /** 管理員列表 API 的 statusFilter 參數 */

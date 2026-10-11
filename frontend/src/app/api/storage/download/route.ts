@@ -87,11 +87,18 @@ export async function GET(request: NextRequest) {
     const encodedFilename = encodeURIComponent(fileData.name);
     const asciiFallback = fileData.name.replace(/[^\x20-\x7E]/g, "_");
 
+    // 若副檔名非 pdf 但 MIME 被標記為 application/pdf，校正 Content-Type 防止解碼錯誤
+    const ext = fileData.name.split(".").pop()?.toLowerCase();
+    let contentType = fileData.mimeType;
+    if (ext && ext !== "pdf" && contentType === "application/pdf") {
+      contentType = "application/octet-stream";
+    }
+
     // 4. 使用原生 Response (非 NextResponse) 避免 RSC 管線干擾二進位串流
     return new Response(bytes, {
       status: 200,
       headers: {
-        "Content-Type": fileData.mimeType,
+        "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodedFilename}`,
         "Content-Length": bytes.byteLength.toString(),
         "Cache-Control": "no-store, no-cache, must-revalidate",
