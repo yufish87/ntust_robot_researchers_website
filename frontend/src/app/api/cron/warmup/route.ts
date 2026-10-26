@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       method: "GET",
       cache: "no-store",
       redirect: "follow",
-      signal: AbortSignal.timeout(25000), // 給予充足的 25 秒開機容忍時間（GAS 深度冷啟動約需 10~13 秒）
+      signal: AbortSignal.timeout(45000), // 給予充足的 45 秒容忍時間（GAS 重新部署或深度冷啟動約需 15~28 秒）
     });
 
     const latencyMs = Date.now() - t0;

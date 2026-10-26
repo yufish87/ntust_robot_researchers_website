@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useId, useMemo } from "react";
 import { UserAPI } from "@/lib/api/user";
 import type { NotificationPreferences } from "@/lib/types/user";
 import { useToast } from "@/hooks/use-toast";
-import { QRCodeSVG } from "qrcode.react";
+import { LineBindDialog } from "@/components/notification/line-bind-dialog";
 
 import {
   Card,
@@ -17,41 +17,28 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Bell,
-  Mail,
   MessageSquare,
-  Copy,
   Check,
   Loader2,
-  RefreshCw,
   Unlink,
   ShieldCheck,
   Calendar,
   Package,
   Printer,
   Receipt,
-  AlertCircle,
-  Sparkles,
   Save,
   RotateCcw,
-  Info,
 } from "lucide-react";
 
 // ─── 預設偏好常數與計算函式 ──────────────────────────────────────────────
 
 export const getDefaultPreferences = (isLineBound: boolean): NotificationPreferences => ({
   email: {
-    equipment: !isLineBound,
-    machine: !isLineBound,
-    finance: true,
-    announcements: !isLineBound,
+    equipment: false,
+    machine: false,
+    finance: false,
+    announcements: false,
   },
   line: {
     equipment: true,
@@ -64,11 +51,10 @@ export const getDefaultPreferences = (isLineBound: boolean): NotificationPrefere
 // ─── 事件項目配置 ──────────────────────────────────────────────
 
 interface EventItemConfig {
-  key: keyof NotificationPreferences["email"];
+  key: keyof NotificationPreferences["line"];
   title: string;
   description: string;
   icon: typeof Bell;
-  emailLocked?: boolean;
 }
 
 const EVENT_ITEMS: EventItemConfig[] = [
@@ -155,10 +141,6 @@ export function NotificationPrefsCard() {
 
   // LINE 綁定 Modal 狀態
   const [bindModalOpen, setBindModalOpen] = useState(false);
-  const [generatingCode, setGeneratingCode] = useState(false);
-  const [bindCode, setBindCode] = useState<string>("");
-  const [bindCountdown, setBindCountdown] = useState<number>(0);
-  const [copied, setCopied] = useState(false);
   const [unbinding, setUnbinding] = useState(false);
 
   // ─── 檢查是否有未儲存的變更 ───
@@ -231,9 +213,7 @@ export function NotificationPrefsCard() {
     setSaveSuccess(false);
     toast({
       title: "已套用系統建議預設值",
-      description: isLineBound
-        ? "LINE 通知全數開啟，Email 預設僅保留「財務報帳與請款」。請點擊「儲存通知設定」以生效。"
-        : "LINE 尚未綁定，為防漏接重要訊息，Email 與 LINE 預設全數開啟。請點擊「儲存通知設定」以生效。",
+      description: "LINE 即時通知已全數開啟。請點擊「儲存通知設定」以生效。",
     });
   };
 
@@ -262,44 +242,6 @@ export function NotificationPrefsCard() {
     }
   };
 
-  // ─── 產生 LINE 綁定碼 ───
-  const handleRequestBindCode = async () => {
-    setGeneratingCode(true);
-    try {
-      const res = await UserAPI.requestLineBindCode();
-      setBindCode(res.bindCode);
-      setBindCountdown(res.ttlSeconds || 900);
-      setBindModalOpen(true);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "產生驗證碼失敗";
-      toast({
-        title: "操作失敗",
-        description: message,
-        variant: "destructive",
-      });
-    } finally {
-      setGeneratingCode(false);
-    }
-  };
-
-  // ─── 倒數計時器 ───
-  useEffect(() => {
-    if (bindCountdown <= 0) return;
-    const timer = setInterval(() => {
-      setBindCountdown((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [bindCountdown]);
-
-  // ─── 複製綁定碼 ───
-  const handleCopyCode = () => {
-    if (!bindCode) return;
-    navigator.clipboard.writeText(bindCode);
-    setCopied(true);
-    toast({ title: "已複製綁定碼", description: `已複製「${bindCode}」至剪貼簿` });
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   // ─── 解除 LINE 綁定 ───
   const handleUnbindLine = async () => {
     if (!confirm("確定要解除 LINE 官方帳號綁定嗎？解除後將無法接收 LINE 即時推播。")) return;
@@ -314,27 +256,6 @@ export function NotificationPrefsCard() {
       toast({ title: "操作失敗", description: message, variant: "destructive" });
     } finally {
       setUnbinding(false);
-    }
-  };
-
-  // 格式化倒數分秒
-  const formatCountdown = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  // ─── 關閉綁定彈窗確認防呆 ───
-  const handleBindModalOpenChange = (open: boolean) => {
-    if (!open && !isLineBound && bindCountdown > 0) {
-      const confirmClose = window.confirm(
-        "確定要中斷 LINE 綁定流程嗎？\n若尚未在官方 LINE 聊天室發送驗證碼，關閉後需重新取得綁定碼。\n\nAre you sure you want to cancel the LINE binding process?\nIf you have not sent the verification code in LINE yet, you will need to request a new code next time."
-      );
-      if (!confirmClose) return;
-    }
-    setBindModalOpen(open);
-    if (!open) {
-      fetchPreferences();
     }
   };
 
@@ -357,7 +278,7 @@ export function NotificationPrefsCard() {
                 )}
               </div>
               <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                自由配置學校信箱與 LINE 官方帳號的即時事件接收通知。
+                自由配置 LINE 官方帳號的即時事件接收通知。電子郵件僅用於註冊與忘記密碼安全性驗證。
               </CardDescription>
             </div>
 
@@ -384,15 +305,10 @@ export function NotificationPrefsCard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleRequestBindCode}
-                  disabled={generatingCode}
+                  onClick={() => setBindModalOpen(true)}
                   className="border-slate-300 dark:border-[#ffc000]/40 text-slate-800 dark:text-[#ffc000] bg-slate-50/80 dark:bg-[#ffc000]/10 hover:bg-slate-100 dark:hover:bg-[#ffc000]/20 text-xs font-semibold h-8 shadow-xs cursor-pointer"
                 >
-                  {generatingCode ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                  ) : (
-                    <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-[#06c755]" />
-                  )}
+                  <MessageSquare className="h-3.5 w-3.5 mr-1.5 text-[#06c755]" />
                   綁定 LINE 官方帳號
                 </Button>
               )}
@@ -424,8 +340,7 @@ export function NotificationPrefsCard() {
                   </div>
                   <Button
                     size="sm"
-                    onClick={handleRequestBindCode}
-                    disabled={generatingCode}
+                    onClick={() => setBindModalOpen(true)}
                     className="bg-[#06c755] hover:bg-[#05b34c] text-white font-medium text-xs shrink-0 cursor-pointer shadow-sm w-full sm:w-auto"
                   >
                     立即取得綁定碼
@@ -436,17 +351,9 @@ export function NotificationPrefsCard() {
               {/* 通知欄位標題 */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5 px-1 sm:px-2 text-xs font-semibold text-slate-400">
                 <div className="min-w-0 flex-1">事件通知類別</div>
-                <div className="flex items-center gap-2 sm:gap-6 shrink-0">
-                  <div className="w-14 sm:w-20 flex items-center justify-center gap-1 whitespace-nowrap">
-                    <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    <span>Email</span>
-                    <span className="hidden sm:inline">通知</span>
-                  </div>
-                  <div className="w-14 sm:w-20 flex items-center justify-center gap-1 whitespace-nowrap">
-                    <MessageSquare className="h-3.5 w-3.5 text-[#06c755] shrink-0" />
-                    <span>LINE</span>
-                    <span className="hidden sm:inline">通知</span>
-                  </div>
+                <div className="flex items-center gap-1.5 shrink-0 px-2 sm:px-4">
+                  <MessageSquare className="h-3.5 w-3.5 text-[#06c755] shrink-0" />
+                  <span>LINE 推播開關</span>
                 </div>
               </div>
 
@@ -454,7 +361,6 @@ export function NotificationPrefsCard() {
               <div className="divide-y divide-slate-100 dark:divide-white/5">
                 {EVENT_ITEMS.map((item) => {
                   const Icon = item.icon;
-                  const emailChecked = preferences.email[item.key];
                   const lineChecked = preferences.line[item.key];
 
                   return (
@@ -478,26 +384,13 @@ export function NotificationPrefsCard() {
                       </div>
 
                       {/* 開關控制項 */}
-                      <div className="flex items-center gap-2 sm:gap-6 shrink-0">
-                        {/* Email 開關 */}
-                        <div className="w-14 sm:w-20 flex justify-center items-center">
-                          <CustomSwitch
-                            checked={emailChecked}
-                            disabled={item.emailLocked}
-                            onCheckedChange={(val) => handleToggle("email", item.key, val)}
-                            label={`${item.title} Email 通知開關`}
-                          />
-                        </div>
-
-                        {/* LINE 開關 */}
-                        <div className="w-14 sm:w-20 flex justify-center items-center">
-                          <CustomSwitch
-                            checked={isLineBound ? lineChecked : false}
-                            disabled={!isLineBound}
-                            onCheckedChange={(val) => handleToggle("line", item.key, val)}
-                            label={`${item.title} LINE 通知開關`}
-                          />
-                        </div>
+                      <div className="flex justify-center items-center shrink-0 px-2 sm:px-4">
+                        <CustomSwitch
+                          checked={isLineBound ? lineChecked : false}
+                          disabled={!isLineBound}
+                          onCheckedChange={(val) => handleToggle("line", item.key, val)}
+                          label={`${item.title} LINE 通知開關`}
+                        />
                       </div>
                     </div>
                   );
@@ -569,122 +462,12 @@ export function NotificationPrefsCard() {
         </CardContent>
       </Card>
 
-      {/* ─── LINE 官方帳號 6 碼動態綁定 Dialog ─── */}
-      <Dialog open={bindModalOpen} onOpenChange={handleBindModalOpenChange}>
-        <DialogContent className="sm:max-w-md bg-white dark:bg-[#1e1c26] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-100 rounded-2xl shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-              <MessageSquare className="h-5 w-5 text-[#06c755]" />
-              綁定 臺科大機器人研究社 官方 LINE 帳號
-            </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              請依照以下兩步驟完成學號與 LINE 官方帳號之安全綁定。
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-5 py-3">
-            {/* 步驟 1: 加入好友 */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-slate-100">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#ffc000] text-black text-[11px] font-bold shrink-0">
-                  1
-                </span>
-                <span>掃描 QR Code 或搜尋 ID 加入社團官方帳號</span>
-              </div>
-              <div className="flex flex-col items-center gap-2.5">
-                <div className="flex items-center justify-center p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl w-fit mx-auto shadow-xs">
-                  <div className="p-2 bg-white rounded-lg shadow-xs">
-                    <QRCodeSVG
-                      value={process.env.NEXT_PUBLIC_LINE_ADD_FRIEND_URL || "https://line.me/R/ti/p/@ntust_rrc"}
-                      size={140}
-                      level="M"
-                      includeMargin={false}
-                    />
-                  </div>
-                </div>
-                <a
-                  href={process.env.NEXT_PUBLIC_LINE_ADD_FRIEND_URL || "https://line.me/R/ti/p/@ntust_rrc"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
-                >
-                  手機版點此直接開啟 LINE 加入好友
-                </a>
-              </div>
-            </div>
-
-            {/* 步驟 2: 發送動態驗證碼 */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-slate-100">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#ffc000] text-black text-[11px] font-bold shrink-0">
-                    2
-                  </span>
-                  <span>在 LINE 聊天室直接發送此綁定碼</span>
-                </div>
-                {bindCountdown > 0 && (
-                  <span className="text-[11px] text-amber-600 dark:text-amber-400 font-mono font-medium">
-                    有效剩餘: {formatCountdown(bindCountdown)}
-                  </span>
-                )}
-              </div>
-
-              {/* 綁定碼展示與複製按鈕 */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700">
-                <span className="font-mono text-xl font-bold tracking-widest text-slate-900 dark:text-[#ffc000] pl-2">
-                  {bindCode || "BIND-XXXX"}
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCopyCode}
-                  className="border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs h-8 cursor-pointer shadow-xs"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-emerald-500 mr-1" />
-                      已複製
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3.5 w-3.5 mr-1" />
-                      複製
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* 說明與確認 (無 Emoji) */}
-            <div className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.03] p-3 rounded-xl border border-slate-200 dark:border-white/10 leading-relaxed flex items-start gap-2">
-              <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-              <span>機器人收到綁定碼後會自動回覆確認訊息。完成後回到此頁面點擊「檢查綁定狀態」即可啟用。</span>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleBindModalOpenChange(false)}
-              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            >
-              完成並關閉
-            </Button>
-            <Button
-              size="sm"
-              onClick={async () => {
-                await fetchPreferences();
-                toast({ title: "已重新檢查綁定狀態" });
-              }}
-              className="bg-[#ffc000] hover:bg-[#e6ad00] text-black font-semibold text-xs cursor-pointer shadow-sm active:scale-[0.98] transition-all"
-            >
-              <RefreshCw className="h-3.5 w-3.5 mr-1" />
-              檢查綁定狀態
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* LINE 官方帳號綁定 Dialog (全系統共用同一元件) */}
+      <LineBindDialog
+        open={bindModalOpen}
+        onOpenChange={setBindModalOpen}
+        onSuccess={fetchPreferences}
+      />
     </>
   );
 }

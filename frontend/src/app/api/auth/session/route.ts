@@ -18,6 +18,7 @@ interface SessionUser {
   department: string;
   grade?: string;
   email?: string;
+  isLineBound?: boolean;
 }
 
 function sanitizeUser(raw: unknown): SessionUser | null {
@@ -37,6 +38,7 @@ function sanitizeUser(raw: unknown): SessionUser | null {
     department: String(user.department),
     grade: user.grade ? String(user.grade) : undefined,
     email: user.email ? String(user.email) : undefined,
+    isLineBound: Boolean(user.isLineBound),
   };
 }
 

@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { UserAPI } from "@/lib/api/user";
 import api from "@/lib/api";
 import type { UserProfile, UserRole, VerifyCode } from "@/lib/types/user";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -168,6 +169,7 @@ export default function AdminUsersPage() {
   const [codeUsageLimit, setCodeUsageLimit] = useState(1);
   const [codeTargetYear, setCodeTargetYear] = useState("");
   const [codeLoading, setCodeLoading] = useState(false);
+  const [codeReactivate, setCodeReactivate] = useState(false);
 
   // Receipt Print Modal
   const [printModalOpen, setPrintModalOpen] = useState(false);
@@ -216,7 +218,11 @@ export default function AdminUsersPage() {
       return result.users;
     },
   });
-  const users = usersData ?? [];
+  const users = useMemo(() => {
+    return (usersData ?? []).filter(
+      (u): u is UserProfile => Boolean(u && typeof u.studentId === "string" && u.studentId.trim() !== "")
+    );
+  }, [usersData]);
 
   /* ---------- 驗證碼資料（useQuery）---------- */
   const {
@@ -230,9 +236,53 @@ export default function AdminUsersPage() {
       const result = await UserAPI.listCodes();
       return result.codes;
     },
-    enabled: mainTab === "codes",
   });
-  const codes = codesData ?? [];
+  const codes = useMemo(() => {
+    return (codesData ?? []).filter(
+      (c): c is VerifyCode => Boolean(c && typeof c.code === "string" && c.code.trim() !== "")
+    );
+  }, [codesData]);
+
+  // 驗證碼生命週期狀態計算
+  const getVerifyCodeStatus = (vc: VerifyCode) => {
+    const now = new Date();
+    const from = vc.validFrom ? new Date(vc.validFrom) : new Date(0);
+    const until = vc.validUntil ? new Date(vc.validUntil) : new Date(8640000000000000);
+    const isExpired = now > until;
+    const isExhausted = vc.usageLimit > 0 && vc.usedCount >= vc.usageLimit;
+    // 預留 1 分鐘緩衝，避免剛產生時因秒差判定為尚未生效
+    const isNotStarted = now.getTime() + 60 * 1000 < from.getTime();
+    const isActive = vc.isActive && !isExpired && !isExhausted && !isNotStarted;
+
+    return {
+      isActive,
+      isExpired,
+      isExhausted,
+      isNotStarted,
+      isManualDisabled: !vc.isActive,
+    };
+  };
+
+  // 即時查重與狀態感知
+  const duplicateCodeInfo = useMemo(() => {
+    if (codeCount > 1 || !codeValue.trim()) return null;
+    const target = codeValue.trim().toUpperCase();
+    const found = codes.find((c) => c.code.trim().toUpperCase() === target);
+    if (!found) return null;
+
+    const status = getVerifyCodeStatus(found);
+    let statusLabel = "有效使用中";
+    if (status.isManualDisabled) statusLabel = "已手動停用";
+    else if (status.isExpired) statusLabel = "已逾期失效";
+    else if (status.isExhausted) statusLabel = "使用次數已達上限";
+    else if (status.isNotStarted) statusLabel = "尚未生效";
+
+    return {
+      found,
+      status,
+      statusLabel,
+    };
+  }, [codes, codeValue, codeCount]);
 
   // Filtered list
   const filteredUsers = useMemo(() => {
@@ -241,8 +291,8 @@ export default function AdminUsersPage() {
       if (search) {
         const q = search.toLowerCase();
         if (
-          !u.studentId.toLowerCase().includes(q) &&
-          !u.name.toLowerCase().includes(q)
+          !String(u.studentId || "").toLowerCase().includes(q) &&
+          !String(u.name || "").toLowerCase().includes(q)
         ) {
           return false;
         }
@@ -322,7 +372,9 @@ export default function AdminUsersPage() {
     const formatDt = (d: Date) =>
       `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
-    const fromStr = formatDt(now);
+    // 向前預留 5 分鐘，確保建立或重新啟用當下，使用者立即註冊時絕不卡「尚未生效」
+    const bufferedFrom = new Date(now.getTime() - 5 * 60 * 1000);
+    const fromStr = formatDt(bufferedFrom);
     const year = now.getMonth() + 1 >= 9 ? now.getFullYear() + 1 : now.getFullYear();
     const untilDate = new Date(year, 5, 30, 23, 59, 0);
     const untilStr = formatDt(untilDate);
@@ -338,6 +390,7 @@ export default function AdminUsersPage() {
     setCodeValidUntil(untilStr);
     setCodeUsageLimit(1);
     setCodeTargetYear(String(academicYear));
+    setCodeReactivate(false);
     setCodeDialogOpen(true);
   };
 
@@ -345,15 +398,24 @@ export default function AdminUsersPage() {
     setCodeLoading(true);
     try {
       const isBatch = codeCount > 1;
+      const isReactivating = Boolean(duplicateCodeInfo && !duplicateCodeInfo.status.isActive && codeReactivate);
+      
+      const normalizeDateInput = (val: string) => {
+        if (!val) return "";
+        const s = val.replace("T", " ").trim();
+        return s.length === 16 ? `${s}:00` : s;
+      };
+
       const result = await UserAPI.generateCode({
         code: !isBatch ? codeValue.trim() : undefined,
         count: codeCount,
         prefix: codePrefix.trim() || "RRC-",
         description: codeDesc,
-        validFrom: codeValidFrom,
-        validUntil: codeValidUntil,
+        validFrom: normalizeDateInput(codeValidFrom),
+        validUntil: normalizeDateInput(codeValidUntil),
         usageLimit: codeUsageLimit,
         targetYear: codeTargetYear.trim(),
+        reactivate: isReactivating,
       });
 
       const generatedList =
@@ -375,10 +437,15 @@ export default function AdminUsersPage() {
       setCodeUsageLimit(1);
       setCodeTargetYear("");
       setCodeCount(1);
+      setCodeReactivate(false);
       queryClient.invalidateQueries({ queryKey: ["admin-codes"] });
 
       toast({
-        title: isBatch ? `已成功產生 ${generatedList.length} 組驗證碼` : "驗證碼已產生",
+        title: isBatch
+          ? `已成功產生 ${generatedList.length} 組驗證碼`
+          : isReactivating
+          ? "既有驗證碼已重新啟用並延展"
+          : "驗證碼已產生",
         description: isBatch
           ? `代碼如：${generatedList[0]} 等共 ${generatedList.length} 組。`
           : `驗證碼: ${generatedList[0]}`,
@@ -744,12 +811,26 @@ export default function AdminUsersPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((u) => (
-                    <TableRow key={u.studentId}>
+                  filteredUsers.map((u, index) => (
+                    <TableRow key={u.studentId ? `${u.studentId}-${index}` : `user-${index}`}>
                       <TableCell className="font-mono text-xs">
                         {u.studentId}
                       </TableCell>
-                      <TableCell className="font-medium">{u.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col">
+                          <span>{u.name}</span>
+                          {u.email && (
+                            <span className="text-[11px] text-muted-foreground font-mono flex items-center gap-1 font-normal">
+                              {u.email}
+                              {u.isEmailDefault && (
+                                <span className="text-[9px] px-1 py-0.2 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded">
+                                  學校
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-sm">
                         {u.department || "—"}
                       </TableCell>
@@ -762,9 +843,13 @@ export default function AdminUsersPage() {
                           const latestOffRec = [...(u.membershipHistory ?? [])].reverse()
                             .find(h => h.type === "admin" || h.type === "owner");
                           if ((u.role === "admin" || u.role === "owner") && latestOffRec?.positions) {
-                            return latestOffRec.positions.split(",").filter(Boolean).map((p: string) => (
-                              <Badge key={p} variant="outline" className="text-xs mr-0.5">{p}</Badge>
-                            ));
+                            return latestOffRec.positions
+                              .split(",")
+                              .map(p => p.trim())
+                              .filter(Boolean)
+                              .map((p: string, pIdx: number) => (
+                                <Badge key={`${p}-${pIdx}`} variant="outline" className="text-xs mr-0.5">{p}</Badge>
+                              ));
                           }
                           if (u.role === "admin" || u.role === "owner") {
                             return <Badge variant="outline" className="text-xs">幹部</Badge>;
@@ -942,8 +1027,8 @@ export default function AdminUsersPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  codes.map((vc) => (
-                    <TableRow key={vc.code}>
+                  codes.map((vc, index) => (
+                    <TableRow key={vc.code ? `${vc.code}-${index}` : `code-${index}`}>
                       <TableCell className="text-center">
                         <input
                           type="checkbox"
@@ -969,23 +1054,55 @@ export default function AdminUsersPage() {
                         {formatLoginTime(vc.validUntil)}
                       </TableCell>
                       <TableCell className="text-center">
-                        {vc.isActive ? (
-                          <Badge
-                            variant="default"
-                            className="text-xs cursor-pointer"
-                            onClick={() => handleToggleActive(vc)}
-                          >
-                            啟用
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="secondary"
-                            className="text-xs cursor-pointer"
-                            onClick={() => handleToggleActive(vc)}
-                          >
-                            停用
-                          </Badge>
-                        )}
+                        {(() => {
+                          const s = getVerifyCodeStatus(vc);
+                          if (s.isManualDisabled) {
+                            return (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs cursor-pointer bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300"
+                                onClick={() => handleToggleActive(vc)}
+                                title="點擊切換為啟用"
+                              >
+                                已停用
+                              </Badge>
+                            );
+                          }
+                          if (s.isExpired) {
+                            return (
+                              <Badge
+                                variant="outline"
+                                className="text-xs cursor-pointer border-amber-500 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10"
+                                onClick={() => handleToggleActive(vc)}
+                                title="代碼已逾期，點擊停用或重新延期"
+                              >
+                                已逾期
+                              </Badge>
+                            );
+                          }
+                          if (s.isExhausted) {
+                            return (
+                              <Badge
+                                variant="outline"
+                                className="text-xs cursor-pointer border-purple-500 text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10"
+                                onClick={() => handleToggleActive(vc)}
+                                title="使用額度已滿，點擊修改額度或停用"
+                              >
+                                額度已滿
+                              </Badge>
+                            );
+                          }
+                          return (
+                            <Badge
+                              variant="default"
+                              className="text-xs cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
+                              onClick={() => handleToggleActive(vc)}
+                              title="有效使用中，點擊停用"
+                            >
+                              有效中
+                            </Badge>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-center text-sm">
                         {vc.usedCount}
@@ -1197,7 +1314,17 @@ export default function AdminUsersPage() {
                     id="code-value"
                     placeholder="請輸入驗證碼（例：RRC-8K9M2P）"
                     value={codeValue}
-                    onChange={(e) => setCodeValue(e.target.value)}
+                    onChange={(e) => {
+                      setCodeValue(e.target.value);
+                      setCodeReactivate(false);
+                    }}
+                    className={cn(
+                      duplicateCodeInfo?.status.isActive
+                        ? "border-red-500 focus-visible:ring-red-500"
+                        : duplicateCodeInfo
+                        ? "border-amber-500 focus-visible:ring-amber-500"
+                        : ""
+                    )}
                   />
                   <Button
                     type="button"
@@ -1210,6 +1337,37 @@ export default function AdminUsersPage() {
                     <Dices className="h-4 w-4" />
                   </Button>
                 </div>
+
+                {/* 即時衝突與失效處理提示 */}
+                {duplicateCodeInfo && (
+                  duplicateCodeInfo.status.isActive ? (
+                    <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-2.5 text-xs text-red-600 dark:text-red-400 space-y-1">
+                      <p className="font-semibold">
+                        此驗證碼目前正處於有效使用中，不可重複建立！
+                      </p>
+                      <p className="text-[11px] text-red-500 dark:text-red-300">
+                        代碼：{duplicateCodeInfo.found.code}｜已使用：{duplicateCodeInfo.found.usedCount}/{duplicateCodeInfo.found.usageLimit === 0 ? "無限制" : duplicateCodeInfo.found.usageLimit} 次｜效期至：{duplicateCodeInfo.found.validUntil}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300 space-y-2">
+                      <p className="font-semibold">
+                        此驗證碼已存在但處於失效狀態（{duplicateCodeInfo.statusLabel}）
+                      </p>
+                      <label className="flex items-start gap-2 cursor-pointer font-normal select-none">
+                        <input
+                          type="checkbox"
+                          checked={codeReactivate}
+                          onChange={(e) => setCodeReactivate(e.target.checked)}
+                          className="mt-0.5 rounded border-amber-400 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                        />
+                        <span className="leading-snug">
+                          確認「重新啟用並延展有效期限」：系統將重設已使用次數為 0，套用新設定並將驗證碼重新啟用。
+                        </span>
+                      </label>
+                    </div>
+                  )
+                )}
               </div>
             ) : (
               <div className="space-y-2">
@@ -1299,7 +1457,9 @@ export default function AdminUsersPage() {
                 (codeCount === 1 && !codeValue.trim()) ||
                 (codeCount > 1 && codeCount <= 0) ||
                 !codeValidFrom ||
-                !codeValidUntil
+                !codeValidUntil ||
+                Boolean(duplicateCodeInfo?.status.isActive) ||
+                Boolean(duplicateCodeInfo && !duplicateCodeInfo.status.isActive && !codeReactivate)
               }
               className="min-w-[120px] gap-1.5"
             >

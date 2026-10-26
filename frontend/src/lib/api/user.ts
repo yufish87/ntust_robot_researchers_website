@@ -57,7 +57,13 @@ export const UserAPI = {
     const res = await api.post("/admin/users/list", {});
     if (!res.data.success)
       throw new Error(res.data.message || "取得使用者列表失敗");
-    return res.data.data as AdminListUsersResponse;
+    const data = res.data.data as AdminListUsersResponse;
+    if (data && Array.isArray(data.users)) {
+      data.users = data.users.filter(
+        (u) => Boolean(u && typeof u.studentId === "string" && u.studentId.trim() !== "")
+      );
+    }
+    return data;
   },
 
   /** 管理員 — 變更使用者身份 */
@@ -97,7 +103,13 @@ export const UserAPI = {
     const res = await api.post("/admin/users/list-codes", {});
     if (!res.data.success)
       throw new Error(res.data.message || "取得驗證碼列表失敗");
-    return res.data.data as AdminListCodesResponse;
+    const data = res.data.data as AdminListCodesResponse;
+    if (data && Array.isArray(data.codes)) {
+      data.codes = data.codes.filter(
+        (c) => Boolean(c && typeof c.code === "string" && c.code.trim() !== "")
+      );
+    }
+    return data;
   },
 
   /** 管理員 — 更新驗證碼 */

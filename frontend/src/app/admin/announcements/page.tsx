@@ -258,7 +258,6 @@ interface FormData {
   category: string;
   status: string;
   attachments: AttachmentFormItem[];
-  broadcastEmail?: boolean;
   broadcastLinePersonal?: boolean;
   broadcastToLineGroup?: boolean;
 }
@@ -269,7 +268,6 @@ const emptyForm: FormData = {
   category: "一般公告",
   status: "顯示中",
   attachments: [],
-  broadcastEmail: true,
   broadcastLinePersonal: true,
   broadcastToLineGroup: true,
 };
@@ -378,7 +376,6 @@ export default function AdminAnnouncementsPage() {
         link: att.link || "",
         fileId: (att as AttachmentFormItem).fileId || "",
       })),
-      broadcastEmail: false,
       broadcastLinePersonal: false,
       broadcastToLineGroup: false,
     };
@@ -805,49 +802,7 @@ export default function AdminAnnouncementsPage() {
               </div>
 
               <div className="divide-y divide-slate-200/60 dark:divide-white/5">
-                {/* 1. Email 全體社員 */}
-                <label
-                  htmlFor="ann-broadcast-email"
-                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none group"
-                >
-                  <div className="flex-1 min-w-0 pr-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                        Email 全體社員
-                      </span>
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-400 shrink-0">
-                        學校信箱
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
-                      發送公告通知信至全體活躍社員之學校信箱 (@mail.ntust.edu.tw)
-                    </p>
-                  </div>
-                  <div className="shrink-0">
-                    <input
-                      id="ann-broadcast-email"
-                      type="checkbox"
-                      checked={!!form.broadcastEmail}
-                      onChange={(e) =>
-                        setForm((prev) => ({ ...prev, broadcastEmail: e.target.checked }))
-                      }
-                      className="sr-only"
-                    />
-                    <div
-                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ${
-                        form.broadcastEmail ? "bg-[#ffc000]" : "bg-slate-300 dark:bg-slate-700"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transform transition duration-200 ease-in-out ${
-                          form.broadcastEmail ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </label>
-
-                {/* 2. LINE 個人官方帳號 */}
+                {/* 1. LINE 個人官方帳號 */}
                 <label
                   htmlFor="ann-broadcast-line-personal"
                   className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none group"

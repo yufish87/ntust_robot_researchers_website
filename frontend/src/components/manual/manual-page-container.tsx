@@ -267,9 +267,9 @@ export function ManualPageContainer({
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-16 text-white">
-      {/* Header Container (與社團行事曆相同之 #34313d 淺灰底色) */}
-      <AdminPageHeader title={title} description={subtitle} className="bg-[#34313d] border-white/10">
+    <div className="space-y-6 max-w-6xl mx-auto pb-16 text-slate-900 dark:text-white">
+      {/* Header Container */}
+      <AdminPageHeader title={title} description={subtitle}>
         {/* Search Box */}
         <form
           onSubmit={handleSearchSubmit}
@@ -308,19 +308,19 @@ export function ManualPageContainer({
       {/* SEARCH RESULTS VIEW */}
       {activeQuery ? (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-[#1a1822] px-5 py-3.5 rounded-xl border border-white/10">
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <Search className="w-4 h-4 text-[#ffc000]" />
+          <div className="flex items-center justify-between bg-slate-100 dark:bg-[#1a1822] px-5 py-3.5 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <Search className="w-4 h-4 text-amber-600 dark:text-[#ffc000]" />
               <span>
-                關鍵字「<strong className="text-white">{activeQuery}</strong>」搜尋結果，共找到{" "}
-                <strong className="text-[#ffc000] font-mono">{searchResults.length}</strong> 筆相關條目：
+                關鍵字「<strong className="text-slate-900 dark:text-white">{activeQuery}</strong>」搜尋結果，共找到{" "}
+                <strong className="text-amber-600 dark:text-[#ffc000] font-mono">{searchResults.length}</strong> 筆相關條目：
               </span>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleClearSearch}
-              className="text-xs text-slate-400 hover:text-white cursor-pointer"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
             >
               <X className="w-3.5 h-3.5 mr-1" />
               關閉搜尋
@@ -337,24 +337,24 @@ export function ManualPageContainer({
                   <div
                     key={item.id}
                     onClick={() => handleSelectSearchResult(item.tabId)}
-                    className="group bg-[#1a1822] p-5 rounded-xl border border-white/10 hover:border-[#ffc000] shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                    className="group bg-white dark:bg-[#1a1822] p-5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-amber-500 dark:hover:border-[#ffc000] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
                   >
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-white/5 text-slate-300 border border-white/10">
-                          <Icon className="w-3.5 h-3.5 text-[#ffc000]" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">
+                          <Icon className="w-3.5 h-3.5 text-amber-600 dark:text-[#ffc000]" />
                           {item.tabLabel}
                         </span>
                       </div>
-                      <h3 className="font-bold text-base text-white group-hover:text-[#ffc000] transition-colors">
+                      <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-[#ffc000] transition-colors">
                         <HighlightMatch text={item.heading} query={activeQuery} />
                       </h3>
-                      <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed">
                         <HighlightMatch text={item.snippet} query={activeQuery} />
                       </p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-[#ffc000] font-medium">
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs text-amber-600 dark:text-[#ffc000] font-medium">
                       <span>跳轉至此章節</span>
                       <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -363,16 +363,16 @@ export function ManualPageContainer({
               })}
             </div>
           ) : (
-            <div className="text-center py-16 bg-[#1a1822] rounded-xl border border-white/10 p-8 space-y-3">
-              <p className="text-base text-slate-400">
+            <div className="text-center py-16 bg-white dark:bg-[#1a1822] rounded-xl border border-slate-200 dark:border-white/10 p-8 space-y-3">
+              <p className="text-base text-slate-600 dark:text-slate-400">
                 查無與「{activeQuery}」相符的說明條目。
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 建議嘗試搜尋常用關鍵字：
-                <button type="button" onClick={() => { setSearchInputValue("器材"); setActiveQuery("器材"); }} className="text-[#ffc000] underline mx-1 cursor-pointer">器材</button>、
-                <button type="button" onClick={() => { setSearchInputValue("gcode"); setActiveQuery("gcode"); }} className="text-[#ffc000] underline mx-1 cursor-pointer">gcode</button>、
-                <button type="button" onClick={() => { setSearchInputValue("發票"); setActiveQuery("發票"); }} className="text-[#ffc000] underline mx-1 cursor-pointer">發票</button>、
-                <button type="button" onClick={() => { setSearchInputValue("驗證碼"); setActiveQuery("驗證碼"); }} className="text-[#ffc000] underline mx-1 cursor-pointer">驗證碼</button>
+                <button type="button" onClick={() => { setSearchInputValue("器材"); setActiveQuery("器材"); }} className="text-amber-600 dark:text-[#ffc000] underline mx-1 cursor-pointer font-medium">器材</button>、
+                <button type="button" onClick={() => { setSearchInputValue("gcode"); setActiveQuery("gcode"); }} className="text-amber-600 dark:text-[#ffc000] underline mx-1 cursor-pointer font-medium">gcode</button>、
+                <button type="button" onClick={() => { setSearchInputValue("發票"); setActiveQuery("發票"); }} className="text-amber-600 dark:text-[#ffc000] underline mx-1 cursor-pointer font-medium">發票</button>、
+                <button type="button" onClick={() => { setSearchInputValue("驗證碼"); setActiveQuery("驗證碼"); }} className="text-amber-600 dark:text-[#ffc000] underline mx-1 cursor-pointer font-medium">驗證碼</button>
               </p>
             </div>
           )}
@@ -381,7 +381,7 @@ export function ManualPageContainer({
         /* STANDARD DOCUMENTATION VIEW */
         <div className="space-y-6">
           {/* Module Navigation Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-[#1a1822] rounded-xl border border-white/10 shadow-sm">
+          <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-100/90 dark:bg-[#1a1822] rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs">
             {tabs.map((tab, idx) => {
               const Icon = ICON_MAP[tab.iconName || tab.id] || BookOpen;
               const isActive = tab.id === activeTab;
@@ -395,17 +395,17 @@ export function ManualPageContainer({
                   className={cn(
                     "flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-sm font-semibold border transition-all duration-150 cursor-pointer select-none",
                     isActive
-                      ? "bg-[#282432] text-white shadow-xs border-white/20"
-                      : "text-slate-400 hover:text-white hover:bg-white/5 border-transparent"
+                      ? "bg-white dark:bg-[#282432] text-slate-900 dark:text-white shadow-xs border-slate-200/90 dark:border-white/20 font-bold"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/5 border-transparent"
                   )}
                 >
-                  <span className={cn("text-[11px] font-mono", isActive ? "text-[#ffc000] font-bold" : "text-slate-500")}>
+                  <span className={cn("text-[11px] font-mono", isActive ? "text-amber-600 dark:text-[#ffc000] font-bold" : "text-slate-400 dark:text-slate-500")}>
                     {num}
                   </span>
                   <Icon
                     className={cn(
                       "w-4 h-4 shrink-0 transition-colors duration-150",
-                      isActive ? "text-[#ffc000]" : "text-slate-400"
+                      isActive ? "text-amber-600 dark:text-[#ffc000]" : "text-slate-400 dark:text-slate-400"
                     )}
                   />
                   <span>{tab.label}</span>
@@ -417,14 +417,14 @@ export function ManualPageContainer({
           {/* Two-Column Layout: Main Document + Sticky TOC */}
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
             {/* Left: Main Content Column */}
-            <div className="xl:col-span-9 bg-[#1a1822] rounded-xl border border-white/10 p-6 lg:p-10 shadow-sm text-slate-200">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 pb-3 mb-6 border-b border-white/10 font-medium">
-                <span className="flex items-center gap-1.5 text-white font-semibold">
-                  <FileText className="w-3.5 h-3.5 text-[#ffc000]" />
+            <div className="xl:col-span-9 bg-white dark:bg-[#1a1822] rounded-xl border border-slate-200/90 dark:border-white/10 p-6 lg:p-10 shadow-xs text-slate-800 dark:text-slate-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 pb-3 mb-6 border-b border-slate-200/80 dark:border-white/10 font-medium">
+                <span className="flex items-center gap-1.5 text-slate-900 dark:text-white font-semibold">
+                  <FileText className="w-3.5 h-3.5 text-amber-600 dark:text-[#ffc000]" />
                   <span>章節：{currentTab.label}</span>
                 </span>
                 {currentTab?.updatedAt && (
-                  <span className="inline-flex items-center gap-1 text-slate-400 font-mono text-[11px]">
+                  <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                     <Calendar className="w-3 h-3 text-slate-400" />
                     最後修訂：{currentTab.updatedAt}
                   </span>
@@ -435,7 +435,7 @@ export function ManualPageContainer({
 
               {/* Bottom revision note */}
               {currentTab?.updatedAt && (
-                <div className="mt-8 flex items-center justify-end text-[11px] text-slate-400 font-mono">
+                <div className="mt-8 flex items-center justify-end text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                   <span className="inline-flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-slate-400" />
                     此手冊檔案最後更新時間：{currentTab.updatedAt}
@@ -444,18 +444,18 @@ export function ManualPageContainer({
               )}
 
               {/* Prev / Next Chapter Buttons */}
-              <div className="mt-12 pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mt-12 pt-6 border-t border-slate-200/80 dark:border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {prevTab ? (
                   <button
                     type="button"
                     onClick={() => setActiveTab(prevTab.id)}
-                    className="flex flex-col items-start p-4 rounded-xl border border-white/10 hover:border-[#ffc000] hover:bg-white/5 bg-black/25 transition-all text-left group cursor-pointer"
+                    className="flex flex-col items-start p-4 rounded-xl border border-slate-200/90 dark:border-white/10 hover:border-amber-500 dark:hover:border-[#ffc000] hover:bg-slate-50 dark:hover:bg-white/5 bg-slate-50/70 dark:bg-black/25 transition-all text-left group cursor-pointer"
                   >
-                    <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1 mb-1">
-                      <ArrowLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform text-[#ffc000]" />
+                    <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-1 font-medium">
+                      <ArrowLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform text-amber-600 dark:text-[#ffc000]" />
                       上一章節
                     </span>
-                    <span className="text-sm font-bold text-white group-hover:text-[#ffc000] transition-colors">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-[#ffc000] transition-colors">
                       {prevTab.label}
                     </span>
                   </button>
@@ -467,13 +467,13 @@ export function ManualPageContainer({
                   <button
                     type="button"
                     onClick={() => setActiveTab(nextTab.id)}
-                    className="flex flex-col items-end p-4 rounded-xl border border-white/10 hover:border-[#ffc000] hover:bg-white/5 bg-black/25 transition-all text-right group cursor-pointer sm:col-start-2"
+                    className="flex flex-col items-end p-4 rounded-xl border border-slate-200/90 dark:border-white/10 hover:border-amber-500 dark:hover:border-[#ffc000] hover:bg-slate-50 dark:hover:bg-white/5 bg-slate-50/70 dark:bg-black/25 transition-all text-right group cursor-pointer sm:col-start-2"
                   >
-                    <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1 mb-1">
+                    <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-1 font-medium">
                       下一章節
-                      <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform text-[#ffc000]" />
+                      <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform text-amber-600 dark:text-[#ffc000]" />
                     </span>
-                    <span className="text-sm font-bold text-white group-hover:text-[#ffc000] transition-colors">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-[#ffc000] transition-colors">
                       {nextTab.label}
                     </span>
                   </button>
@@ -483,25 +483,25 @@ export function ManualPageContainer({
 
             {/* Right: Sticky Table of Contents (On this page) */}
             <div className="hidden xl:block xl:col-span-3 sticky top-24 space-y-4">
-              <div className="bg-[#1a1822] border border-white/10 rounded-xl p-4.5 space-y-3 text-xs shadow-sm">
-                <div className="flex items-center gap-2 font-bold text-white text-xs tracking-wider uppercase">
-                  <ListTree className="w-4 h-4 text-[#ffc000]" />
+              <div className="bg-white dark:bg-[#1a1822] border border-slate-200/90 dark:border-white/10 rounded-xl p-4.5 space-y-3 text-xs shadow-xs">
+                <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white text-xs tracking-wider uppercase">
+                  <ListTree className="w-4 h-4 text-amber-600 dark:text-[#ffc000]" />
                   <span>本頁章節導覽</span>
                 </div>
 
                 {currentToc.length > 0 ? (
-                  <nav className="space-y-1 text-slate-300 font-sans">
+                  <nav className="space-y-1 font-sans">
                     {currentToc.map((item, idx) => (
                       <button
                         key={`${item.id}-${idx}`}
                         type="button"
                         onClick={() => scrollToHeading(item.id)}
                         className={cn(
-                          "w-full text-left py-1.5 px-2 rounded-md hover:bg-white/5 hover:text-[#ffc000] text-slate-400 transition-colors block truncate cursor-pointer",
-                          item.level === 3 ? "pl-4 text-[11px] text-slate-400" : "font-medium"
+                          "w-full text-left py-1.5 px-2 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 hover:text-amber-600 dark:hover:text-[#ffc000] text-slate-600 dark:text-slate-400 transition-colors block truncate cursor-pointer",
+                          item.level === 3 ? "pl-4 text-[11px] text-slate-500 dark:text-slate-400" : "font-medium"
                         )}
                       >
-                        {item.level === 3 && <CornerDownRight className="w-2.5 h-2.5 inline mr-1 text-[#ffc000]/70" />}
+                        {item.level === 3 && <CornerDownRight className="w-2.5 h-2.5 inline mr-1 text-amber-600/70 dark:text-[#ffc000]/70" />}
                         <span>{item.title}</span>
                       </button>
                     ))}

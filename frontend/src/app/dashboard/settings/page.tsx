@@ -146,11 +146,14 @@ export default function SettingsPage() {
     setProfileSuccess(false);
     try {
       await UserAPI.updateProfile(values);
+      const hasCustom = Boolean(values.email && values.email.trim());
       // 同步更新 Zustand store
       updateUser({
         department: values.department,
         grade: values.grade,
         email: values.email || "",
+        hasCustomEmail: hasCustom,
+        isEmailDefault: !hasCustom,
       });
       setProfileSuccess(true);
     } catch (err: unknown) {
@@ -359,9 +362,18 @@ export default function SettingsPage() {
 
             {/* 可編輯欄位：通知 Email */}
             <div className="space-y-2">
-              <div className="flex justify-between items-center h-5">
-                <Label htmlFor="email" className="flex items-center gap-1.5">
+              <div className="flex justify-between items-center h-auto min-h-5 flex-wrap gap-1">
+                <Label htmlFor="email" className="flex items-center gap-1.5 flex-wrap">
                   通知 Email
+                  {user?.isEmailDefault ? (
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10 font-normal">
+                      目前為學校預設信箱
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 border-emerald-500/50 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 font-normal">
+                      已設定個人信箱
+                    </Badge>
+                  )}
                   <span className="text-xs text-muted-foreground font-normal">（留空則預設使用學校信箱）</span>
                 </Label>
                 {profileForm.formState.errors.email && (
@@ -375,7 +387,7 @@ export default function SettingsPage() {
                 type="email"
                 placeholder={
                   user?.studentId
-                    ? `${user.studentId.toLowerCase()}@mail.ntust.edu.tw`
+                    ? `${String(user.studentId).toLowerCase()}@mail.ntust.edu.tw`
                     : "學號@mail.ntust.edu.tw"
                 }
                 {...profileForm.register("email")}
@@ -383,7 +395,7 @@ export default function SettingsPage() {
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 若留空或未設定，通知將發送至學校信箱（
                 {user?.studentId
-                  ? `${user.studentId.toLowerCase()}@mail.ntust.edu.tw`
+                  ? `${String(user.studentId).toLowerCase()}@mail.ntust.edu.tw`
                   : "學號@mail.ntust.edu.tw"}
                 ）。
               </p>
