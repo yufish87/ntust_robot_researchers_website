@@ -1,4 +1,6 @@
 .agent/
+.agents/
+.idea/
 docs/
 
 gas-backend/

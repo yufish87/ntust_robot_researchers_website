@@ -12,6 +12,9 @@ interface User {
   email?: string;
   membershipHistory?: MembershipRecord[]; // 歷年身份組
   activeUntilYear?: string;              // 有效截止學年，如 "115"
+  isLineBound?: boolean;                 // 是否已綁定 LINE 官方帳號
+  hasCustomEmail?: boolean;              // 是否已自行設定個人常用信箱
+  isEmailDefault?: boolean;              // 是否為系統預設之學校信箱
 }
 
 interface AuthState {
@@ -42,9 +45,20 @@ export const useAuthStore = create<AuthState>()(
 
           if (res.data.success) {
             // token 已由 server-side BFF proxy 設定為 HttpOnly cookie
-            // client 只收到 user info
+            // client 只收到 user info，確保 studentId 轉為 string 防止 TypeError
+            const rawUser = res.data.data?.user;
+            const normalizedUser = rawUser
+              ? {
+                  ...rawUser,
+                  studentId: String(rawUser.studentId),
+                  isLineBound: Boolean(rawUser.isLineBound),
+                  hasCustomEmail: Boolean(rawUser.hasCustomEmail),
+                  isEmailDefault: Boolean(rawUser.isEmailDefault),
+                }
+              : null;
+
             set({
-              user: res.data.data.user,
+              user: normalizedUser,
               authChecked: true,
             });
           } else {
@@ -109,8 +123,17 @@ export const useAuthStore = create<AuthState>()(
 
             const authenticated =
               !!res.data?.success && !!res.data?.data?.authenticated;
-            const nextUser = authenticated
+            const rawNextUser = authenticated
               ? (res.data?.data?.user as User | null)
+              : null;
+            const nextUser = rawNextUser
+              ? {
+                  ...rawNextUser,
+                  studentId: String(rawNextUser.studentId),
+                  isLineBound: Boolean(rawNextUser.isLineBound),
+                  hasCustomEmail: Boolean(rawNextUser.hasCustomEmail),
+                  isEmailDefault: Boolean(rawNextUser.isEmailDefault),
+                }
               : null;
 
             set({
@@ -138,7 +161,11 @@ export const useAuthStore = create<AuthState>()(
       updateUser: (partial) => {
         const current = get().user;
         if (current) {
-          set({ user: { ...current, ...partial } });
+          const next = { ...current, ...partial };
+          if (next.studentId !== undefined) {
+            next.studentId = String(next.studentId);
+          }
+          set({ user: next });
         }
       },
     }),

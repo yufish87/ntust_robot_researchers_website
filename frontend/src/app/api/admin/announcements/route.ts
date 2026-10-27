@@ -7,7 +7,7 @@ function purgeAnnouncementCache() {
     revalidatePath("/api/announcements");
     revalidatePath("/");
     revalidatePath("/dashboard/announcements");
-    (revalidateTag as any)("announcements");
+    revalidateTag("announcements", "max");
   } catch (err) {
     console.warn("Announcement cache purge failed:", err);
   }

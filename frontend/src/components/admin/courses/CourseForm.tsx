@@ -140,7 +140,6 @@ const courseSchema = z.object({
   syncToAnnouncement: z.boolean().optional(),
   broadcastToLineGroup: z.boolean().optional(),
   broadcastLinePersonal: z.boolean().optional(),
-  broadcastEmail: z.boolean().optional(),
   handouts: z.array(resourceItemSchema).optional(),
   videos: z.array(resourceItemSchema).optional(),
   others: z.array(resourceItemSchema).optional(),
@@ -163,7 +162,6 @@ interface CourseFormValues {
   syncToAnnouncement?: boolean;
   broadcastToLineGroup?: boolean;
   broadcastLinePersonal?: boolean;
-  broadcastEmail?: boolean;
   handouts?: ResourceFormItem[];
   videos?: ResourceFormItem[];
   others?: ResourceFormItem[];
@@ -207,7 +205,6 @@ export function CourseForm({
       syncToAnnouncement: true,
       broadcastToLineGroup: true,
       broadcastLinePersonal: true,
-      broadcastEmail: true,
       handouts: [] as ResourceFormItem[],
       videos: [] as ResourceFormItem[],
       others: [] as ResourceFormItem[],
@@ -240,7 +237,6 @@ export function CourseForm({
       syncToAnnouncement: true,
       broadcastToLineGroup: true,
       broadcastLinePersonal: true,
-      broadcastEmail: true,
       handouts: [] as ResourceFormItem[],
       videos: [] as ResourceFormItem[],
       others: [] as ResourceFormItem[],
@@ -673,53 +669,7 @@ export function CourseForm({
               )}
             />
 
-            {/* 2. Email 全體社員 */}
-            <FormField
-              control={form.control}
-              name="broadcastEmail"
-              render={({ field }) => (
-                <label
-                  htmlFor="crs-broadcast-email"
-                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-100/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none group"
-                >
-                  <div className="flex-1 min-w-0 pr-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                        寄送 Email 全體社員
-                      </span>
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-400 shrink-0">
-                        學校信箱
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal">
-                      發送社課通知信至全體活躍社員學校信箱 (@mail.ntust.edu.tw)
-                    </p>
-                  </div>
-                  <div className="shrink-0">
-                    <input
-                      id="crs-broadcast-email"
-                      type="checkbox"
-                      checked={!!field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      className="sr-only"
-                    />
-                    <div
-                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ${
-                        field.value ? "bg-[#ffc000]" : "bg-slate-300 dark:bg-slate-700"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transform transition duration-200 ease-in-out ${
-                          field.value ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </label>
-              )}
-            />
-
-            {/* 3. LINE 個人官方帳號 */}
+            {/* 2. LINE 個人官方帳號 */}
             <FormField
               control={form.control}
               name="broadcastLinePersonal"

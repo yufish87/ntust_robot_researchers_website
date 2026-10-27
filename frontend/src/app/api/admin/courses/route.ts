@@ -9,8 +9,8 @@ function purgeCourseCache() {
     revalidatePath("/api/announcements");
     revalidatePath("/");
     revalidatePath("/dashboard/courses");
-    (revalidateTag as any)("courses");
-    (revalidateTag as any)("announcements");
+    revalidateTag("courses", "max");
+    revalidateTag("announcements", "max");
   } catch (err) {
     console.warn("Course cache purge failed:", err);
   }

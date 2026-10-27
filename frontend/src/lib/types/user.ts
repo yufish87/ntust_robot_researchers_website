@@ -53,6 +53,9 @@ export interface UserProfile {
   lineUserId?: string;                   // LINE User ID
   notificationPreferences?: NotificationPreferences | string; // 通知偏好
   email?: string;                        // 自訂通知信箱 (未設定時預設學校信箱)
+  hasCustomEmail?: boolean;              // 是否已自行設定個人常用信箱
+  isEmailDefault?: boolean;              // 是否為系統預設之學校信箱
+  isLineBound?: boolean;                 // 是否已綁定 LINE 官方帳號
 }
 
 /** 更新個人資料 Request */
@@ -131,6 +134,7 @@ export interface AdminGenerateCodeRequest {
   validUntil: string;
   usageLimit: number;
   targetYear?: string;  // 選填：目標學年
+  reactivate?: boolean; // 若驗證碼已失效，是否重新啟用並延展
 }
 
 /** 管理員用 — 產生驗證碼 Response */
